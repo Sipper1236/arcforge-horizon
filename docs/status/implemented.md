@@ -1,6 +1,6 @@
 # Current implementation
 
-This is an as-built snapshot, not a claim of Arcforge parity. **Paused work note (2026-11-08):** Pressurized Conduit code and content files have been added in the working tree but are unverified; they are not included in the 380-recipe verified archive below and are not counted as implemented here. The active completion target is in [goal.md](../goal.md), and the resumable project state is in [handoff.md](../handoff.md). For verification strength, see [verification.md](verification.md). The code targets Arcforge commit `8843cb02cf9132f278f6a8e804b6d78837d3cbcb` and Horizon Nightly 2026-11-08, commit `fdc87aecdbd116bf1e08adcd062fcbaea8c2e2ca`.
+This is an as-built snapshot, not a claim of Arcforge parity. **Build checkpoint (2026-11-09):** Four Pressurized Conduit tiers and a known Arcforge gas list pass Rust type-check and the Horizon content checker; runtime registration and routing remain unverified in-game. The active completion target is in [goal.md](../goal.md), and the resumable project state is in [handoff.md](../handoff.md). For verification strength, see [verification.md](verification.md). The code targets Arcforge commit `8843cb02cf9132f278f6a8e804b6d78837d3cbcb` and Horizon Nightly 2026-11-08, commit `fdc87aecdbd116bf1e08adcd062fcbaea8c2e2ca`.
 
 ## Native crate and registered content
 
@@ -8,7 +8,7 @@ This is an as-built snapshot, not a claim of Arcforge parity. **Paused work note
 
 ## Recipe data present
 
-The content directory contains 380 recipe JSON files (Arcforge machine recipes and vanilla recipe types):
+The content directory contains 384 recipe JSON files (Arcforge machine recipes and vanilla recipe types):
 
 | Recipe group | Files |
 |---|---:|
@@ -40,16 +40,19 @@ The content directory contains 380 recipe JSON files (Arcforge machine recipes a
 | Invar Dust crafting | 1 |
 | Item Conduit crafting and tier upgrades | 4 |
 | Fluid Conduit crafting and tier upgrades | 4 |
+| Pressurized Conduit crafting and tier upgrades | 4 |
 | Drying/vulcanizing recipe data | 5 |
 | Vanilla smelting recipes | 32 |
 | Vanilla blasting recipes | 31 |
 | Composite material crafting | 1 |
 | Induction Furnace Arcforge smelting catalog | 32 |
-| **Total** | **380** |
+| **Total** | **384** |
 
 Files existing does not by itself prove the complete recipe graph or survival progression works.
 
 ## Implemented behavior in source
+
+- **Pressurized Conduits:** four tiers route the 22 Arcforge gases listed in the pinned source through separate networks at 400/1,600/6,400/25,600 mB/t, with recipes, tags, and loot. The gas list matches upstream `gas_properties.json`. This source compiles and the content archive passes Horizon's checker; arbitrary third-party gas classification is unsupported by the pinned API, and network behavior is not in-world verified.
 
 - **Item Conduits:** all four source tiers are registered with their Arcforge models, source loot tables, and survival recipes. Connected runs are cached and invalidated on conduit placement, breaking, Wrench changes, or a changed local conduit edge. They use Horizon's transactional item-move helper between configured Output and Input faces. Each network uses its slowest tier: 8/16/32/64 items every 20/10/5/2 ticks. The Wrench changes a face through Auto, Input, Output, and Disabled; Output faces extract from adjacent inventories and Input faces insert into them. A refused transfer stays at its source. Animated packets, conduit-held items, filters, and capability-based Auto detection are absent. Tier upgrades use shaped recipes and do not preserve Wrench face settings. Routes and transfers have not been tested in-world.
 

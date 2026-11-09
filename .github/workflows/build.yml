@@ -2,7 +2,17 @@ name: Build Arcforge for Horizon
 
 on:
   push:
+    paths:
+      - 'api/**'
+      - 'content/**'
+      - 'horizon-mixin.toml'
+      - '.github/workflows/build.yml'
   pull_request:
+    paths:
+      - 'api/**'
+      - 'content/**'
+      - 'horizon-mixin.toml'
+      - '.github/workflows/build.yml'
   workflow_dispatch:
 
 permissions:
