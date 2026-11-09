@@ -30,6 +30,11 @@ jobs:
       - name: Check Rust formatting
         run: cargo fmt --check --manifest-path api/Cargo.toml
 
+      - name: Install Horizon native build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends libasound2-dev libudev-dev
+
       - name: Compile native mod crate
         run: cargo build --locked --release --manifest-path api/Cargo.toml
 
