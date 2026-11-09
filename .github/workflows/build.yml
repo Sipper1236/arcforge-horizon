@@ -1,0 +1,56 @@
+name: Build Arcforge for Horizon
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out Arcforge
+        uses: actions/checkout@v7
+
+      - name: Check out pinned Horizon tooling
+        uses: actions/checkout@v7
+        with:
+          repository: horizon-rust/horizon
+          ref: fdc87aecdbd116bf1e08adcd062fcbaea8c2e2ca
+          path: horizon-source
+
+      - name: Install stable Rust
+        run: |
+          rustup toolchain install stable --profile minimal --component rustfmt
+          rustup default stable
+
+      - name: Check Rust formatting
+        run: cargo fmt --check --manifest-path api/Cargo.toml
+
+      - name: Compile native mod crate
+        run: cargo build --locked --release --manifest-path api/Cargo.toml
+
+      - name: Build Horizon content pack
+        working-directory: content
+        run: cargo run --locked --manifest-path ../horizon-source/crates/cargo-horizon-mod/Cargo.toml -- build
+
+      - name: Check Horizon content pack
+        working-directory: content
+        run: cargo run --locked --manifest-path ../horizon-source/crates/cargo-horizon-mod/Cargo.toml -- check target/horizon-mod/arcforge.hmod
+
+      - name: Upload content pack
+        uses: actions/upload-artifact@v7
+        with:
+          name: arcforge-content-${{ github.sha }}
+          path: content/target/horizon-mod/arcforge.hmod
+          if-no-files-found: error
+
+      - name: Explain native bundle boundary
+        run: |
+          {
+            echo '### Native bundle'
+            echo 'The Rust mod crate compiled successfully. A playable Horizon native bundle is built by Horizon for a specific installed game instance and requires the player trust decision. This workflow does not build or install that instance-specific bundle.'
+          } >> "$GITHUB_STEP_SUMMARY"

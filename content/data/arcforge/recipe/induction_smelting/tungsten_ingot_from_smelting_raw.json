@@ -1,0 +1,9 @@
+{
+  "type": "arcforge:induction_smelting",
+  "ingredient": "#c:raw_materials/tungsten",
+  "result": {
+    "id": "arcforge:tungsten_ingot"
+  },
+  "cookingtime": 200,
+  "experience": 0.7
+}

@@ -1,0 +1,25 @@
+{
+  "title": "Conduits & the Wrench",
+  "icon": "arcforge:wrench",
+  "items": [
+    "arcforge:wrench",
+    "arcforge:wrought_energy_conduit",
+    "arcforge:tempered_energy_conduit",
+    "arcforge:hardened_energy_conduit",
+    "arcforge:arcforged_energy_conduit",
+    "arcforge:wrought_thermal_conduit",
+    "arcforge:tempered_thermal_conduit",
+    "arcforge:hardened_thermal_conduit",
+    "arcforge:arcforged_thermal_conduit"
+  ],
+  "pages": [
+    {
+      "type": "text",
+      "text": "The alpha registers Energy Conduits for FE and Thermal Conduits for HU. Item, fluid, gas and pressurized conduits are not implemented yet. Conduits connect to adjacent blocks of their own type. Each segment has its own buffer and rate; Arcforge's network-wide pooled rate is not implemented.\n# The Wrench\nCraft it from three iron ingots and a copper ingot. Right-click a conduit face to cycle Auto, Input, Output and Disabled. Auto permits either direction, Input receives, Output sends, and Disabled disconnects. The Wrench also sets supported Solar heat-output faces, configures adjacent-transfer output faces on the Combustion and Thermoelectric Plants, and rotates supported single-block machines. Other Wrench modes, sneaking reverse-cycle, dismantling, and conduit joint controls are not implemented."
+    },
+    {
+      "type": "text",
+      "text": "# Solar heat output\nA Solar Thermal Array starts with all output faces disabled. Right-click a formed tower part with the Wrench on the face that should send heat. This saves the setting on the controller and lets supported adjacent machines or Thermal Conduits receive heat. Enabled faces show a steel collar and heat-port plate on formed tower parts. Other multiblock port types and port screens are not implemented."
+    }
+  ]
+}

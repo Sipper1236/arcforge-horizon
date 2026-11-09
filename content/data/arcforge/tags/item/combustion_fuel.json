@@ -1,0 +1,9 @@
+{
+  "values": [
+    "minecraft:coal",
+    "minecraft:charcoal",
+    "minecraft:coal_block",
+    "arcforge:bio_coal",
+    "arcforge:bio_coal_block"
+  ]
+}

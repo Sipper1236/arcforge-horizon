@@ -1,0 +1,9 @@
+[mod]
+id = "arcforge"
+version = "0.1.0"
+
+[compatibility]
+horizon_revision = "fdc87aecdbd116bf1e08adcd062fcbaea8c2e2ca"
+
+[api]
+path = "api"

@@ -1,0 +1,8 @@
+{
+  "type": "neoforge:add_features",
+  "biomes": [
+    "minecraft:small_end_islands"
+  ],
+  "features": "arcforge:ore_iolite_outer",
+  "step": "underground_ores"
+}

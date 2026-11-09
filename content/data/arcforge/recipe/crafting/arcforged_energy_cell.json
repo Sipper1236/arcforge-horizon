@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "ACA",
+    "pXp",
+    "ApA"
+  ],
+  "key": {
+    "A": "arcforge:arcforged_alloy",
+    "C": "#c:gems/arcite",
+    "p": "#c:plates/copper",
+    "X": "arcforge:hardened_energy_cell"
+  },
+  "result": {
+    "id": "arcforge:arcforged_energy_cell",
+    "count": 1
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [" T ", "TXT", " T "],
+  "key": {
+    "T": "arcforge:tempered_alloy",
+    "X": "arcforge:wrought_canister"
+  },
+  "result": {"id": "arcforge:tempered_canister", "count": 1}
+}

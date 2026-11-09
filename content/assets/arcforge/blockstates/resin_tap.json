@@ -1,0 +1,184 @@
+{
+  "variants": {
+    "attached=false,content=empty,facing=north,powered=false": {
+      "model": "arcforge:block/resin_tap"
+    },
+    "attached=false,content=empty,facing=north,powered=true": {
+      "model": "arcforge:block/resin_tap"
+    },
+    "attached=false,content=empty,facing=east,powered=false": {
+      "model": "arcforge:block/resin_tap",
+      "y": 90
+    },
+    "attached=false,content=empty,facing=east,powered=true": {
+      "model": "arcforge:block/resin_tap",
+      "y": 90
+    },
+    "attached=false,content=empty,facing=south,powered=false": {
+      "model": "arcforge:block/resin_tap",
+      "y": 180
+    },
+    "attached=false,content=empty,facing=south,powered=true": {
+      "model": "arcforge:block/resin_tap",
+      "y": 180
+    },
+    "attached=false,content=empty,facing=west,powered=false": {
+      "model": "arcforge:block/resin_tap",
+      "y": 270
+    },
+    "attached=false,content=empty,facing=west,powered=true": {
+      "model": "arcforge:block/resin_tap",
+      "y": 270
+    },
+    "attached=false,content=latex,facing=north,powered=false": {
+      "model": "arcforge:block/resin_tap_latex"
+    },
+    "attached=false,content=latex,facing=north,powered=true": {
+      "model": "arcforge:block/resin_tap_latex"
+    },
+    "attached=false,content=latex,facing=east,powered=false": {
+      "model": "arcforge:block/resin_tap_latex",
+      "y": 90
+    },
+    "attached=false,content=latex,facing=east,powered=true": {
+      "model": "arcforge:block/resin_tap_latex",
+      "y": 90
+    },
+    "attached=false,content=latex,facing=south,powered=false": {
+      "model": "arcforge:block/resin_tap_latex",
+      "y": 180
+    },
+    "attached=false,content=latex,facing=south,powered=true": {
+      "model": "arcforge:block/resin_tap_latex",
+      "y": 180
+    },
+    "attached=false,content=latex,facing=west,powered=false": {
+      "model": "arcforge:block/resin_tap_latex",
+      "y": 270
+    },
+    "attached=false,content=latex,facing=west,powered=true": {
+      "model": "arcforge:block/resin_tap_latex",
+      "y": 270
+    },
+    "attached=false,content=resin,facing=north,powered=false": {
+      "model": "arcforge:block/resin_tap_resin"
+    },
+    "attached=false,content=resin,facing=north,powered=true": {
+      "model": "arcforge:block/resin_tap_resin"
+    },
+    "attached=false,content=resin,facing=east,powered=false": {
+      "model": "arcforge:block/resin_tap_resin",
+      "y": 90
+    },
+    "attached=false,content=resin,facing=east,powered=true": {
+      "model": "arcforge:block/resin_tap_resin",
+      "y": 90
+    },
+    "attached=false,content=resin,facing=south,powered=false": {
+      "model": "arcforge:block/resin_tap_resin",
+      "y": 180
+    },
+    "attached=false,content=resin,facing=south,powered=true": {
+      "model": "arcforge:block/resin_tap_resin",
+      "y": 180
+    },
+    "attached=false,content=resin,facing=west,powered=false": {
+      "model": "arcforge:block/resin_tap_resin",
+      "y": 270
+    },
+    "attached=false,content=resin,facing=west,powered=true": {
+      "model": "arcforge:block/resin_tap_resin",
+      "y": 270
+    },
+    "attached=true,content=empty,facing=north,powered=false": {
+      "model": "arcforge:block/resin_tap"
+    },
+    "attached=true,content=empty,facing=north,powered=true": {
+      "model": "arcforge:block/resin_tap"
+    },
+    "attached=true,content=empty,facing=east,powered=false": {
+      "model": "arcforge:block/resin_tap",
+      "y": 90
+    },
+    "attached=true,content=empty,facing=east,powered=true": {
+      "model": "arcforge:block/resin_tap",
+      "y": 90
+    },
+    "attached=true,content=empty,facing=south,powered=false": {
+      "model": "arcforge:block/resin_tap",
+      "y": 180
+    },
+    "attached=true,content=empty,facing=south,powered=true": {
+      "model": "arcforge:block/resin_tap",
+      "y": 180
+    },
+    "attached=true,content=empty,facing=west,powered=false": {
+      "model": "arcforge:block/resin_tap",
+      "y": 270
+    },
+    "attached=true,content=empty,facing=west,powered=true": {
+      "model": "arcforge:block/resin_tap",
+      "y": 270
+    },
+    "attached=true,content=latex,facing=north,powered=false": {
+      "model": "arcforge:block/resin_tap_latex"
+    },
+    "attached=true,content=latex,facing=north,powered=true": {
+      "model": "arcforge:block/resin_tap_latex"
+    },
+    "attached=true,content=latex,facing=east,powered=false": {
+      "model": "arcforge:block/resin_tap_latex",
+      "y": 90
+    },
+    "attached=true,content=latex,facing=east,powered=true": {
+      "model": "arcforge:block/resin_tap_latex",
+      "y": 90
+    },
+    "attached=true,content=latex,facing=south,powered=false": {
+      "model": "arcforge:block/resin_tap_latex",
+      "y": 180
+    },
+    "attached=true,content=latex,facing=south,powered=true": {
+      "model": "arcforge:block/resin_tap_latex",
+      "y": 180
+    },
+    "attached=true,content=latex,facing=west,powered=false": {
+      "model": "arcforge:block/resin_tap_latex",
+      "y": 270
+    },
+    "attached=true,content=latex,facing=west,powered=true": {
+      "model": "arcforge:block/resin_tap_latex",
+      "y": 270
+    },
+    "attached=true,content=resin,facing=north,powered=false": {
+      "model": "arcforge:block/resin_tap_resin"
+    },
+    "attached=true,content=resin,facing=north,powered=true": {
+      "model": "arcforge:block/resin_tap_resin"
+    },
+    "attached=true,content=resin,facing=east,powered=false": {
+      "model": "arcforge:block/resin_tap_resin",
+      "y": 90
+    },
+    "attached=true,content=resin,facing=east,powered=true": {
+      "model": "arcforge:block/resin_tap_resin",
+      "y": 90
+    },
+    "attached=true,content=resin,facing=south,powered=false": {
+      "model": "arcforge:block/resin_tap_resin",
+      "y": 180
+    },
+    "attached=true,content=resin,facing=south,powered=true": {
+      "model": "arcforge:block/resin_tap_resin",
+      "y": 180
+    },
+    "attached=true,content=resin,facing=west,powered=false": {
+      "model": "arcforge:block/resin_tap_resin",
+      "y": 270
+    },
+    "attached=true,content=resin,facing=west,powered=true": {
+      "model": "arcforge:block/resin_tap_resin",
+      "y": 270
+    }
+  }
+}

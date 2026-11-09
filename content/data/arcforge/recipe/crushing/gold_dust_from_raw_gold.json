@@ -1,0 +1,17 @@
+{
+  "type": "arcforge:crushing",
+  "ingredient": [
+    "minecraft:raw_gold"
+  ],
+  "result": {
+    "count": 1,
+    "id": "arcforge:gold_dust"
+  },
+  "bonus": {
+    "count": 1,
+    "id": "arcforge:gold_dust"
+  },
+  "bonus_chance": 0.25,
+  "time": 200,
+  "ore": true
+}

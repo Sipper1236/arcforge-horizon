@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "PGP",
+    "GXG",
+    "PBP"
+  ],
+  "key": {
+    "G": "arcforge:steel_gear",
+    "B": "minecraft:redstone_block",
+    "X": "minecraft:grindstone",
+    "P": "arcforge:steel_plate"
+  },
+  "result": {
+    "id": "arcforge:arc_crusher",
+    "count": 1
+  }
+}

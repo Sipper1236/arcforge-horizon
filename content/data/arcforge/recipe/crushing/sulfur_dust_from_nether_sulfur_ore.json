@@ -1,0 +1,17 @@
+{
+  "type": "arcforge:crushing",
+  "ingredient": [
+    "arcforge:nether_sulfur_ore"
+  ],
+  "result": {
+    "count": 4,
+    "id": "arcforge:sulfur_dust"
+  },
+  "bonus": {
+    "count": 1,
+    "id": "arcforge:sulfur_dust"
+  },
+  "bonus_chance": 0.25,
+  "time": 200,
+  "ore": false
+}

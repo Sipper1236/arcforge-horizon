@@ -1,0 +1,13 @@
+{
+  "type": "arcforge:crushing",
+  "ingredient": [
+    "minecraft:netherrack"
+  ],
+  "bonus": {
+    "count": 1,
+    "id": "arcforge:sulfur_dust"
+  },
+  "bonus_chance": 0.15,
+  "time": 100,
+  "ore": false
+}

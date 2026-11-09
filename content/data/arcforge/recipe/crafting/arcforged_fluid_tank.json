@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "ACA",
+    "LXL",
+    "AVA"
+  ],
+  "key": {
+    "A": "arcforge:arcforged_alloy",
+    "C": "#c:gems/arcite",
+    "L": "#c:glass_blocks",
+    "X": "arcforge:hardened_fluid_tank",
+    "V": "arcforge:pvc_sheet"
+  },
+  "result": {
+    "id": "arcforge:arcforged_fluid_tank",
+    "count": 1
+  }
+}

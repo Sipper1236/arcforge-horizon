@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "S": "arcforge:steel_ingot",
+    "X": "minecraft:lightning_rod",
+    "B": "#c:storage_blocks/steel"
+  },
+  "pattern": [
+    "SSS",
+    "SXS",
+    "BBB"
+  ],
+  "result": {
+    "count": 1,
+    "id": "arcforge:rod_die"
+  }
+}

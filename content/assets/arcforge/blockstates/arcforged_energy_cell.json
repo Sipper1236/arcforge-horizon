@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "arcforge:block/energy_cell/arcforged_0"
+    }
+  }
+}

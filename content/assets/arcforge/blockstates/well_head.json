@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "gas=false": {
+      "model": "arcforge:block/well_head"
+    },
+    "gas=true": {
+      "model": "arcforge:block/well_head"
+    }
+  }
+}

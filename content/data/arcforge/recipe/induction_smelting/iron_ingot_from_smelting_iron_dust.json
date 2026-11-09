@@ -1,0 +1,9 @@
+{
+  "type": "arcforge:induction_smelting",
+  "ingredient": "arcforge:iron_dust",
+  "result": {
+    "id": "minecraft:iron_ingot"
+  },
+  "cookingtime": 200,
+  "experience": 0.7
+}

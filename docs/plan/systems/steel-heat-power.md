@@ -1,0 +1,29 @@
+# System plan: steel, heat, and power
+
+## Target
+
+The opening Arcforge progression uses starter FE generation, the Carbonizer, creosote and Coal Coke, the Arcforge Furnace, first steel, Wrought Alloy, the Metal Press, Firebox heat, and a Thermoelectric Plant. Later chapters add higher alloys, geothermal/fuel generation, arrays, solar heat, upgrades, conduits, cells, and steam-powered generation.
+
+## Build order
+
+1. Make the opening recipes and machine access match Arcforge's Getting Started chapter.
+2. Complete the Arcforge Furnace's multiblock form, coke fuel/reagent accounting, temperature gates, additives, slag, inventory behavior, and screen.
+3. Complete the four material tiers and their alloy recipes before recipes that consume them.
+4. Establish mod-side bounded FE and HU stores with save-safe transfer and explicit units.
+5. Extend the Firebox/Thermoelectric path with source side modes and upgrades. FE and HU conduits now pool across bidirectionally connected components, use the lowest member tier's rate, and bridge one-way links between pools; compare transfer ordering, direction, and saved state against Arcforge in-world. The Geothermal Plant's base lava and contact-heat behavior is implemented. The Firebox Array now has its controller/casing/glass structure and scaled solid-fuel heat loop; add its fuel/flue/oxygen ports and controls. Solar Thermal Array has core tower formation, sun-driven heat and Wrench-configurable direct heat ports. Solar port overlays are visible in blockstates, while player-facing status remains outstanding.
+6. Add heat and FE storage/transfer behavior using existing Horizon hooks only; simplify/defer any unsupported visual or interaction details for alpha.
+
+## Current state
+
+All four Energy Cell tiers expose bounded FE storage at their upstream capacities and transfer rates. Ordinary player mining and placement preserve charge through the block item; a per-tick snapshot supplies charge to loot callbacks that lack block-entity access, with explosion timing still awaiting in-world verification. Orientation-aware sides, custom screens, comparators, redstone controls, and charge-preserving tier upgrades remain incomplete. The Furnace processes the upstream steel, four alloy-tier, and Graphite recipes; Arcite/Tungsten Composite crafting is present, while Arcforged Alloy remains blocked on Pitch from the unimplemented Refinery chain. The project has a separate seven-slot Steelworks compatibility prototype and a six-slot formed Arcforge Furnace port loading all 12 smelting recipes. The Combustion Plant pushes FE into adjacent Arcforge consumers. A Firebox transfers at its active source temperature into adjacent heat consumers; the Firebox Array now forms a hollow casing/Pressure Glass box and scales solid-fuel heat output and storage by volume; Solar Thermal Array forms a 2×2×4 tower, supplies sun-driven heat, and displays enabled Wrench heat ports with formed-part overlays; the Geothermal Plant burns lava and also gathers passive heat from touching lava and magma; the Thermoelectric Plant converts received heat through the source efficiency curve into FE. Energy and thermal conduits pool resources across bidirectionally connected members and bridge one-way links between pools. Both set the imported active glow while holding resources and briefly after transfers; this remains unverified in-world. Their tick paths use the current block entity passed by Horizon because it is absent from ordinary world lookups while ticking. FE migration preserves pre-existing charge above the new source-sized pool capacity as temporary capacity, while direct calls to Horizon's per-block energy capability are reconciled but cannot share the pooled rate limit. Both schedulers compile but need in-world verification; FE source/sink discovery is limited to the registered Arcforge endpoints. FE/HU upgrade paths, full alloy progression, and in-world validation remain incomplete.
+
+## Acceptance checks
+
+- Coke and additives are consumed atomically only when a recipe completes.
+- Full outputs and insufficient heat/power pause without losing inventory or recipe progress.
+- HU/FE remain bounded and conserved during supported transfers.
+- Firebox Array forms only with valid casing/glass walls, an outward-facing wall controller, and an empty interior; breaking a part unforms the remaining shell.
+- Firebox Array fuel consumption pauses at the source burn temperature and never exceeds the volume-scaled generation rate or heat capacity.
+- Solar Thermal Array forms only from its 2×2×4 tower, scales output with time, weather, alignment, and clear-sky collectors, lets the Wrench configure saved direct heat-output faces, transfers into thermal conduits, and preserves bounded heat through save/reload. Thermal conduits pool HU at the lowest member tier rate across bidirectionally connected members, bridge one-way Output-to-Input links between pools, honor face modes, and feed supported heat consumers. Verify rate sharing, direction, temperature, and save/reload in-world before calling network parity complete.
+- Energy conduits pool FE at the lowest member tier rate across bidirectionally connected members, bridge one-way Output-to-Input links between pools, honor face modes, feed supported consumers within their insertion limits, and preserve old per-block charge during migration. Verify rates, source/sink fairness, direction, and save/reload in-world before calling network parity complete.
+- Machine state survives save/reload and the same server logic works in solo and LAN/dedicated play.

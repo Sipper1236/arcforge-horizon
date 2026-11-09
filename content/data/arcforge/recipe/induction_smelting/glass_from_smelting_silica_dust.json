@@ -1,0 +1,9 @@
+{
+  "type": "arcforge:induction_smelting",
+  "ingredient": "#c:dusts/silica",
+  "result": {
+    "id": "minecraft:glass"
+  },
+  "cookingtime": 200,
+  "experience": 0.1
+}

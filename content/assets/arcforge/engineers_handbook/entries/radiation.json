@@ -1,0 +1,22 @@
+{
+  "title": "Radiation",
+  "icon": "arcforge:geiger_counter",
+  "items": [
+    "arcforge:geiger_counter",
+    "arcforge:dosimeter"
+  ],
+  "pages": [
+    {
+      "type": "text",
+      "text": "Everything radioactive gives a dose rate in mSv/h. A source's rate falls with the square of the distance (a source twice as far gives a quarter), and every solid block between you and it cuts it: lead lets 10% through, depleted uranium 5%, concrete 30%, water 50%, iron and steel 40%, stone and deepslate 60%, and other blocks 80%.\n- Sources: radioactive blocks, chests and tanks holding radioactive things, items on the ground and other players.\n- What you carry counts as half a block away."
+    },
+    {
+      "type": "text",
+      "text": "# Radiation Poisoning\nWhile you're exposed your dose (mSv) builds up by the rate each in-game hour, and falls again only once you are clear of radiation (10 mSv an hour). Radioactive blocks, items and machines or conduits containing radioactive contents emit green warning particles nearby (configurable). It brings Radiation Poisoning, which hurts through armour:\n- I from 50 mSv: half a heart every 30 seconds.\n- II from 500: every 10 seconds, and Hunger.\n- III from 2,000: every 4 seconds, Hunger and Weakness.\n- IV from 4,000: a heart every 2 seconds, with Nausea, until the dose falls or you die.\nStanding in a strong field (100 mSv/h or more) makes it a level worse at once, even with no dose yet. Dying resets it."
+    },
+    {
+      "type": "text",
+      "text": "# Meters\n- Geiger Counter: held, it shows the dose rate where you stand and clicks faster as it rises.\n- Dosimeter: held, it shows your dose; carried, it warns you as you pass each threshold.\nHold both and the Geiger Counter shows the two together."
+    }
+  ]
+}

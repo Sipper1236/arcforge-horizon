@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "HpH",
+    "pXp",
+    "HpH"
+  ],
+  "key": {
+    "H": "arcforge:hardened_alloy",
+    "X": "arcforge:tempered_energy_cell",
+    "p": "#c:plates/copper"
+  },
+  "result": {
+    "id": "arcforge:hardened_energy_cell",
+    "count": 1
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "title": "Mineral Wool",
+  "icon": "arcforge:rock_wool",
+  "items": [
+    "arcforge:slag_wool",
+    "arcforge:rock_wool",
+    "arcforge:insulation_upgrade",
+    "arcforge:carbon_fiber"
+  ],
+  "pages": [
+    {
+      "type": "text",
+      "text": "Spun in the Fiberizer: Slag Wool from slag, Rock Wool from basalt. It insulates Heat Cells, and Rock Wool makes Insulation Upgrades.\nIt also spins pitch into Carbon Fiber, from 1,000°C."
+    }
+  ]
+}

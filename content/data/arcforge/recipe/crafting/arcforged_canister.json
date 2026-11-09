@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [" C ", "AXA", " A "],
+  "key": {
+    "C": "#c:gems/arcite",
+    "A": "arcforge:arcforged_alloy",
+    "X": "arcforge:hardened_canister"
+  },
+  "result": {"id": "arcforge:arcforged_canister", "count": 1}
+}

@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "": {
+      "type": "arcforge:connected",
+      "model": "arcforge:block/fluid_reservoir_ctm"
+    }
+  }
+}

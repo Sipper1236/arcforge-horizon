@@ -1,0 +1,9 @@
+{
+  "type": "arcforge:induction_smelting",
+  "ingredient": "arcforge:ancient_debris_dust",
+  "result": {
+    "id": "minecraft:netherite_scrap"
+  },
+  "cookingtime": 200,
+  "experience": 2.0
+}

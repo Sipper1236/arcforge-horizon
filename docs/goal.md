@@ -1,0 +1,36 @@
+# Active project goal
+
+## Objective
+
+Port the complete survival gameplay scope of the pinned Arcforge release to Horizon as a Rust-native mod, using the pinned Horizon modding API without changing it. The parity target is Arcforge commit `8843cb02cf9132f278f6a8e804b6d78837d3cbcb`; the Horizon target is commit `fdc87aecdbd116bf1e08adcd062fcbaea8c2e2ca` (Nightly 2026-11-08).
+
+The current code is an early prototype, not a complete port. Continue implementing real gameplay from the scope in the root [README](../README.md), preserve Arcforge's recognizable mechanics and progression, and update the as-built and remaining-work documents whenever implementation changes.
+
+## Player progression
+
+The desired experience is to discover new ores, generate power, build machines, make steel, and automate production, while staying close to Arcforge. The alpha may follow Arcforge's original chapter order; use the pinned [progression map](plan/progression.md) for player unlocks and build prerequisites early when needed. Do not invent easier recipes that bypass source gates without documenting an explicit alpha simplification.
+
+## Constraints
+
+- Do not change Horizon's modding API, engine source, hooks, or generated bindings.
+- Use only the interfaces in the pinned Horizon revision. When an interface cannot express a behavior reliably, implement a faithful mod-side alternative if possible; otherwise simplify or defer it and record the player-visible difference.
+- Preserve upstream source behavior, recipe data, and assets when licensing and Horizon's content format permit. Keep attribution and third-party licensing records accurate.
+- Keep machine simulation bounded, deterministic, save-safe, and server-authoritative within the existing hooks.
+- Do not call a feature complete because its ID, recipe, or model exists. Distinguish source presence, build, load, behavior test, and parity completion.
+
+## Completion criteria
+
+The port is complete when every feature in the pinned README inventory is one of:
+
+1. Implemented with behavior, recipes, assets, and survival access matching Arcforge, and validated in the game; or
+2. Explicitly simplified/deferred with a precise reason, documented player impact, and a known limit.
+
+The final quality pass must cover each progression chapter, clean installation, existing saves, save/reload, inventory and resource retention, output backpressure, supported automation, LAN/dedicated-server consistency, performance bounds, and source/content parity. API changes are outside this objective.
+
+## Current milestone — paused 2026-11-08
+
+Work is paused at the user's request after starting a Pressurized Conduit slice. The latest verified state is still the 380-recipe content archive recorded in [verification](status/verification.md); the current source tree also contains unverified Pressurized Conduit code and resource edits. Do not describe those edits as built, compiled, installed, or playable until the resume checks pass. The player-facing objective and completion criteria below remain active when work resumes.
+
+The project has a broad early gameplay prototype: ore worldgen and material recipes, source machine recipe catalogs, several working processors, a formed Crushing Array, steelmaking and heat/power slices including the Geothermal Plant, Energy, Item, and Fluid Conduits, Energy Cells, Fluid Tanks with full-bucket exchange, Resin Tap behavior, treated wood, and basic Steel equipment. Exact details and evidence are in [implemented](status/implemented.md), [parity notes](status/parity-notes.md), and [verification](status/verification.md).
+
+Recent slices fixed both pooled FE/HU conduit tick paths to use the current block entity passed by Horizon, added the missing source Invar Dust craft plus its Iron Dust common tag, and wired FE/HU active glow to stored resources and recent transfers. Four Item Conduit tiers route bounded transfers between configured endpoints using Horizon's transactional item mover. Four Fluid Conduit tiers route one fluid at a time with Horizon's transactional fluid mover and use native sided capabilities for Auto faces. Both first passes lack conduit buffers and animation; filtering is absent. At the last verified checkpoint, the source formatted and compiled, the 380-recipe content pack built and passed Horizon's checker, and that `.hmod` was installed in the enabled disposable profile. These checks predate the Pressurized Conduit edits. The pinned native bundle still requires the player's native-code trust decision; current-source load and gameplay remain unverified. Solar Thermal Array heat-port overlays use standard blockstate multipart models and existing textures; the overlay remains uninspected in-world. Continue the README inventory in coherent slices. Do not treat compilation or content builds as evidence of in-world behavior.

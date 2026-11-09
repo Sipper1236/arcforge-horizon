@@ -1,0 +1,18 @@
+{
+  "type": "arcforge:crushing",
+  "ingredient": [
+    "minecraft:lapis_ore",
+    "minecraft:deepslate_lapis_ore"
+  ],
+  "result": {
+    "count": 8,
+    "id": "minecraft:lapis_lazuli"
+  },
+  "bonus": {
+    "count": 2,
+    "id": "minecraft:lapis_lazuli"
+  },
+  "bonus_chance": 0.25,
+  "time": 200,
+  "ore": true
+}

@@ -1,0 +1,18 @@
+{
+  "type": "arcforge:crushing",
+  "ingredient": [
+    "minecraft:copper_ore",
+    "minecraft:deepslate_copper_ore"
+  ],
+  "result": {
+    "count": 2,
+    "id": "arcforge:copper_dust"
+  },
+  "bonus": {
+    "count": 1,
+    "id": "arcforge:copper_dust"
+  },
+  "bonus_chance": 0.25,
+  "time": 200,
+  "ore": true
+}

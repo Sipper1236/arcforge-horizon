@@ -1,0 +1,9 @@
+{
+  "type": "arcforge:induction_smelting",
+  "ingredient": "#c:ores/fluorite",
+  "result": {
+    "id": "arcforge:fluorite_crystal"
+  },
+  "cookingtime": 200,
+  "experience": 0.7
+}

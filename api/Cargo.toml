@@ -1,0 +1,7 @@
+[package]
+name = "mod-arcforge"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+horizon-client = { git = "https://github.com/horizon-rust/horizon", rev = "fdc87aecdbd116bf1e08adcd062fcbaea8c2e2ca" }

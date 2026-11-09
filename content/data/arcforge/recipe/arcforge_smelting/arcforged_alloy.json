@@ -1,0 +1,27 @@
+{
+  "type": "arcforge:arcforge_smelting",
+  "metal": {
+    "ingredient": "arcforge:hardened_alloy",
+    "count": 2
+  },
+  "additive": {
+    "ingredient": "arcforge:carbon_fiber",
+    "count": 2
+  },
+  "additive_2": {
+    "ingredient": "arcforge:arcite_tungsten_composite",
+    "count": 1
+  },
+  "coke": 2,
+  "result": {
+    "id": "arcforge:arcforged_alloy",
+    "count": 2
+  },
+  "byproduct": {
+    "id": "arcforge:slag",
+    "count": 1
+  },
+  "time": 800,
+  "min_temp": 1500,
+  "experience": 2.0
+}

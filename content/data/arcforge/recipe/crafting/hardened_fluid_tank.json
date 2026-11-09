@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "HLH",
+    "LXL",
+    "HVH"
+  ],
+  "key": {
+    "X": "arcforge:tempered_fluid_tank",
+    "L": "#c:glass_blocks",
+    "H": "arcforge:hardened_alloy",
+    "V": "arcforge:rubber_gasket"
+  },
+  "result": {
+    "id": "arcforge:hardened_fluid_tank",
+    "count": 1
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "type": "arcforge:crushing",
+  "ingredient": [
+    "arcforge:raw_galena_block"
+  ],
+  "result": {
+    "count": 9,
+    "id": "arcforge:lead_dust"
+  },
+  "bonus": {
+    "count": 1,
+    "id": "arcforge:silver_dust"
+  },
+  "bonus_chance": 0.9,
+  "time": 200,
+  "ore": false
+}

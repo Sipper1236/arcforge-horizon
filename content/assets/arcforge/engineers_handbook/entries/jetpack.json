@@ -1,0 +1,32 @@
+{
+  "title": "Jetpack",
+  "icon": "arcforge:tempered_jetpack",
+  "items": [
+    "arcforge:tempered_jetpack",
+    "arcforge:hardened_jetpack",
+    "arcforge:arcforged_jetpack",
+    "arcforge:tempered_armored_jetpack",
+    "arcforge:hardened_armored_jetpack",
+    "arcforge:arcforged_armored_jetpack",
+    "arcforge:shock_boots",
+    "arcforge:armored_long_fall_boots"
+  ],
+  "pages": [
+    {
+      "type": "text",
+      "text": "The Jetpack goes in your chest slot or the dedicated Curios Jetpack slot and burns fuel for thrust. Curios is included with Arcforge. Its slot lets you keep a chestplate equipped; plating armor attributes apply when the pack is worn in the chest slot. All flight modes and the fuel HUD work in either slot. It holds one fuel at a time.\n- Fill it in a Pressurized Cylinder's item slot, or pick up a Gas Cartridge, Canister or Kerosene bucket and click it onto the Jetpack in your inventory.\n- Tanks: 16,000 mB Tempered, 64,000 mB Hardened, 256,000 mB Arcforged. Higher tiers also climb faster: 0.5, 0.65 and 0.8 blocks per tick."
+    },
+    {
+      "type": "text",
+      "text": "# Fuels\n| Fuel | Thrust | mB/t |\n| Steam | 0.10 | 10 |\n| High-Pressure Steam | 0.13 | 8 |\n| Superheated Steam | 0.16 | 6 |\n| Hydrogen | 0.20 | 4 |\n| Kerosene | 0.18 | 2 |\nGravity pulls 0.08, so every fuel can lift you; better fuels climb faster and last longer. Steam fuels puff white steam, Hydrogen and Kerosene burn with a blue flame. It won't take Sour Kerosene: hydrotreat it first."
+    },
+    {
+      "type": "text",
+      "text": "# Modes\nPress the Jetpack Mode key (H by default) to cycle:\n- **Normal**: hold jump to rise.\n- **Hover**: holds your altitude and uses 50% more fuel. Jump to rise, sneak to sink. No fall damage.\n- **Distance**: hold jump to thrust forward where you face, holding altitude in the air. Sneak while thrusting to descend. Higher tiers travel faster. Uses the normal fuel rate; release jump to coast and fall.\n- **Off**: the Jetpack does nothing.\nThe gauge beside your hotbar shows fuel and mode. You take no fall damage while the Jetpack is firing."
+    },
+    {
+      "type": "text",
+      "text": "# Armored Jetpack\nCraft a Jetpack beside a Steel Chestplate to make the matching Armored Jetpack (7 armor, 1 toughness). Fuel, mode and custom components carry over. Armored packs have their own items and tier upgrade recipes, using the same materials as normal pack upgrades. Existing plated packs still work.\n# Long Fall Boots\nSteel Boots, a Tempered Battery, 2 Rubber Gaskets and 2 Copper Ingots make Long Fall Boots. They hold 100,000 FE and negate all fall damage for 1,000 FE per damaging landing. With less than 1,000 FE they give no fall protection. Recharge in a charging slot or on a Chargepad.\nCraft Long Fall Boots beside Steel Boots for Armored Long Fall Boots, keeping stored FE and the custom name. The armored variant adds 2 armor and 1 toughness, even while empty. The base variant supplies fall protection without armor."
+    }
+  ]
+}

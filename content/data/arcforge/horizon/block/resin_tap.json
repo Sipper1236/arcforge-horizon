@@ -1,0 +1,13 @@
+{
+  "template": "minecraft:tripwire_hook",
+  "item": true,
+  "state_properties": {
+    "content": {
+      "type": "enum",
+      "values": ["empty", "latex", "resin"]
+    }
+  },
+  "default_state": {
+    "content": "empty"
+  }
+}

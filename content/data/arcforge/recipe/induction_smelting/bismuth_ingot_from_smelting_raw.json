@@ -1,0 +1,9 @@
+{
+  "type": "arcforge:induction_smelting",
+  "ingredient": "#c:raw_materials/bismuth",
+  "result": {
+    "id": "arcforge:bismuth_ingot"
+  },
+  "cookingtime": 200,
+  "experience": 0.7
+}

@@ -1,0 +1,9 @@
+{
+  "type": "arcforge:induction_smelting",
+  "ingredient": "#c:dusts/arcite",
+  "result": {
+    "id": "arcforge:arcite_crystal"
+  },
+  "cookingtime": 200,
+  "experience": 1.0
+}

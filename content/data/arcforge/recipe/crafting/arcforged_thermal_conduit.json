@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": ["XCX", "XAX", "XCX"],
+  "key": {
+    "X": "#arcforge:conduits/hardened_thermal_conduit",
+    "A": "arcforge:arcforged_alloy",
+    "C": "#c:gems/arcite"
+  },
+  "result": {"id": "arcforge:arcforged_thermal_conduit", "count": 6}
+}

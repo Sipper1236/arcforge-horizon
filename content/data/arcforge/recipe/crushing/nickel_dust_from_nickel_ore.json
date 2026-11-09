@@ -1,0 +1,18 @@
+{
+  "type": "arcforge:crushing",
+  "ingredient": [
+    "arcforge:nickel_ore",
+    "arcforge:deepslate_nickel_ore"
+  ],
+  "result": {
+    "count": 2,
+    "id": "arcforge:nickel_dust"
+  },
+  "bonus": {
+    "count": 1,
+    "id": "arcforge:nickel_dust"
+  },
+  "bonus_chance": 0.25,
+  "time": 200,
+  "ore": true
+}

@@ -1,0 +1,8 @@
+id = "arcforge"
+name = "Arcforge"
+version = "0.1.0"
+description = "Arcforge industrial machines, materials, and processing recipes for Horizon."
+authors = ["Arcforge Horizon contributors"]
+api = "0.2"
+side = "both"
+capabilities = ["registries"]

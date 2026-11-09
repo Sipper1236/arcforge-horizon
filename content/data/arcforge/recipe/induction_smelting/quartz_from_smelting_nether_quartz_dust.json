@@ -1,0 +1,9 @@
+{
+  "type": "arcforge:induction_smelting",
+  "ingredient": "arcforge:nether_quartz_dust",
+  "result": {
+    "id": "minecraft:quartz"
+  },
+  "cookingtime": 200,
+  "experience": 0.2
+}

@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": ["XIX", "XHX", "XIX"],
+  "key": {
+    "X": "#arcforge:conduits/tempered_thermal_conduit",
+    "H": "arcforge:hardened_alloy",
+    "I": "#c:plates/invar"
+  },
+  "result": {"id": "arcforge:hardened_thermal_conduit", "count": 6}
+}

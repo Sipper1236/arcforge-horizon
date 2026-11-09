@@ -1,0 +1,299 @@
+{
+  "turbine_array_run": {
+    "subtitle": "subtitles.arcforge.turbine_array_run",
+    "sounds": [
+      {
+        "name": "arcforge:turbine_array_run",
+        "stream": false
+      }
+    ]
+  },
+  "arc_crusher_run": {
+    "subtitle": "subtitles.arcforge.arc_crusher_run",
+    "sounds": [
+      {
+        "name": "arcforge:arc_crusher_run",
+        "stream": false
+      }
+    ]
+  },
+  "arc_crushing_array_run": {
+    "subtitle": "subtitles.arcforge.arc_crushing_array_run",
+    "sounds": [
+      {
+        "name": "arcforge:arc_crushing_array_run",
+        "stream": false
+      }
+    ]
+  },
+  "induction_furnace_run": {
+    "subtitle": "subtitles.arcforge.induction_furnace_run",
+    "sounds": [
+      {
+        "name": "arcforge:induction_furnace_run",
+        "stream": false
+      }
+    ]
+  },
+  "induction_furnace_array_run": {
+    "subtitle": "subtitles.arcforge.induction_furnace_array_run",
+    "sounds": [
+      {
+        "name": "arcforge:induction_furnace_array_run",
+        "stream": false
+      }
+    ]
+  },
+  "metal_press_run": {
+    "subtitle": "subtitles.arcforge.metal_press_run",
+    "sounds": [
+      {
+        "name": "arcforge:metal_press_run",
+        "stream": false
+      }
+    ]
+  },
+  "metal_pressing_array_run": {
+    "subtitle": "subtitles.arcforge.metal_pressing_array_run",
+    "sounds": [
+      {
+        "name": "arcforge:metal_pressing_array_run",
+        "stream": false
+      }
+    ]
+  },
+  "arc_melter_run": {
+    "subtitle": "subtitles.arcforge.arc_melter_run",
+    "sounds": [
+      {
+        "name": "arcforge:arc_melter_run",
+        "stream": false
+      }
+    ]
+  },
+  "chemical_reactor_run": {
+    "subtitle": "subtitles.arcforge.chemical_reactor_run",
+    "sounds": [
+      {
+        "name": "arcforge:chemical_reactor_run",
+        "stream": false
+      }
+    ]
+  },
+  "superheater_array_run": {
+    "subtitle": "subtitles.arcforge.superheater_array_run",
+    "sounds": [
+      {
+        "name": "arcforge:superheater_array_run",
+        "stream": false
+      }
+    ]
+  },
+  "condenser_array_run": {
+    "subtitle": "subtitles.arcforge.condenser_array_run",
+    "sounds": [
+      {
+        "name": "arcforge:condenser_array_run",
+        "stream": false
+      }
+    ]
+  },
+  "electrolyzer_run": {
+    "subtitle": "subtitles.arcforge.electrolyzer_run",
+    "sounds": [
+      {
+        "name": "arcforge:electrolyzer_run",
+        "stream": false
+      }
+    ]
+  },
+  "assembler_run": {
+    "subtitle": "subtitles.arcforge.assembler_run",
+    "sounds": [
+      {
+        "name": "arcforge:assembler_run",
+        "stream": false
+      }
+    ]
+  },
+  "block_breaker_run": {
+    "subtitle": "subtitles.arcforge.block_breaker_run",
+    "sounds": [
+      {
+        "name": "arcforge:block_breaker_run",
+        "stream": false
+      }
+    ]
+  },
+  "block_placer_run": {
+    "subtitle": "subtitles.arcforge.block_placer_run",
+    "sounds": [
+      {
+        "name": "arcforge:block_placer_run",
+        "stream": false
+      }
+    ]
+  },
+  "vacuum_collector_run": {
+    "subtitle": "subtitles.arcforge.vacuum_collector_run",
+    "sounds": [
+      {
+        "name": "arcforge:vacuum_collector_run",
+        "stream": false
+      }
+    ]
+  },
+  "arc_quarry_run": {
+    "subtitle": "subtitles.arcforge.arc_quarry_run",
+    "sounds": [
+      {
+        "name": "arcforge:arc_quarry_run",
+        "stream": false
+      }
+    ]
+  },
+  "jetpack_steam": {
+    "sounds": [
+      {
+        "name": "arcforge:jetpack_steam",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.arcforge.jetpack_steam"
+  },
+  "jetpack_flame": {
+    "sounds": [
+      {
+        "name": "arcforge:jetpack_flame",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.arcforge.jetpack_flame"
+  },
+  "arc_drill_run": {
+    "subtitle": "subtitles.arcforge.arc_drill_run",
+    "sounds": [
+      {
+        "name": "arcforge:arc_drill_run",
+        "stream": false
+      }
+    ]
+  },
+  "arc_saw_run": {
+    "subtitle": "subtitles.arcforge.arc_saw_run",
+    "sounds": [
+      {
+        "name": "arcforge:arc_saw_run",
+        "stream": false
+      }
+    ]
+  },
+  "fermenter_run": {
+    "sounds": [
+      {
+        "name": "arcforge:fermenter_run",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.arcforge.fermenter_run"
+  },
+  "gas_turbine_array_run": {
+    "sounds": [
+      {
+        "name": "arcforge:gas_turbine_array_run",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.arcforge.gas_turbine_array_run"
+  },
+  "gas_turbine_array_ignite": {
+    "sounds": [
+      {
+        "name": "arcforge:gas_turbine_array_ignite",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.arcforge.gas_turbine_array_ignite"
+  },
+  "gas_turbine_array_flameout": {
+    "sounds": [
+      {
+        "name": "arcforge:gas_turbine_array_flameout",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.arcforge.gas_turbine_array_flameout"
+  },
+  "diesel_generator_run": {
+    "sounds": [
+      {
+        "name": "arcforge:diesel_generator_run",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.arcforge.diesel_generator_run"
+  },
+  "oil_derrick_run": {
+    "sounds": [
+      {
+        "name": "arcforge:oil_derrick_run",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.arcforge.oil_derrick_run"
+  },
+  "pumpjack_run": {
+    "sounds": [
+      {
+        "name": "arcforge:pumpjack_run",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.arcforge.pumpjack_run"
+  },
+  "distillation_array_run": {
+    "sounds": [
+      {
+        "name": "arcforge:distillation_array_run",
+        "stream": false
+      }
+    ],
+    "subtitle": "subtitles.arcforge.distillation_array_run"
+  },
+  "centrifuge_cascade_run": {
+    "subtitle": "subtitles.arcforge.centrifuge_cascade_run",
+    "sounds": [
+      {
+        "name": "arcforge:centrifuge_cascade_run",
+        "stream": false
+      }
+    ]
+  },
+  "fission_reactor_run": {
+    "subtitle": "subtitles.arcforge.fission_reactor_run",
+    "sounds": [
+      {
+        "name": "arcforge:fission_reactor_run",
+        "stream": false
+      }
+    ]
+  },
+  "geiger_click": {
+    "subtitle": "subtitles.arcforge.geiger_click",
+    "sounds": [
+      {
+        "name": "arcforge:geiger_click",
+        "stream": false
+      }
+    ]
+  },
+  "reactor_alarm": {
+    "subtitle": "subtitles.arcforge.reactor_alarm",
+    "sounds": [
+      {
+        "name": "arcforge:reactor_alarm",
+        "stream": false
+      }
+    ]
+  }
+}

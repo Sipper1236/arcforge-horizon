@@ -1,0 +1,12 @@
+{
+  "type": "arcforge:crushing",
+  "ingredient": [
+    "arcforge:raw_bismuth_block"
+  ],
+  "result": {
+    "count": 9,
+    "id": "arcforge:bismuth_dust"
+  },
+  "time": 200,
+  "ore": false
+}

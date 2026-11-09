@@ -1,0 +1,9 @@
+{
+  "type": "arcforge:induction_smelting",
+  "ingredient": "#c:dusts/depleted_uranium",
+  "result": {
+    "id": "arcforge:depleted_uranium_ingot"
+  },
+  "cookingtime": 200,
+  "experience": 0.5
+}

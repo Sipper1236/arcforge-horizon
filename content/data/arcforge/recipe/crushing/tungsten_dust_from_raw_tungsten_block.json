@@ -1,0 +1,12 @@
+{
+  "type": "arcforge:crushing",
+  "ingredient": [
+    "arcforge:raw_wolframite_block"
+  ],
+  "result": {
+    "count": 9,
+    "id": "arcforge:tungsten_dust"
+  },
+  "time": 200,
+  "ore": false
+}

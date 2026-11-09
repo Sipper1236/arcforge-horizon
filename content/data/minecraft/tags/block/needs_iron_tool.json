@@ -1,0 +1,15 @@
+{
+  "values": [
+    "arcforge:uraninite_ore",
+    "arcforge:deepslate_uraninite_ore",
+    "arcforge:iolite_ore",
+    "arcforge:silver_block",
+    "arcforge:nickel_block",
+    "arcforge:tungsten_block",
+    "arcforge:fluorite_block",
+    "arcforge:bismuth_block",
+    "arcforge:arcite_block",
+    "arcforge:iolite_block",
+    "arcforge:depleted_uranium_block"
+  ]
+}

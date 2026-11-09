@@ -1,0 +1,9 @@
+{
+  "type": "arcforge:induction_smelting",
+  "ingredient": "#c:dusts/iolite",
+  "result": {
+    "id": "arcforge:iolite_crystal"
+  },
+  "cookingtime": 200,
+  "experience": 0.7
+}

@@ -1,0 +1,169 @@
+{
+  "multipart": [
+    {
+      "when": {
+        "formed": "false",
+        "facing": "north"
+      },
+      "apply": {
+        "model": "arcforge:block/solar_thermal_array/controller"
+      }
+    },
+    {
+      "when": {
+        "formed": "false",
+        "facing": "east"
+      },
+      "apply": {
+        "model": "arcforge:block/solar_thermal_array/controller",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "formed": "false",
+        "facing": "south"
+      },
+      "apply": {
+        "model": "arcforge:block/solar_thermal_array/controller",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "formed": "false",
+        "facing": "west"
+      },
+      "apply": {
+        "model": "arcforge:block/solar_thermal_array/controller",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "base": "false"
+      },
+      "apply": {
+        "model": "arcforge:block/solar_thermal_array/hidden"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "base": "true"
+      },
+      "apply": {
+        "model": "arcforge:block/solar_thermal_array/formed_base"
+      }
+    },
+    {
+      "when": {
+        "port_north": "false"
+      },
+      "apply": {
+        "model": "arcforge:block/solar_thermal_array/hidden"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "port_north": "true"
+      },
+      "apply": {
+        "model": "arcforge:block/solar_thermal_array/heat_port",
+        "y": 0
+      }
+    },
+    {
+      "when": {
+        "port_east": "false"
+      },
+      "apply": {
+        "model": "arcforge:block/solar_thermal_array/hidden"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "port_east": "true"
+      },
+      "apply": {
+        "model": "arcforge:block/solar_thermal_array/heat_port",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "port_south": "false"
+      },
+      "apply": {
+        "model": "arcforge:block/solar_thermal_array/hidden"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "port_south": "true"
+      },
+      "apply": {
+        "model": "arcforge:block/solar_thermal_array/heat_port",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "port_west": "false"
+      },
+      "apply": {
+        "model": "arcforge:block/solar_thermal_array/hidden"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "port_west": "true"
+      },
+      "apply": {
+        "model": "arcforge:block/solar_thermal_array/heat_port",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "port_up": "false"
+      },
+      "apply": {
+        "model": "arcforge:block/solar_thermal_array/hidden"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "port_up": "true"
+      },
+      "apply": {
+        "model": "arcforge:block/solar_thermal_array/heat_port",
+        "x": 90
+      }
+    },
+    {
+      "when": {
+        "port_down": "false"
+      },
+      "apply": {
+        "model": "arcforge:block/solar_thermal_array/hidden"
+      }
+    },
+    {
+      "when": {
+        "formed": "true",
+        "port_down": "true"
+      },
+      "apply": {
+        "model": "arcforge:block/solar_thermal_array/heat_port",
+        "x": 270
+      }
+    }
+  ]
+}
