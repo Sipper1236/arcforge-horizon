@@ -29,7 +29,7 @@ The final quality pass must cover each progression chapter, clean installation, 
 
 ## Current milestone — build checkpoint 2026-11-09
 
-The Pressurized Conduit slice now passes Rust formatting/type-check and is included in the checked 384-recipe content archive. GitHub Actions run [42678494547](https://github.com/Sipper1236/arcforge-horizon/actions/runs/42678494547) passed and uploaded that archive. Native registration and all new conduit behavior remain unverified in-game because the instance-specific Horizon bundle has not been built; Horizon requires the player's native-code trust decision. The larger Arcforge port remains incomplete.
+The Pressurized Conduit slice now passes Rust formatting/type-check and is included in the checked 384-recipe content archive. GitHub Actions run [42679842491](https://github.com/Sipper1236/arcforge-horizon/actions/runs/42679842491) passed and uploaded that archive. Native registration and all new conduit behavior remain unverified in-game because the instance-specific Horizon bundle has not been built; Horizon requires the player's native-code trust decision. The larger Arcforge port remains incomplete.
 
 The project has a broad early gameplay prototype: ore worldgen and material recipes, source machine recipe catalogs, several working processors, a formed Crushing Array, steelmaking and heat/power slices including the Geothermal Plant, Energy, Item, and Fluid Conduits, Energy Cells, Fluid Tanks with full-bucket exchange, Resin Tap behavior, treated wood, and basic Steel equipment. Exact details and evidence are in [implemented](status/implemented.md), [parity notes](status/parity-notes.md), and [verification](status/verification.md).
 
