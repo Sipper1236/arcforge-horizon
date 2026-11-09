@@ -1,6 +1,6 @@
 # GitHub Actions build
 
-The workflow at `.github/workflows/build.yml` runs on pushes, pull requests, and manual dispatch. It checks Rust formatting, compiles the native mod crate against the pinned Horizon revision, builds and checks the content `.hmod` with Horizon's pinned content tooling, and uploads the checked `.hmod` as a workflow artifact.
+The workflow at `.github/workflows/build.yml` runs on pushes, pull requests, and manual dispatch. It checks Rust formatting, type-checks the native mod crate against the pinned Horizon revision, builds and checks the content `.hmod` with Horizon's pinned content tooling, and uploads the checked `.hmod` as a workflow artifact.
 
 The artifact is the content pack only. The native Rust source also compiles in CI, but Horizon integrates it into a client bundle for a particular installed game instance. That native build is performed by Horizon's launcher and requires the player to review and explicitly trust the source; CI does not make that choice or produce a playable instance bundle.
 

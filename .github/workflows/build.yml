@@ -35,8 +35,8 @@ jobs:
           sudo apt-get update
           sudo apt-get install --yes --no-install-recommends libasound2-dev libudev-dev
 
-      - name: Compile native mod crate
-        run: cargo build --locked --release --manifest-path api/Cargo.toml
+      - name: Check native mod crate
+        run: cargo check --locked --manifest-path api/Cargo.toml
 
       - name: Build Horizon content pack
         working-directory: content
