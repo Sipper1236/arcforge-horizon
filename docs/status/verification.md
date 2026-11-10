@@ -235,3 +235,14 @@ Added four Pressurized Conduit tiers to the existing fluid conduit router. Gas c
 | Native bundle and in-world test | Not run. | Horizon requires the player to review and choose `--trust-native-code`; native registration, routing, pressure behavior, persistence, and gameplay remain unverified. |
 
 The workflow and public source are at [Sipper1236/arcforge-horizon](https://github.com/Sipper1236/arcforge-horizon). The Actions artifact is only the content `.hmod`. The native crate was type-checked in CI, but Horizon builds native code into an instance-specific client bundle; the player's trust decision is still required before that build. The disposable profile still has the earlier 380-recipe `.hmod` and stale native bundle `native-66f3981-6165e0307f55`. Rust tests were not run.
+
+## Current playable-build checkpoint (2026-11-10)
+
+| Check | Observed result | What it establishes |
+|---|---|---|
+| Current checked `.hmod` copied to `arcforge-port-test` | Passed; installed archive SHA-256 `1320a906595b3075ae77dafcab1c8a23f87004386f592267611131bacff287e0`, matching the current checked archive; `mod.arcforge:true` remains enabled. Previous archive backed up at `~/.local/share/horizon/instances/arcforge-port-test/arcforge.hmod.before-384`. | Current content data is staged in the disposable profile. It does not provide native item or block registrations. |
+| Horizon `native-build` without trust option | Refused: `Native mods run with full access to this computer. Read their source, then pass --trust-native-code.` | No current native bundle was built and no consent was given on the player's behalf. |
+| Disposable instance native bundle | Still `native-66f3981-6165e0307f55`, older than the pinned Horizon Nightly 2026-11-08 source and current native mod source. | Current source has not loaded in-game; the mod is not presently playable. |
+| Next native build, after the player personally reviews and trusts the source | `/home/rayyan/Applications/Horizon.AppImage native-build /home/rayyan/Projects/arcforge-horizon --instance arcforge-port-test --trust-native-code` | Horizon's explicit trust gate is the remaining build prerequisite. Afterward restart the instance and verify item registration and a basic progression path in a disposable world. |
+
+Source for review: [native crate](../../api/src/lib.rs), [Horizon pin](../../horizon-mixin.toml), and the full public repository at [Sipper1236/arcforge-horizon](https://github.com/Sipper1236/arcforge-horizon). No Rust tests or in-world runtime checks have been run for the current state. The user asked to make a playable build; their request does not itself waive Horizon's specific requirement that the player review and trust the full-access native code.
