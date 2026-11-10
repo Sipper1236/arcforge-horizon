@@ -5,12 +5,14 @@ on:
     paths:
       - 'api/**'
       - 'content/**'
+      - 'tools/**'
       - 'horizon-mixin.toml'
       - '.github/workflows/build.yml'
   pull_request:
     paths:
       - 'api/**'
       - 'content/**'
+      - 'tools/**'
       - 'horizon-mixin.toml'
       - '.github/workflows/build.yml'
   workflow_dispatch:
@@ -56,16 +58,56 @@ jobs:
         working-directory: content
         run: cargo run --locked --manifest-path ../horizon-source/crates/cargo-horizon-mod/Cargo.toml -- check target/horizon-mod/arcforge.hmod
 
-      - name: Upload content pack
+      - name: Package native Horizon mod
+        run: python3 tools/package_native_mod.py --source api --manifest horizon-mixin.toml --license-file LICENSE-Arcforge --notices-file THIRD_PARTY_NOTICES.md --horizon-source horizon-source --output target/arcforge.hnmod
+
+      - name: Assemble complete mod artifact
+        run: |
+          mkdir -p target/arcforge-bundle
+          cp content/target/horizon-mod/arcforge.hmod target/arcforge-bundle/
+          cp target/arcforge.hnmod target/arcforge-bundle/
+          cat > target/arcforge-bundle/INSTALL.txt <<'EOF'
+          Arcforge for Horizon build
+
+          Files:
+          - arcforge.hmod: content pack (recipes, loot, tags, and other data)
+          - arcforge.hnmod: native Rust mod source (registers items, blocks, and behavior)
+
+          Install both files in Horizon. The native mod must then be built by Horizon for the
+          player's installed Horizon version, operating system, and architecture. Horizon will
+          ask the player to review and trust native code before building it. GitHub Actions
+          checks the native crate and packages these files; it does not distribute a prebuilt
+          Horizon client executable.
+          EOF
+          (cd target/arcforge-bundle && sha256sum arcforge.hmod arcforge.hnmod > SHA256SUMS)
+          python3 - <<'PY'
+          from pathlib import Path
+          from zipfile import ZIP_DEFLATED, ZipFile
+
+          root = Path("target/arcforge-bundle")
+          with ZipFile("target/arcforge-horizon-bundle.zip", "w", ZIP_DEFLATED) as archive:
+              for path in sorted(root.iterdir()):
+                  archive.write(path, Path("arcforge-bundle") / path.name)
+          PY
+
+      - name: Upload complete mod artifacts
         uses: actions/upload-artifact@v7
         with:
-          name: arcforge-content-${{ github.sha }}
-          path: content/target/horizon-mod/arcforge.hmod
+          name: arcforge-${{ github.sha }}
+          path: |
+            content/target/horizon-mod/arcforge.hmod
+            target/arcforge.hnmod
+            target/arcforge-horizon-bundle.zip
+            target/arcforge-bundle/SHA256SUMS
           if-no-files-found: error
 
-      - name: Explain native bundle boundary
+      - name: Summarize artifacts
         run: |
           {
-            echo '### Native bundle'
-            echo 'The Rust mod crate compiled successfully. A playable Horizon native bundle is built by Horizon for a specific installed game instance and requires the player trust decision. This workflow does not build or install that instance-specific bundle.'
+            echo '### Arcforge build artifacts'
+            echo '- `arcforge.hmod`: checked content pack.'
+            echo '- `arcforge.hnmod`: native Rust source bundle, built against the pinned Horizon commit.'
+            echo '- `arcforge-horizon-bundle.zip`: both installable mod files plus installation notes and checksums.'
+            echo ''
+            echo 'Horizon builds the native client locally for each installed game version and operating system after the player reviews and trusts the code. The mod source and content are both built and packaged by this workflow.'
           } >> "$GITHUB_STEP_SUMMARY"

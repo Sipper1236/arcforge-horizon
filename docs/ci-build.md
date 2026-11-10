@@ -1,7 +1,12 @@
 # GitHub Actions build
 
-The workflow at `.github/workflows/build.yml` runs on pushes, pull requests, and manual dispatch. It checks Rust formatting, type-checks the native mod crate against the pinned Horizon revision, builds and checks the content `.hmod` with Horizon's pinned content tooling, and uploads the checked `.hmod` as a workflow artifact.
+The workflow at `.github/workflows/build.yml` runs on pushes, pull requests, and manual dispatch. It:
 
-The successful run on the current public commit is [42679842491](https://github.com/Sipper1236/arcforge-horizon/actions/runs/42679842491); it uploaded [the checked content artifact](https://github.com/Sipper1236/arcforge-horizon/actions/runs/42679842491/artifacts/13701787845). The artifact is the content pack only. The native Rust source also compiles in CI, but Horizon integrates it into a client bundle for a particular installed game instance. That native build is performed by Horizon's launcher and requires the player to review and explicitly trust the source; CI does not make that choice or produce a playable instance bundle.
+1. Checks Rust formatting and compiles the native crate against the pinned Horizon revision.
+2. Builds and checks the content `.hmod` with the pinned Horizon content tooling.
+3. Packages the native Rust source as Horizon's installable `.hnmod` format, with the Horizon, mixins, and game revisions pinned in its manifest.
+4. Uploads both files individually and together in `arcforge-horizon-bundle.zip`, with checksums and install notes.
 
-Download `arcforge-content-<commit-sha>` from the successful Actions run to get the `.hmod`. To play the native mod, build the Rust source with Horizon's native-build command for the target instance after reviewing the source and accepting Horizon's native-code warning.
+The workflow artifact is the complete mod distribution: `arcforge.hmod` provides content data and `arcforge.hnmod` provides native item registrations and gameplay code. Install both in Horizon. Horizon then compiles the native mod into its client for the installed Horizon version, OS, and architecture, after the player reviews and trusts the native source. The compiled client itself is instance-specific and is not a portable mod artifact, so CI does not distribute a prebuilt Horizon executable.
+
+The first successful build from the expanded workflow will be linked here. Previous content-only workflow runs are recorded in [verification.md](status/verification.md).
