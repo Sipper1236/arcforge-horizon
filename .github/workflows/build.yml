@@ -115,8 +115,8 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 120
     env:
-      HORIZON_LAUNCHER_HOME: ${{ runner.temp }}/arcforge-horizon-launcher
-      HORIZON_HOME: ${{ runner.temp }}/arcforge-horizon-game
+      HORIZON_LAUNCHER_HOME: /tmp/arcforge-horizon-launcher
+      HORIZON_HOME: /tmp/arcforge-horizon-game
       HORIZON_LAUNCHER_NO_SELF_UPDATE: '1'
       HORIZON_GITHUB_TOKEN: ${{ github.token }}
     steps:
