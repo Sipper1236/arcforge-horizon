@@ -120,6 +120,16 @@ jobs:
       HORIZON_LAUNCHER_NO_SELF_UPDATE: '1'
       HORIZON_GITHUB_TOKEN: ${{ github.token }}
     steps:
+      - name: Check that the private Minecraft build input is configured
+        env:
+          MINECRAFT_ARCHIVE_URL: ${{ secrets.HORIZON_MINECRAFT_ARCHIVE_URL }}
+          MINECRAFT_ARCHIVE_SHA256: ${{ secrets.HORIZON_MINECRAFT_ARCHIVE_SHA256 }}
+        run: |
+          if [[ -z "$MINECRAFT_ARCHIVE_URL" || -z "$MINECRAFT_ARCHIVE_SHA256" ]]; then
+            echo '::error::Configure HORIZON_MINECRAFT_ARCHIVE_URL and HORIZON_MINECRAFT_ARCHIVE_SHA256 repository Actions secrets before building the Linux client; see docs/ci-build.md.'
+            exit 1
+          fi
+
       - name: Check out Arcforge
         uses: actions/checkout@v7
 
