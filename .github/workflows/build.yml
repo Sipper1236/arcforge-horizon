@@ -63,9 +63,11 @@ jobs:
 
       - name: Assemble complete mod artifact
         run: |
-          mkdir -p target/arcforge-bundle
-          cp content/target/horizon-mod/arcforge.hmod target/arcforge-bundle/
-          cp target/arcforge.hnmod target/arcforge-bundle/
+          mkdir -p target/arcforge-output target/arcforge-bundle
+          cp content/target/horizon-mod/arcforge.hmod target/arcforge-output/
+          cp target/arcforge.hnmod target/arcforge-output/
+          cp target/arcforge-output/arcforge.hmod target/arcforge-bundle/
+          cp target/arcforge-output/arcforge.hnmod target/arcforge-bundle/
           cat > target/arcforge-bundle/INSTALL.txt <<'EOF'
           Arcforge for Horizon build
 
@@ -73,11 +75,9 @@ jobs:
           - arcforge.hmod: content pack (recipes, loot, tags, and other data)
           - arcforge.hnmod: native Rust mod source (registers items, blocks, and behavior)
 
-          Install both files in Horizon. The native mod must then be built by Horizon for the
-          player's installed Horizon version, operating system, and architecture. Horizon will
-          ask the player to review and trust native code before building it. GitHub Actions
-          checks the native crate and packages these files; it does not distribute a prebuilt
-          Horizon client executable.
+          Install both files in Horizon. This workflow also builds a Linux x86_64 Horizon client
+          containing the native code as a separate artifact. That client is tied to the pinned
+          Horizon Nightly and must be imported on a matching installed version.
           EOF
           (cd target/arcforge-bundle && sha256sum arcforge.hmod arcforge.hnmod > SHA256SUMS)
           python3 - <<'PY'
@@ -85,20 +85,17 @@ jobs:
           from zipfile import ZIP_DEFLATED, ZipFile
 
           root = Path("target/arcforge-bundle")
-          with ZipFile("target/arcforge-horizon-bundle.zip", "w", ZIP_DEFLATED) as archive:
+          with ZipFile("target/arcforge-output/arcforge-horizon-bundle.zip", "w", ZIP_DEFLATED) as archive:
               for path in sorted(root.iterdir()):
                   archive.write(path, Path("arcforge-bundle") / path.name)
           PY
+          cp target/arcforge-bundle/SHA256SUMS target/arcforge-output/
 
       - name: Upload complete mod artifacts
         uses: actions/upload-artifact@v7
         with:
           name: arcforge-${{ github.sha }}
-          path: |
-            content/target/horizon-mod/arcforge.hmod
-            target/arcforge.hnmod
-            target/arcforge-horizon-bundle.zip
-            target/arcforge-bundle/SHA256SUMS
+          path: target/arcforge-output/*
           if-no-files-found: error
 
       - name: Summarize artifacts
@@ -109,5 +106,111 @@ jobs:
             echo '- `arcforge.hnmod`: native Rust source bundle, built against the pinned Horizon commit.'
             echo '- `arcforge-horizon-bundle.zip`: both installable mod files plus installation notes and checksums.'
             echo ''
-            echo 'Horizon builds the native client locally for each installed game version and operating system after the player reviews and trusts the code. The mod source and content are both built and packaged by this workflow.'
+            echo 'A second job compiles a Linux x86_64 Horizon client with the native mod and uploads it separately.'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  build-linux-client:
+    if: github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    env:
+      HORIZON_LAUNCHER_HOME: ${{ runner.temp }}/arcforge-horizon-launcher
+      HORIZON_HOME: ${{ runner.temp }}/arcforge-horizon-game
+      HORIZON_LAUNCHER_NO_SELF_UPDATE: '1'
+      HORIZON_GITHUB_TOKEN: ${{ github.token }}
+    steps:
+      - name: Check out Arcforge
+        uses: actions/checkout@v7
+
+      - name: Check out the pinned Horizon launcher and game source
+        uses: actions/checkout@v7
+        with:
+          repository: horizon-rust/horizon
+          ref: fdc87aecdbd116bf1e08adcd062fcbaea8c2e2ca
+          path: horizon-source
+
+      - name: Install Rust and Horizon Linux build dependencies
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends \
+            libasound2-dev libudev-dev libxkbcommon-x11-dev libwayland-dev \
+            libx11-xcb-dev libfontconfig-dev libvulkan-dev
+
+      - name: Build Horizon launcher CLI
+        run: cargo build --locked --manifest-path horizon-source/launcher/Cargo.toml --bin horizon-launcher
+
+      - name: Install pinned Horizon Nightly and create a CI instance
+        run: |
+          launcher="$PWD/horizon-source/launcher/target/debug/horizon-launcher"
+          "$launcher" install nightly-2026-11-08-fdc87ae
+          "$launcher" instance create arcforge-ci
+          "$launcher" instance version arcforge-ci nightly-2026-11-08-fdc87ae
+
+      - name: Build Arcforge into a Linux Horizon client
+        run: |
+          horizon-source/launcher/target/debug/horizon-launcher native-build "$PWD" \
+            --instance arcforge-ci \
+            --version nightly-2026-11-08-fdc87ae \
+            --profile performance \
+            --trust-native-code
+
+      - name: Download the checked mod files
+        uses: actions/download-artifact@v7
+        with:
+          name: arcforge-${{ github.sha }}
+          path: target/mod-files
+
+      - name: Assemble and verify the importable Linux client bundle
+        run: |
+          set -euo pipefail
+          native_version_dir="$(find "$HORIZON_LAUNCHER_HOME/versions" -mindepth 1 -maxdepth 1 -type d -name 'native-fdc87ae-*' -print -quit)"
+          test -n "$native_version_dir"
+          test -x "$native_version_dir/horizon-client"
+          mkdir -p target/arcforge-linux-x86_64
+          cp "$native_version_dir/horizon-client" target/arcforge-linux-x86_64/horizon-client
+          cp target/mod-files/arcforge.hmod target/arcforge-linux-x86_64/
+          cp target/mod-files/arcforge.hnmod target/arcforge-linux-x86_64/
+          cat > target/arcforge-linux-x86_64/INSTALL.txt <<'EOF'
+          Arcforge Horizon Linux x86_64 client
+
+          This client executable contains the Arcforge native Rust mod and is built for
+          Horizon Nightly 2026-11-08 (fdc87aecdbd116bf1e08adcd062fcbaea8c2e2ca).
+          It is not a standalone Minecraft installation. Install that exact Horizon Nightly,
+          then import this client with:
+
+            Horizon.AppImage import-build ./horizon-client \
+              --version nightly-2026-11-08-fdc87ae --trust-unsigned
+
+          Use the imported version for an instance, and install arcforge.hmod in that instance
+          for recipes, loot, tags, and other content. arcforge.hnmod is the matching source bundle.
+          EOF
+          (cd target/arcforge-linux-x86_64 && sha256sum horizon-client arcforge.hmod arcforge.hnmod > SHA256SUMS)
+          file target/arcforge-linux-x86_64/horizon-client
+          python3 - <<'PY'
+          from pathlib import Path
+          from zipfile import ZIP_DEFLATED, ZipFile
+
+          root = Path("target/arcforge-linux-x86_64")
+          with ZipFile("target/arcforge-linux-x86_64.zip", "w", ZIP_DEFLATED) as archive:
+              for path in sorted(root.iterdir()):
+                  archive.write(path, path.name)
+          PY
+
+      - name: Upload playable Linux client bundle
+        uses: actions/upload-artifact@v7
+        with:
+          name: arcforge-playable-linux-x86_64-${{ github.sha }}
+          path: target/arcforge-linux-x86_64.zip
+          if-no-files-found: error
+
+      - name: Summarize native client
+        run: |
+          {
+            echo '### Playable Linux client'
+            echo '- Built Horizon Nightly 2026-11-08 with Arcforge native code.'
+            echo '- Uploaded an importable Linux x86_64 client bundle with the matching `.hmod` and `.hnmod`.'
+            echo '- Pull requests package sources only; native code is built on pushes and manual dispatches.'
           } >> "$GITHUB_STEP_SUMMARY"
