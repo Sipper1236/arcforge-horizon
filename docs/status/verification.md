@@ -2,6 +2,20 @@
 
 This file records observed checks only. Re-run checks after Rust or content changes; do not infer current results from an earlier build. For the completion criteria and current resume state, see [goal.md](../goal.md) and [handoff.md](../handoff.md).
 
+## Heat Cells alpha slice (2026-11-12)
+
+Added Wrought, Tempered, Hardened, and Arcforged Heat Cells with tier capacities, transfer caps, maximum temperatures, passive leakage, five-level heat visuals, charge-preserving block drops/placement, source-shaped tier recipes, and explosion-aware loot tables. The alpha uses automatic six-side connections; screens, capsules, insulation upgrades, redstone/side controls, and charge-preserving tier upgrades are not implemented. No gameplay world was used for verification.
+
+| Check | Result | What it establishes |
+|---|---|---|
+| `cargo fmt --manifest-path api/Cargo.toml` | Passed. | Rust sources are formatted. |
+| `cargo check --locked --manifest-path api/Cargo.toml` | Passed: 0 errors; the existing unused `EnergyStore::transfer_to` warning remains. | Heat Cell hooks and the native crate compile against the pinned API. |
+| Horizon `cargo-horizon-mod build` in `content/` | Passed; 388 recipe JSON files are present. | Heat Cell recipes and loot package with the existing content. |
+| Horizon `cargo-horizon-mod check target/horizon-mod/arcforge.hmod` | Passed; 3,517,204 bytes; SHA-256 `40c675764f93faf5953bff98c74605000f2e5e5183743e663ffcd3ba9913e790` (unsigned). | The content bundle passes Horizon's checker. This does not prove runtime item registration or crafting. |
+| Rust tests, native client build, and in-world Heat Cell trial | Not run. | Runtime transfer/loss rates, state persistence, item charge round-trip, and visuals remain unverified. |
+
+These local changes have not yet been pushed to GitHub or included in the latest Actions artifact.
+
 ## Conduit tick entity lookup correction (2026-11-08)
 
 Horizon removes the block entity currently ticking from ordinary `Host::mod_block_entity` lookups and passes it separately to the tick hook. Both pooled conduit schedulers now use that supplied entity during network discovery, cache validation, pool reconciliation, and output endpoint collection. This lets the tick path proceed without changing Horizon's API. This corrects a source-level early return; it does not establish that network transfers behave correctly in a running world.

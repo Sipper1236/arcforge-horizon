@@ -743,13 +743,14 @@ fn is_heat_source(id: &str) -> bool {
 }
 
 fn is_heat_target(id: &str) -> bool {
-    matches!(
-        id,
-        "arcforge:fiberizer"
-            | "arcforge:vulcanizer"
-            | "arcforge:grain_dryer"
-            | "arcforge:thermoelectric_plant"
-    )
+    crate::heat_cell::spec(id).is_some()
+        || matches!(
+            id,
+            "arcforge:fiberizer"
+                | "arcforge:vulcanizer"
+                | "arcforge:grain_dryer"
+                | "arcforge:thermoelectric_plant"
+        )
 }
 
 fn can_output(setting: Option<&str>) -> bool {

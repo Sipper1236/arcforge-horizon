@@ -1,14 +1,14 @@
 # Current implementation
 
-This is an as-built snapshot, not a claim of Arcforge parity. **Build checkpoint (2026-11-09):** Four Pressurized Conduit tiers and a known Arcforge gas list pass Rust type-check and the Horizon content checker; runtime registration and routing remain unverified in-game. The active completion target is in [goal.md](../goal.md), and the resumable project state is in [handoff.md](../handoff.md). For verification strength, see [verification.md](verification.md). The code targets Arcforge commit `8843cb02cf9132f278f6a8e804b6d78837d3cbcb` and Horizon Nightly 2026-11-08, commit `fdc87aecdbd116bf1e08adcd062fcbaea8c2e2ca`.
+This is an as-built snapshot, not a claim of Arcforge parity. **Build checkpoint (2026-11-12):** Four Heat Cell tiers are now implemented as automatic heat buffers, with source-shaped crafting/loot data. The Rust crate compiles and the 388-recipe content pack builds and passes Horizon's checker; Heat Cell behavior remains unverified in-game. The active completion target is in [goal.md](../goal.md), and the resumable project state is in [handoff.md](../handoff.md). For verification strength, see [verification.md](verification.md). The code targets Arcforge commit `8843cb02cf9132f278f6a8e804b6d78837d3cbcb` and Horizon Nightly 2026-11-08, commit `fdc87aecdbd116bf1e08adcd062fcbaea8c2e2ca`.
 
 ## Native crate and registered content
 
-`api/src/lib.rs` registers a Metal Press, Sifter, Arc Crusher, a three-lane Arc Crushing Array controller and its formed casing multiblock, Carbonizer, Induction Furnace, Infuser, Resin Tap, Firebox, Firebox Array controller and casing, Pressure Glass, Solar Thermal Array controller/casing/collectors, Fuel Burner, all four Fluid Tank tiers, Thermoelectric Plant, four Energy Conduit tiers, four Item Conduit tiers, four Fluid Conduit tiers, four thermal conduit tiers, four Energy Cell tiers, a Wrench that rotates supported single-block machines and configures conduit, Solar heat-port, and energy-generator faces, seven Steel tools, four Steel armor pieces, Fiberizer, Vulcanizer, Grain Dryer, Arcforge Furnace port, Steelworks prototype, Combustion Plant, coke block, treated wood, Arcforge furnace bricks, Creosote/Latex buckets and four tiered portable canisters, the tungsten heating coil, and processing materials.
+`api/src/lib.rs` registers a Metal Press, Sifter, Arc Crusher, a three-lane Arc Crushing Array controller and its formed casing multiblock, Carbonizer, Induction Furnace, Infuser, Resin Tap, Firebox, Firebox Array controller and casing, Pressure Glass, Solar Thermal Array controller/casing/collectors, Fuel Burner, all four Fluid Tank tiers, Thermoelectric Plant, four Energy Conduit tiers, four Item Conduit tiers, four Fluid Conduit tiers, four thermal conduit tiers, four Energy Cell tiers, four Heat Cell tiers, a Wrench that rotates supported single-block machines and configures conduit, Solar heat-port, and energy-generator faces, seven Steel tools, four Steel armor pieces, Fiberizer, Vulcanizer, Grain Dryer, Arcforge Furnace port, Steelworks prototype, Combustion Plant, coke block, treated wood, Arcforge furnace bricks, Creosote/Latex buckets and four tiered portable canisters, the tungsten heating coil, and processing materials.
 
 ## Recipe data present
 
-The content directory contains 384 recipe JSON files (Arcforge machine recipes and vanilla recipe types):
+The content directory contains 388 recipe JSON files (Arcforge machine recipes and vanilla recipe types):
 
 | Recipe group | Files |
 |---|---:|
@@ -46,13 +46,16 @@ The content directory contains 384 recipe JSON files (Arcforge machine recipes a
 | Vanilla blasting recipes | 31 |
 | Composite material crafting | 1 |
 | Induction Furnace Arcforge smelting catalog | 32 |
-| **Total** | **384** |
+| Heat Cell crafting recipes | 4 |
+| **Total** | **388** |
 
 Files existing does not by itself prove the complete recipe graph or survival progression works.
 
 ## Implemented behavior in source
 
 - **Pressurized Conduits:** four tiers route the 22 Arcforge gases listed in the pinned source through separate networks at 400/1,600/6,400/25,600 mB/t, with recipes, tags, and loot. The gas list matches upstream `gas_properties.json`. This source compiles and the content archive passes Horizon's checker; arbitrary third-party gas classification is unsupported by the pinned API, and network behavior is not in-world verified.
+
+- **Heat Cells:** all four tiers are registered with source-derived HU capacities, transfer rates, maximum temperatures, and passive loss rates. Stored HU persists in block-entity data, transfers only downhill through adjacent supported heat connections within the tier's total per-tick rate, and updates the existing five-level heat blockstate. Mining and placement carry charge in custom data. Four source-shaped crafting recipes and explosion-aware loot tables are packaged. The alpha automatically connects all six sides; custom screens, capsule slots, insulation upgrades, redstone controls, side configuration, and charge-preserving tier upgrades are not implemented. No in-world transfer, loss, persistence, or visual check has been run.
 
 - **Item Conduits:** all four source tiers are registered with their Arcforge models, source loot tables, and survival recipes. Connected runs are cached and invalidated on conduit placement, breaking, Wrench changes, or a changed local conduit edge. They use Horizon's transactional item-move helper between configured Output and Input faces. Each network uses its slowest tier: 8/16/32/64 items every 20/10/5/2 ticks. The Wrench changes a face through Auto, Input, Output, and Disabled; Output faces extract from adjacent inventories and Input faces insert into them. A refused transfer stays at its source. Animated packets, conduit-held items, filters, and capability-based Auto detection are absent. Tier upgrades use shaped recipes and do not preserve Wrench face settings. Routes and transfers have not been tested in-world.
 

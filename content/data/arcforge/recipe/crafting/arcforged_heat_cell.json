@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "wCw",
+    "AXA",
+    "wAw"
+  ],
+  "key": {
+    "A": "arcforge:arcforged_alloy",
+    "C": "#c:gems/arcite",
+    "w": "arcforge:rock_wool",
+    "X": "arcforge:hardened_heat_cell"
+  },
+  "result": {
+    "id": "arcforge:arcforged_heat_cell",
+    "count": 1
+  }
+}

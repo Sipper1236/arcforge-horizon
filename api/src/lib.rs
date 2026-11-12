@@ -37,6 +37,7 @@ mod energy_conduit;
 mod fluid;
 mod fluid_conduit;
 mod heat;
+mod heat_cell;
 mod item_conduit;
 mod solar;
 mod thermal;
@@ -250,6 +251,10 @@ impl Hooks for Arcforge {
             item_conduit::connect_placed(host, event.pos, &entity);
         }
         fluid_conduit::neighbor_placed(host, event.pos);
+        if heat_cell::spec(&event.stack.item).is_some() {
+            heat_cell::restore_from_item(host, event.pos, event.stack);
+            host.set_block_property(event.pos, "heat", "0");
+        }
         if let Some((capacity, _)) = energy_cell_spec(&event.stack.item) {
             let energy = item_energy_amount(event.stack, capacity);
             if energy > 0 {
@@ -293,6 +298,9 @@ impl Hooks for Arcforge {
             if let Some((capacity, _)) = energy_cell_spec(&entity.id) {
                 let stored = (get_i32(&entity.nbt, "energy").max(0) as u64).min(capacity);
                 cache_cell_charge(host.dimension(), event.pos, &entity.id, stored as i32);
+            }
+            if heat_cell::spec(&entity.id).is_some() {
+                heat_cell::cache_charge(host.dimension(), event.pos, &entity);
             }
             if entity.id == ARC_CRUSHING_ARRAY_CASING {
                 unform_crushing_array_near(host, event.pos);
@@ -735,6 +743,9 @@ impl Hooks for Arcforge {
         ] {
             register_content!(&mut event.blocks, id: id.into(), template: "minecraft:iron_block".into(), item: true);
         }
+        for id in heat_cell::ids() {
+            register_content!(&mut event.blocks, id: id.into(), template: "minecraft:iron_block".into(), item: true);
+        }
         register_content!(&mut event.blocks, id: COKE_BLOCK.into(), template: "minecraft:coal_block".into(), item: true);
         for (id, template, hardness, resistance) in [
             ("arcforge:treated_log", "minecraft:crimson_stem", 2.0, 2.0),
@@ -1061,15 +1072,23 @@ impl Hooks for Arcforge {
         let Some((pos, _)) = event.context.block else {
             return;
         };
-        let Some((item, energy)) = take_cell_charge(event.context.dimension, pos) else {
-            return;
-        };
-        for drop in event
-            .drops
-            .iter_mut()
-            .filter(|drop| drop.item.as_ref() == item.as_str())
-        {
-            set_item_energy(drop, energy);
+        if let Some((item, energy)) = take_cell_charge(event.context.dimension, pos) {
+            for drop in event
+                .drops
+                .iter_mut()
+                .filter(|drop| drop.item.as_ref() == item.as_str())
+            {
+                set_item_energy(drop, energy);
+            }
+        }
+        if let Some((item, heat)) = heat_cell::take_charge(event.context.dimension, pos) {
+            for drop in event
+                .drops
+                .iter_mut()
+                .filter(|drop| drop.item.as_ref() == item.as_str())
+            {
+                heat_cell::set_item_heat(drop, heat);
+            }
         }
     }
 
@@ -1113,10 +1132,7 @@ impl Hooks for Arcforge {
             || event.block == TEMPERED_ENERGY_CELL
             || event.block == HARDENED_ENERGY_CELL
             || event.block == ARCFORGED_ENERGY_CELL
-            || event.block == WROUGHT_ENERGY_CELL
-            || event.block == TEMPERED_ENERGY_CELL
-            || event.block == HARDENED_ENERGY_CELL
-            || event.block == ARCFORGED_ENERGY_CELL
+            || heat_cell::spec(event.block).is_some()
         {
             Some((event.block.to_owned(), Default::default()))
         } else {
@@ -1156,6 +1172,7 @@ impl Hooks for Arcforge {
             || event.block == ARCFORGED_ENERGY_CONDUIT
             || item_conduit::spec(event.block).is_some()
             || thermal::spec(event.block).is_some()
+            || heat_cell::spec(event.block).is_some()
         {
             event.ticks = true;
         }
@@ -1614,6 +1631,12 @@ impl Hooks for Arcforge {
             | TEMPERED_THERMAL_CONDUIT
             | HARDENED_THERMAL_CONDUIT
             | ARCFORGED_THERMAL_CONDUIT => thermal::tick(
+                host,
+                event.pos,
+                event.entity,
+                transfer_supported_heat_to_neighbor,
+            ),
+            id if heat_cell::spec(id).is_some() => heat_cell::tick(
                 host,
                 event.pos,
                 event.entity,
@@ -4562,6 +4585,9 @@ fn transfer_supported_heat_to_neighbor(
     let Some(target) = host.mod_block_entity(neighbor) else {
         return 0;
     };
+    if heat_cell::spec(&target.id).is_some() {
+        return heat_cell::accept_heat(host, neighbor, heat, rate);
+    }
     if thermal::spec(&target.id).is_some() {
         return thermal::accept_heat(host, neighbor, source_pos, heat, rate);
     }

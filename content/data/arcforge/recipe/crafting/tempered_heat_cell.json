@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "wTw",
+    "TXT",
+    "wTw"
+  ],
+  "key": {
+    "T": "arcforge:tempered_alloy",
+    "X": "arcforge:wrought_heat_cell",
+    "w": "arcforge:slag_wool"
+  },
+  "result": {
+    "id": "arcforge:tempered_heat_cell",
+    "count": 1
+  }
+}
