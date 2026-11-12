@@ -9,6 +9,8 @@ A Rust-native port of Arcforge for Horizon. Arcforge is an MIT-licensed Minecraf
 
 The detailed build plan and as-built inventory are in [`docs/README.md`](docs/README.md). The alpha's player progression will follow Arcforge's original order; implementation tasks may work on prerequisites early. The plan uses the pinned Horizon modding API without changing it.
 
+GitHub Actions currently builds and uploads the checked content and native source packages. A Linux client build also runs when a private Minecraft 26.3 install archive is configured; setup instructions and the latest run evidence are in [`docs/ci-build.md`](docs/ci-build.md). No playable client has been verified yet.
+
 For a resumable project snapshot and immediate next actions, see [`docs/handoff.md`](docs/handoff.md) and [`docs/goal.md`](docs/goal.md).
 
 The complete feature inventory is version-sensitive. The source audit was made against Arcforge commit `8843cb02cf9132f278f6a8e804b6d78837d3cbcb` (2026-10-28), with its published feature documentation checked on 2026-11-07. Treat that pinned snapshot as the parity target; update the inventory and implementation when the target changes. The matching MIT notice is in `LICENSE-Arcforge`.

@@ -149,6 +149,58 @@ jobs:
           "$launcher" instance create arcforge-ci
           "$launcher" instance version arcforge-ci nightly-2026-11-08-fdc87ae
 
+      - name: Restore the privately supplied Minecraft 26.3 client files
+        env:
+          MINECRAFT_ARCHIVE_URL: ${{ secrets.HORIZON_MINECRAFT_ARCHIVE_URL }}
+          MINECRAFT_ARCHIVE_SHA256: ${{ secrets.HORIZON_MINECRAFT_ARCHIVE_SHA256 }}
+        run: |
+          set -euo pipefail
+          if [[ -z "$MINECRAFT_ARCHIVE_URL" || -z "$MINECRAFT_ARCHIVE_SHA256" ]]; then
+            echo '::error::The native client build needs the Minecraft 26.3 client files from an install you own. Configure HORIZON_MINECRAFT_ARCHIVE_URL and HORIZON_MINECRAFT_ARCHIVE_SHA256 repository Actions secrets; see docs/ci-build.md.'
+            exit 1
+          fi
+          archive=/tmp/arcforge-minecraft-26.3.tar.gz
+          curl --fail --location --silent --show-error --retry 3 \
+            "$MINECRAFT_ARCHIVE_URL" --output "$archive"
+          printf '%s  %s\n' "$MINECRAFT_ARCHIVE_SHA256" "$archive" | sha256sum --check --status
+          mkdir -p "$PWD/ci-minecraft"
+          python3 - "$archive" "$PWD/ci-minecraft" <<'PY'
+          import pathlib
+          import sys
+          import tarfile
+
+          archive, destination = sys.argv[1:]
+          allowed = {
+              "versions/26.3/26.3.jar": 64 * 1024 * 1024,
+              "versions/26.3/26.3.json": 1024 * 1024,
+          }
+          with tarfile.open(archive, "r:gz") as tar:
+              seen = set()
+              for member in tar.getmembers():
+                  name = member.name.removeprefix("./").rstrip("/")
+                  if name in {"", ".", "versions", "versions/26.3"} and member.isdir():
+                      continue
+                  if name not in allowed or not member.isfile() or member.size > allowed[name]:
+                      raise SystemExit(f"Unexpected or oversized archive entry: {member.name}")
+                  source = tar.extractfile(member)
+                  if source is None:
+                      raise SystemExit(f"Could not read archive entry: {member.name}")
+                  target = pathlib.Path(destination, name)
+                  target.parent.mkdir(parents=True, exist_ok=True)
+                  with target.open("wb") as output:
+                      while chunk := source.read(1024 * 1024):
+                          output.write(chunk)
+                  seen.add(name)
+              if seen != set(allowed):
+                  raise SystemExit(f"Archive must contain exactly the pinned client jar and version JSON; found {sorted(seen)}")
+          PY
+
+      - name: Prepare Horizon from the supplied Minecraft install
+        run: |
+          horizon-source/launcher/target/debug/horizon-launcher prepare \
+            --minecraft "$PWD/ci-minecraft" \
+            --version nightly-2026-11-08-fdc87ae
+
       - name: Build Arcforge into a Linux Horizon client
         run: |
           horizon-source/launcher/target/debug/horizon-launcher native-build "$PWD" \
