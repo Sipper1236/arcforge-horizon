@@ -59,6 +59,10 @@ def main() -> None:
 
     project = tomllib.loads(args.manifest.read_text())
     mod = project["mod"]
+    api_path = project["api"]["path"]
+    api_parts = Path(api_path)
+    if api_parts.is_absolute() or ".." in api_parts.parts or not api_parts.parts:
+        raise SystemExit("[api].path must be a safe relative folder")
     horizon_revision = project["compatibility"]["horizon_revision"]
     if not re.fullmatch(r"[0-9a-f]{40}", horizon_revision):
         raise SystemExit("horizon-mixin.toml must pin a 40-character Horizon revision")
@@ -70,6 +74,8 @@ def main() -> None:
     if not mixins_match or not game_match:
         raise SystemExit("could not read pinned Horizon native-mod and game versions")
 
+    if not (args.source / "Cargo.toml").is_file():
+        raise SystemExit(f"native crate is missing Cargo.toml: {args.source}")
     files = source_files(args.source)
     if not files:
         raise SystemExit("native source folder contains no packageable files")
@@ -92,7 +98,7 @@ def main() -> None:
     ]
     prefix = f"mixins/{mod['id']}/"
     entries.append((prefix + "horizon-mixin.toml", args.manifest.read_bytes()))
-    entries.extend((prefix + name, path.read_bytes()) for name, path in files)
+    entries.extend((prefix + api_path.rstrip("/") + "/" + name, path.read_bytes()) for name, path in files)
     entries.append((prefix + "api/LICENSE-Arcforge", args.license_file.read_bytes()))
     entries.append((prefix + "api/NOTICE-THIRD-PARTY.md", args.notices_file.read_bytes()))
     unpacked_size = sum(len(content) for _, content in entries)
@@ -110,6 +116,40 @@ def main() -> None:
             info.compress_type = zipfile.ZIP_DEFLATED
             info.external_attr = (stat.S_IFREG | 0o644) << 16
             archive.writestr(info, content)
+
+    with zipfile.ZipFile(args.output) as archive:
+        names = archive.namelist()
+        if len(names) != len(set(names)) or len(names) > MAX_FILES:
+            raise SystemExit("generated native bundle has duplicate entries or exceeds Horizon's file limit")
+        manifest = json.loads(archive.read("horizon-native.json"))
+        mixin = tomllib.loads(archive.read(prefix + "horizon-mixin.toml").decode())
+        expected = {
+            "schema": 1,
+            "id": mod["id"],
+            "version": mod["version"],
+            "game": game_match.group(1),
+            "horizon": horizon_revision,
+            "mixins": mixins_match.group(1),
+        }
+        if manifest != expected:
+            raise SystemExit("generated native manifest does not match the pinned project")
+        if (
+            mixin["mod"]["id"] != manifest["id"]
+            or mixin["mod"]["version"] != manifest["version"]
+            or mixin["compatibility"]["horizon_revision"] != manifest["horizon"]
+            or not archive.getinfo(prefix + api_path.rstrip("/") + "/Cargo.toml")
+        ):
+            raise SystemExit("generated native bundle layout does not match horizon-mixin.toml")
+        unpacked = 0
+        for name in names:
+            if name == "horizon-native.json":
+                continue
+            rest = name.removeprefix(prefix)
+            if rest == name or not allowed(rest):
+                raise SystemExit(f"generated native bundle contains a disallowed path: {name}")
+            unpacked += archive.getinfo(name).file_size
+        if unpacked > MAX_UNPACKED_BYTES:
+            raise SystemExit("generated native bundle exceeds Horizon's unpacked-size limit")
 
     print(
         f"Built {args.output}: {len(entries)} files, {unpacked_size} uncompressed bytes; "
