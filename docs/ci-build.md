@@ -32,4 +32,4 @@ Once both secrets are configured, push a source change or run **Actions → Buil
 
 ## Current verification
 
-Run [43319234022](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43319234022) passed the formatting, native crate check, content build/check, and mod packaging job. Its Linux client job compiled the launcher and installed the pinned Nightly, then failed because no prepared Minecraft client was available. The workflow now accepts an owner-supplied private archive as described above. A successful Linux client build, import, launch, and in-world gameplay check are still pending.
+Run [43322958666](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43322958666) passed formatting, native crate check, content build/check, and mod packaging. Its checked mod artifact is [available here](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43322958666/artifacts/13992230701); I downloaded it and verified both checksums. The Linux client job now stops immediately because the required private archive secrets are not configured. A successful Linux client build, import, launch, and in-world gameplay check are still pending.
