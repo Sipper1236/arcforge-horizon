@@ -12,9 +12,10 @@ Added Wrought, Tempered, Hardened, and Arcforged Heat Cells with tier capacities
 | `cargo check --locked --manifest-path api/Cargo.toml` | Passed: 0 errors; the existing unused `EnergyStore::transfer_to` warning remains. | Heat Cell hooks and the native crate compile against the pinned API. |
 | Horizon `cargo-horizon-mod build` in `content/` | Passed; 388 recipe JSON files are present. | Heat Cell recipes and loot package with the existing content. |
 | Horizon `cargo-horizon-mod check target/horizon-mod/arcforge.hmod` | Passed; 3,517,204 bytes; SHA-256 `40c675764f93faf5953bff98c74605000f2e5e5183743e663ffcd3ba9913e790` (unsigned). | The content bundle passes Horizon's checker. This does not prove runtime item registration or crafting. |
+| GitHub Actions run [43329802649](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43329802649) on commit `6621649` | Mod package job passed: formatting, crate check, content build/check, and `.hnmod` packaging. Artifact [13993968359](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43329802649/artifacts/13993968359) downloaded; SHA-256 values verified: `.hmod` `40c675764f93faf5953bff98c74605000f2e5e5183743e663ffcd3ba9913e790`, `.hnmod` `e276b80d61d0790f1f27017a659d546572a02b2a30546b8fd7fad46d2b97fb37`. Full workflow is failed because the native-client job's private-input preflight found the required Minecraft archive secrets absent. | GitHub produced the current source/data mod artifact. It did not build a playable client. |
 | Rust tests, native client build, and in-world Heat Cell trial | Not run. | Runtime transfer/loss rates, state persistence, item charge round-trip, and visuals remain unverified. |
 
-These local changes have not yet been pushed to GitHub or included in the latest Actions artifact.
+The changes are committed as `6621649` on `main` and included in the verified GitHub artifact. The native client and in-world behavior remain outstanding.
 
 ## Conduit tick entity lookup correction (2026-11-08)
 
