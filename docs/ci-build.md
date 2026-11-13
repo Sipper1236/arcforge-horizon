@@ -17,7 +17,6 @@ Push a change under `api/`, `content/`, `tools/`, or the workflow, or use **Acti
 
 ## Current verification
 
-As of 2026-11-13, package jobs for GitHub runs [43503798037](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43503798037) (`2864301`, battery hand transfer), [43505199774](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43505199774) (`2b16b81`, Energy Cell charge models), and [43506438439](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43506438439) (`461fb88`, Energy Cell item stack limit) have passed. The first two runs completed both package and Linux client jobs. The latest run's client job is still in progress; its package passed. None of these Energy Cell changes has matching-client runtime verification yet; see [verification record](status/verification.md).
 
 The initial native client artifact omitted Horizon's generated `native-mods.json`, so importing its executable alone did not activate Arcforge's registries. The workflow now packages that file too. Runtime verification also found a duplicate `arcforge:raw_rubber` item registration; it is now declared once through the shared catalog. Ore feature JSON now uses Horizon 26.3's flattened `worldgen/feature/` format, so ore generation can be read by the pinned build. The imported executable plus its manifest and content pack passed an isolated item-registration smoke check; full progression and machine behavior still need in-world play verification.
 
