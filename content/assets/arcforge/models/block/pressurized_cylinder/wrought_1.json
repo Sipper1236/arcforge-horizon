@@ -1,6 +1,7 @@
 {
   "parent": "minecraft:block/block",
   "ambientocclusion": false,
+  "render_type": "minecraft:cutout",
   "textures": {
     "particle": "#body",
     "body": "arcforge:block/pressurized_cylinder/wrought_body",
@@ -572,12 +573,12 @@
     },
     {
       "from": [
-        6,
-        13,
+        4,
+        10,
         9
       ],
       "to": [
-        10,
+        12,
         16,
         10
       ],

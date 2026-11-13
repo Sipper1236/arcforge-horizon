@@ -7,7 +7,7 @@ use horizon_client::{
         BlockEntityContainerEvent, BlockEntityEvent, BlockEntityTickEvent, BlockEntityTicksEvent,
         BlocksEvent, ContainerAcceptsEvent, Direction, Flow, Hooks, Host, ItemEnergyBuffer,
         ItemEnergyBufferEvent, ItemFluidTankEvent, ItemStack, ItemsEvent, LootDropsEvent,
-        RandomSource, Tag, serde_json,
+        RandomSource, Tag, Text, serde_json,
     },
 };
 use std::{
@@ -520,6 +520,13 @@ impl Hooks for Arcforge {
         }
         if event.stack.item.as_ref() != WRENCH {
             return Flow::Continue;
+        }
+        if host
+            .mod_block_entity(event.pos)
+            .is_some_and(|entity| pressurized_cylinder::cylinder_capacity(&entity.id).is_some())
+        {
+            show_cylinder_status(host, event.pos);
+            return Flow::Cancel;
         }
         if let Some((controller_pos, tower)) = solar::controller_for_part(host, event.pos) {
             let Some(side) = energy_conduit_side(event.face) else {
@@ -4009,6 +4016,7 @@ fn use_gas_cartridge(
             host.fluid_extract(host.dimension(), pos, face, inserted as i32);
             return Flow::Continue;
         }
+        show_cylinder_status(host, pos);
         return Flow::Cancel;
     }
 
@@ -4030,7 +4038,29 @@ fn use_gas_cartridge(
         host.fluid_insert(pos, face, &gas, extracted as i32);
         return Flow::Continue;
     }
+    show_cylinder_status(host, pos);
     Flow::Cancel
+}
+
+fn show_cylinder_status(host: &mut dyn Host, pos: [i32; 3]) {
+    let Some(entity) = host.mod_block_entity(pos) else {
+        return;
+    };
+    let Some(capacity) = pressurized_cylinder::cylinder_capacity(&entity.id) else {
+        return;
+    };
+    let amount = fluid::amount(&entity.nbt, 0).min(capacity);
+    let name = fluid::name(&entity.nbt, 0);
+    let level = ((amount as u64 * 5) / capacity as u64).min(4);
+    let contents = if amount == 0 {
+        "empty".to_owned()
+    } else {
+        name.unwrap_or_else(|| "unknown gas".into())
+    };
+    let line = format!("Cylinder: {contents}, {amount}/{capacity} mB (gauge {level}/4)");
+    if let Some(player) = host.acting_player() {
+        host.action_bar(player.uuid, Text::literal(line));
+    }
 }
 
 fn replace_carried_stack(

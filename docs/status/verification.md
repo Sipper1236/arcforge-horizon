@@ -350,3 +350,16 @@ The workflow now builds and uploads the complete mod distribution: the checked c
 | Workflow and setup guide | The workflow expects `HORIZON_MINECRAFT_ARCHIVE_URL` and `HORIZON_MINECRAFT_ARCHIVE_SHA256`, checks the archive hash and exact file layout, then runs Horizon's normal prepare and native-build commands. `gh secret list` showed no configured secrets. | The code path is ready, but the owner must place the archive in private HTTPS storage and configure both repository secrets before the client build can run. |
 
 The account-free launch option does not prepare missing game files. Keep the client input in private storage; do not commit it or publish it as a workflow artifact. After configuring both secrets and rerunning Actions, inspect the client bundle, import it into the matching Horizon Nightly, launch an instance, and verify Arcforge registrations and progression in-world before calling the mod playable.
+
+## Cylinder visibility follow-up (2026-11-13)
+
+The previous disposable-world check verified 2,000 mB Wrought oxygen hand insertion and extraction, then confirmed the Cylinder still held 2,000 mB after save/reload. To address difficulty reading its level, the five-stage gauge display was doubled in size on all 25 tier/state models. The model now explicitly uses `minecraft:cutout` for its alpha valve texture, preventing the full model from entering the translucent terrain pass. Wrench inspection now reports gas name and exact amount/capacity in the action bar, and successful cartridge transfers also show this readout.
+
+| Check | Observed result | What it establishes |
+|---|---|---|
+| `cargo fmt --manifest-path api/Cargo.toml` | Passed. | Rust formatting is clean. |
+| Local `cargo check --locked --manifest-path api/Cargo.toml -j6` | Passed with zero errors and the existing unused `EnergyStore::transfer_to` warning. Remote SSH timed out and local sccache startup failed, so this used the direct local compiler fallback. | The Wrench and transfer readout code type-checks against the pinned API. |
+| Cylinder model JSON edits | 25 models parsed successfully; `git diff --check` passed. | All tiers and five gauge stages carry the larger display and cutout render type. |
+| Matching-client render and Wrench readout | Pending GitHub Actions build and disposable-world check. | Neighbor opacity and in-game readability are not yet confirmed. |
+
+No Horizon API or engine changes were made. No Rust tests were added or run.
