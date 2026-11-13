@@ -6,9 +6,11 @@ Port the complete survival gameplay scope of the pinned Arcforge release to Hori
 
 The current code is an early prototype, not a complete port. Continue implementing real gameplay from the scope in the root [README](../README.md), preserve Arcforge's recognizable mechanics and progression, and update the as-built and remaining-work documents whenever implementation changes.
 
-## Current milestone — shared Heat Upgrades, 2026-11-13
+## Current milestone — shared Heat and Combustion Energy Upgrades, 2026-11-13
 
 Commit `7abff4a` adds the source Heat Upgrade recipe and installs it on Firebox, Geothermal Plant, Fuel Burner, Thermoelectric Plant, Fiberizer, Vulcanizer, and Grain Dryer through the existing item-use hook. Up to eight cards are saved per machine. Heat output machines gain 12.5% output per card; heat-consuming processors pay the source `0.8^n` HU cost; the Thermoelectric Plant gets the source efficiency increase capped at 100% base efficiency before its separate Thermoelectric upgrades. Local Rust compilation and formatting pass. Run [43518862820](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43518862820) passed the mod-package job and its downloaded ZIP checksums were verified; the separate full Linux client build and in-world behavior checks are still pending. No test suite was run.
+
+The current Energy Upgrade slice adds the source recipe and saved eight-card installation on the Combustion Plant; each card increases FE output per fuel by 12.5%, matching Arcforge. Rust compilation passes. The source Energy Upgrade also reduces FE costs for consumers, which is still unimplemented on the currently ported consuming machines. GitHub build and in-world checks are pending; no test suite was run.
 
 ## Player progression
 

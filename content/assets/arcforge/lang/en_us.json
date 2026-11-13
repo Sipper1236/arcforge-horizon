@@ -40,6 +40,7 @@
   "item.arcforge.tempered_battery": "Tempered Battery",
   "item.arcforge.hardened_battery": "Hardened Battery",
   "item.arcforge.arcforged_battery": "Arcforged Battery",
+  "item.arcforge.energy_upgrade": "Energy Upgrade",
   "item.arcforge.heat_upgrade": "Heat Upgrade",
   "item.arcforge.thermoelectric_upgrade": "Thermoelectric Efficiency Upgrade"
 }

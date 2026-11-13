@@ -95,6 +95,8 @@ const HEAT_UPGRADE: &str = "arcforge:heat_upgrade";
 const HEAT_MAX_UPGRADES: u32 = 8;
 const HEAT_OUTPUT_PER_UPGRADE: f64 = 0.125;
 const HEAT_EFFICIENCY_COST_FACTOR: f64 = 0.8;
+const ENERGY_UPGRADE: &str = "arcforge:energy_upgrade";
+const ENERGY_MAX_UPGRADES: u32 = 8;
 const GEOTHERMAL_HEAT_CAPACITY: u64 = 60_000;
 const GEOTHERMAL_MAX_TEMPERATURE: u32 = 1_400;
 const GEOTHERMAL_LAVA_TANK_CAPACITY: u32 = 8_000;
@@ -456,6 +458,16 @@ impl Hooks for Arcforge {
         host: &mut dyn Host,
         event: &mut horizon_client::mod_api::UseItemOnEvent<'_>,
     ) -> Flow {
+        if event.stack.item.as_ref() == ENERGY_UPGRADE
+            && host
+                .mod_block_entity(event.pos)
+                .is_some_and(|entity| entity.id == COMBUSTION)
+        {
+            let Some(player) = host.acting_player() else {
+                return Flow::Continue;
+            };
+            return use_energy_upgrade(host, event.pos, event.stack, player.uuid);
+        }
         if event.stack.item.as_ref() == HEAT_UPGRADE {
             let Some(entity) = host.mod_block_entity(event.pos) else {
                 return Flow::Continue;
@@ -1003,6 +1015,7 @@ impl Hooks for Arcforge {
         register_content!(&mut event.items, id: PINE_RESIN.into(), template: "minecraft:slime_ball".into());
         register_content!(&mut event.items, id: WOOD_ASH.into(), template: "minecraft:bone_meal".into());
         register_content!(&mut event.items, id: "arcforge:thermocouple".into(), template: "minecraft:comparator".into());
+        register_content!(&mut event.items, id: ENERGY_UPGRADE.into(), template: "minecraft:redstone".into());
         register_content!(&mut event.items, id: HEAT_UPGRADE.into(), template: "minecraft:magma_cream".into());
         register_content!(&mut event.items, id: THERMOELECTRIC_UPGRADE.into(), template: "minecraft:comparator".into());
         register_content!(&mut event.items, id: "arcforge:receiver_tube".into(), template: "minecraft:glass_pane".into());
@@ -4995,6 +5008,57 @@ fn heat_upgrade_cost(base_cost: u64, upgrades: u32) -> u64 {
     .ceil() as u64
 }
 
+fn use_energy_upgrade(host: &mut dyn Host, pos: [i32; 3], held: &ItemStack, player: u128) -> Flow {
+    let Some(entity) = host.mod_block_entity(pos) else {
+        return Flow::Continue;
+    };
+    if entity.id != COMBUSTION {
+        return Flow::Continue;
+    }
+    let upgrades =
+        get_i32(&entity.nbt, "EnergyUpgrades").clamp(0, ENERGY_MAX_UPGRADES as i32) as u32;
+    if upgrades == ENERGY_MAX_UPGRADES {
+        host.action_bar(
+            player,
+            Text::literal(format!(
+                "Energy Upgrades: {upgrades}/{ENERGY_MAX_UPGRADES} (maximum)"
+            )),
+        );
+        return Flow::Cancel;
+    }
+    if host.take_items(ENERGY_UPGRADE, 1) == 0 {
+        return Flow::Continue;
+    }
+    let mut installed = false;
+    let changed = host.change_mod_block_entity(pos, &mut |target| {
+        if target.id != COMBUSTION {
+            return;
+        }
+        let current =
+            get_i32(&target.nbt, "EnergyUpgrades").clamp(0, ENERGY_MAX_UPGRADES as i32) as u32;
+        if current < ENERGY_MAX_UPGRADES {
+            set_i32(&mut target.nbt, "EnergyUpgrades", (current + 1) as i32);
+            installed = true;
+        }
+    });
+    if !changed || !installed {
+        let mut refund = held.clone();
+        refund.count = 1;
+        host.give_stack(player, refund);
+        return Flow::Continue;
+    }
+    host.block_entity_sync(pos);
+    let count = upgrades + 1;
+    host.action_bar(
+        player,
+        Text::literal(format!(
+            "Energy Upgrades: {count}/{ENERGY_MAX_UPGRADES} ({:.1}% increased output)",
+            f64::from(count) * 12.5
+        )),
+    );
+    Flow::Cancel
+}
+
 fn use_heat_upgrade(
     host: &mut dyn Host,
     pos: [i32; 3],
@@ -5753,6 +5817,10 @@ fn tick_combustion_plant(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlo
     );
     let mut burn = get_i32(&entity.nbt, "BurnTime").max(0);
     let mut burn_total = get_i32(&entity.nbt, "BurnDuration").max(0);
+    let energy_upgrades =
+        get_i32(&entity.nbt, "EnergyUpgrades").clamp(0, ENERGY_MAX_UPGRADES as i32) as u32;
+    let energy_per_tick =
+        (COMBUSTION_FE_PER_TICK as f64 * (1.0 + 0.125 * f64::from(energy_upgrades))).round() as u64;
 
     if energy.stored_fe() < COMBUSTION_CAPACITY_FE {
         if burn == 0 {
@@ -5776,7 +5844,7 @@ fn tick_combustion_plant(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlo
         }
 
         if burn > 0 {
-            let produced = energy.insert(COMBUSTION_FE_PER_TICK, COMBUSTION_FE_PER_TICK);
+            let produced = energy.insert(energy_per_tick, energy_per_tick);
             if produced > 0 {
                 burn -= 1;
                 if burn == 0 {
