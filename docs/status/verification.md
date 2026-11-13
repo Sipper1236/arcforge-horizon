@@ -2,6 +2,14 @@
 
 This file records observed checks only. Re-run checks after Rust or content changes; do not infer current results from an earlier build. For the completion criteria and current resume state, see [goal.md](../goal.md) and [handoff.md](../handoff.md).
 
+## Energy Cell feature package builds (2026-11-13)
+
+| Check | Result | What it establishes |
+|---|---|---|
+| GitHub Actions [43503798037](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43503798037), commit `2864301` | Package job passed, including Rust format/type check, 400-recipe Horizon content build/check, and native `.hnmod` packaging. Linux client job is still in progress. | The portable battery hand-transfer source and content pass the package build. No matching-client runtime behavior is established yet. |
+| GitHub Actions [43505199774](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43505199774), commit `2b16b81` | Package job passed, including Rust format/type check, Horizon content build/check, and native `.hnmod` packaging. Linux client job is still in progress. | The five-state Energy Cell block registration and content pass the package build. No client build or charge-model runtime behavior is established yet. |
+| Energy Cell charge visuals and battery hand transfer in-game | Not yet checked on a matching client. | Model rendering, block-state changes, FE transfer, and save/reload remain unverified. |
+
 ## Portable FE Battery local build (2026-11-13)
 
 | Check | Result | What it establishes |
