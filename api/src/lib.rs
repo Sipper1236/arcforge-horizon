@@ -461,7 +461,7 @@ impl Hooks for Arcforge {
         if event.stack.item.as_ref() == ENERGY_UPGRADE
             && host
                 .mod_block_entity(event.pos)
-                .is_some_and(|entity| entity.id == COMBUSTION)
+                .is_some_and(|entity| supports_energy_upgrade(&entity.id))
         {
             let Some(player) = host.acting_player() else {
                 return Flow::Continue;
@@ -2048,7 +2048,11 @@ fn tick_induction_furnace(host: &dyn Host, entity: &mut ModBlockEntity) {
         return;
     }
     let mut energy = energy::EnergyStore::new(20_000, get_i32(&entity.nbt, "energy").max(0) as u64);
-    if energy.extract(20, 20) != 20 {
+    let energy_cost = energy_upgrade_cost(
+        20,
+        get_i32(&entity.nbt, "EnergyUpgrades").clamp(0, ENERGY_MAX_UPGRADES as i32) as u32,
+    );
+    if energy.extract(energy_cost, energy_cost) != energy_cost {
         return;
     }
     let cook = get_i32(&entity.nbt, "CookTime").max(0) + 1;
@@ -2149,10 +2153,14 @@ fn tick_metal_press(host: &dyn Host, entity: &mut ModBlockEntity) {
         return;
     }
     let mut energy = energy::EnergyStore::new(20_000, get_i32(&entity.nbt, "energy").max(0) as u64);
-    if energy.stored_fe() < 20 {
+    let energy_cost = energy_upgrade_cost(
+        20,
+        get_i32(&entity.nbt, "EnergyUpgrades").clamp(0, ENERGY_MAX_UPGRADES as i32) as u32,
+    );
+    if energy.stored_fe() < energy_cost {
         return;
     }
-    energy.extract(20, 20);
+    energy.extract(energy_cost, energy_cost);
     let cook = get_i32(&entity.nbt, "CookTime").max(0) + 1;
     if cook >= recipe.ticks as i32 {
         for _ in 0..recipe.input_count {
@@ -2247,7 +2255,11 @@ fn tick_arc_crusher(host: &mut dyn Host, entity: &mut ModBlockEntity) {
         return;
     }
     let mut energy = energy::EnergyStore::new(20_000, get_i32(&entity.nbt, "energy").max(0) as u64);
-    if energy.extract(20, 20) != 20 {
+    let energy_cost = energy_upgrade_cost(
+        20,
+        get_i32(&entity.nbt, "EnergyUpgrades").clamp(0, ENERGY_MAX_UPGRADES as i32) as u32,
+    );
+    if energy.extract(energy_cost, energy_cost) != energy_cost {
         return;
     }
     let cook = get_i32(&entity.nbt, "CookTime").max(0) + 1;
@@ -2978,6 +2990,10 @@ fn tick_crushing_array(host: &mut dyn Host, entity: &mut ModBlockEntity) {
             continue;
         };
         let yield_multiplier = array_yield_multiplier(recipe.ore);
+        let energy_cost = energy_upgrade_cost(
+            16,
+            get_i32(&entity.nbt, "EnergyUpgrades").clamp(0, ENERGY_MAX_UPGRADES as i32) as u32,
+        );
         if recipe.result.as_ref().is_some_and(|(item, count)| {
             !can_add(
                 entity.items[output_slot].as_ref(),
@@ -2988,11 +3004,11 @@ fn tick_crushing_array(host: &mut dyn Host, entity: &mut ModBlockEntity) {
             .bonus
             .as_ref()
             .is_some_and(|(item, count)| !can_add(entity.items[bonus_slot].as_ref(), item, *count))
-            || energy.stored_fe() < 16
+            || energy.stored_fe() < energy_cost
         {
             continue;
         }
-        energy.extract(16, 16);
+        energy.extract(energy_cost, energy_cost);
         let key = format!("Lane{lane}CookTime");
         let cook = get_i32(&entity.nbt, &key).max(0) + 1;
         if cook >= recipe.ticks as i32 {
@@ -4473,7 +4489,11 @@ fn tick_infuser(host: &dyn Host, entity: &mut ModBlockEntity) {
         }
     }
     let mut energy = energy::EnergyStore::new(20_000, get_i32(&entity.nbt, "energy").max(0) as u64);
-    if energy.extract(20, 20) != 20 {
+    let energy_cost = energy_upgrade_cost(
+        20,
+        get_i32(&entity.nbt, "EnergyUpgrades").clamp(0, ENERGY_MAX_UPGRADES as i32) as u32,
+    );
+    if energy.extract(energy_cost, energy_cost) != energy_cost {
         return;
     }
     let cook = get_i32(&entity.nbt, "CookTime").max(0) + 1;
@@ -5012,7 +5032,7 @@ fn use_energy_upgrade(host: &mut dyn Host, pos: [i32; 3], held: &ItemStack, play
     let Some(entity) = host.mod_block_entity(pos) else {
         return Flow::Continue;
     };
-    if entity.id != COMBUSTION {
+    if !supports_energy_upgrade(&entity.id) {
         return Flow::Continue;
     }
     let upgrades =
@@ -5051,12 +5071,40 @@ fn use_energy_upgrade(host: &mut dyn Host, pos: [i32; 3], held: &ItemStack, play
     let count = upgrades + 1;
     host.action_bar(
         player,
-        Text::literal(format!(
-            "Energy Upgrades: {count}/{ENERGY_MAX_UPGRADES} ({:.1}% increased output)",
-            f64::from(count) * 12.5
-        )),
+        Text::literal(if entity.id == COMBUSTION {
+            format!(
+                "Energy Upgrades: {count}/{ENERGY_MAX_UPGRADES} ({:.1}% increased output)",
+                f64::from(count) * 12.5
+            )
+        } else {
+            format!(
+                "Energy Upgrades: {count}/{ENERGY_MAX_UPGRADES} ({:.1}% of base FE cost)",
+                0.8_f64.powf(f64::from(count)) * 100.0
+            )
+        }),
     );
     Flow::Cancel
+}
+
+fn supports_energy_upgrade(machine: &str) -> bool {
+    matches!(
+        machine,
+        COMBUSTION
+            | ARC_CRUSHER
+            | ARC_CRUSHING_ARRAY
+            | INDUCTION_FURNACE
+            | METAL_PRESS
+            | INFUSER
+            | FIBERIZER
+            | SIFTER
+    )
+}
+
+fn energy_upgrade_cost(base_cost: u64, upgrades: u32) -> u64 {
+    if base_cost == 0 {
+        return 0;
+    }
+    (base_cost as f64 * 0.8_f64.powf(f64::from(upgrades.min(ENERGY_MAX_UPGRADES)))).ceil() as u64
 }
 
 fn use_heat_upgrade(
@@ -5527,15 +5575,18 @@ fn tick_fiberizer(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntit
     let heat_upgrades =
         get_i32(&entity.nbt, "HeatUpgrades").clamp(0, HEAT_MAX_UPGRADES as i32) as u32;
     let heat_cost = heat_upgrade_cost(u64::from(recipe.hu_per_tick), heat_upgrades);
+    let energy_upgrades =
+        get_i32(&entity.nbt, "EnergyUpgrades").clamp(0, ENERGY_MAX_UPGRADES as i32) as u32;
+    let energy_cost = energy_upgrade_cost(u64::from(recipe.fe_per_tick), energy_upgrades);
     if heat.temperature_c() < recipe.min_temperature_c
         || heat.stored_hu() < heat_cost
-        || energy.stored_fe() < recipe.fe_per_tick as u64
+        || energy.stored_fe() < energy_cost
     {
         host.set_block_property(pos, "lit", "false");
         return;
     }
     heat.remove_hu(heat_cost);
-    energy.extract(recipe.fe_per_tick as u64, recipe.fe_per_tick as u64);
+    energy.extract(energy_cost, energy_cost);
     let cook = get_i32(&entity.nbt, "CookTime").max(0).saturating_add(1);
     if cook >= recipe.ticks as i32 {
         consume_one(&mut entity.items[0]);
@@ -5725,7 +5776,12 @@ fn tick_sifter(host: &mut dyn Host, entity: &mut ModBlockEntity) {
         return;
     }
     let ticks = ((recipe.ticks as f32 / mesh.speed_multiplier).round() as u32).max(1);
-    let draw = (recipe.energy_per_tick as f32 * mesh.speed_multiplier).ceil() as u32;
+    let base_draw = (recipe.energy_per_tick as f32 * mesh.speed_multiplier).ceil() as u32;
+    let draw = energy_upgrade_cost(
+        u64::from(base_draw),
+        get_i32(&entity.nbt, "EnergyUpgrades").clamp(0, ENERGY_MAX_UPGRADES as i32) as u32,
+    )
+    .min(u64::from(u32::MAX)) as u32;
     let mut energy = energy::EnergyStore::new(20_000, get_i32(&entity.nbt, "energy").max(0) as u64);
     if draw > 0 && energy.stored_fe() < draw as u64 {
         entity.data.resize(5, 0);
