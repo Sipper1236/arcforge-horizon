@@ -268,6 +268,11 @@ impl Hooks for Arcforge {
         }
         if let Some((capacity, _)) = energy_cell_spec(&event.stack.item) {
             let energy = item_energy_amount(event.stack, capacity);
+            host.set_block_property(
+                event.pos,
+                "charge",
+                &energy_cell_charge_level(energy, capacity).to_string(),
+            );
             if energy > 0 {
                 let item = event.stack.item.to_string();
                 host.change_mod_block_entity(event.pos, &mut |entity| {
@@ -837,6 +842,15 @@ impl Hooks for Arcforge {
             ARCFORGED_ENERGY_CELL,
         ] {
             register_content!(&mut event.blocks, id: id.into(), template: "minecraft:iron_block".into(), item: true);
+            if let Some(block) = event.blocks.iter_mut().find(|block| block.id == id) {
+                block.state_properties = serde_json::from_value(serde_json::json!({
+                    "charge": { "type": "enum", "values": ["0", "1", "2", "3", "4"] }
+                }))
+                .expect("valid Energy Cell charge block state");
+                block.default_state = [("charge".to_owned(), "0".to_owned())]
+                    .into_iter()
+                    .collect();
+            }
         }
         for id in heat_cell::ids() {
             register_content!(&mut event.blocks, id: id.into(), template: "minecraft:iron_block".into(), item: true);
@@ -1809,6 +1823,10 @@ impl Hooks for Arcforge {
                 let stored =
                     (get_i32(&event.entity.nbt, "energy").max(0) as u64).min(capacity) as i32;
                 cache_cell_charge(host.dimension(), event.pos, &event.entity.id, stored);
+                let charge = energy_cell_charge_level(stored as u64, capacity).to_string();
+                if host.block_property(event.pos, "charge").as_deref() != Some(&charge) {
+                    host.set_block_property(event.pos, "charge", &charge);
+                }
             }
             _ => {}
         }
@@ -5568,6 +5586,13 @@ fn energy_cell_spec(id: &str) -> Option<(u64, u64)> {
     }
 }
 
+fn energy_cell_charge_level(stored: u64, capacity: u64) -> u32 {
+    if stored == 0 || capacity == 0 {
+        return 0;
+    }
+    (stored.saturating_mul(4).div_ceil(capacity)).clamp(1, 4) as u32
+}
+
 fn energy_item_spec(item: &str) -> Option<(u64, u64)> {
     energy_cell_spec(item).or_else(|| portable_battery_spec(item))
 }
@@ -5705,6 +5730,11 @@ fn use_energy_item_on_cell(
         return Flow::Continue;
     }
     host.block_entity_sync(pos);
+    host.set_block_property(
+        pos,
+        "charge",
+        &energy_cell_charge_level(new_cell_energy, cell_capacity).to_string(),
+    );
     if let Some(player) = host.acting_player() {
         host.action_bar(
             player.uuid,

@@ -27,9 +27,9 @@ The port is complete when every feature in the pinned README inventory is one of
 
 The final quality pass must cover each progression chapter, clean installation, existing saves, save/reload, inventory and resource retention, output backpressure, supported automation, LAN/dedicated-server consistency, performance bounds, and source/content parity. API changes are outside this objective.
 
-## Current milestone — Energy Cell hand transfer, 2026-11-13
+## Current milestone — Energy Cell interaction and charge models, 2026-11-13
 
-Charged/empty Arcforge Energy Cell items and portable Batteries now have a mod-side hand interaction with Energy Cell blocks. Transfers honor item and cell capacities/rates, synchronize the saved item component and block entity, and show an action-bar amount. Stack sizes above one are rejected with a prompt to split first, avoiding per-item component duplication. This is an alpha replacement for the source's separate GUI slots. Formatting and Rust compile checks will be supplied by the upcoming GitHub build; no tests were added or run. Matching-client behavior and save/reload still need verification.
+Charged/empty Arcforge Energy Cell items and portable Batteries have a mod-side hand interaction with Energy Cell blocks. Transfers honor item and cell capacities/rates, synchronize the saved item component and block entity, and show an action-bar amount. Stack sizes above one are rejected with a prompt to split first, avoiding per-item component duplication. Five enum block states now select the existing empty-to-full Energy Cell models, and charge level is synchronized on placement, per-tick updates, and hand transfers. This is an alpha replacement for the source's separate GUI slots. The charge-state code and battery transfer need GitHub build and matching-client verification; save/reload and visual fill updates remain to verify. No tests were added or run.
 
 ## Earlier milestone — Heat Cell alpha slice, 2026-11-12
 
