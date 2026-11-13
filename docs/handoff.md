@@ -1,16 +1,15 @@
 # Project handoff: Arcforge for Horizon
 
-**Snapshot date:** 2026-11-12
+**Snapshot date:** 2026-11-13
 **Project:** `/home/rayyan/Projects/arcforge-horizon`  
 **Active goal:** see [goal.md](goal.md)  
-**Status:** Pressurized Cylinders and Gas Cartridges are committed as `dc3987d` and pushed to `main`. Rust `cargo check` passes locally with sccache; Horizon built and checked the content archive at 396 recipes (SHA-256 `795bc42c2285ceb9c4363d0476440855c33eede11aea798379d60fd62a49f5bd`). GitHub run [43360699934](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43360699934) passed the complete mod-package job and uploaded artifacts. Its Linux client job is currently compiling the Horizon launcher CLI. The hybrid remote Rust check reached a distributed worker missing files from `wayland-protocols-plasma`; local fallback passed. This slice has no in-world verification.
+**Status:** The current local diff adds four portable FE Battery items and recipes; it is not committed or pushed yet. Local `cargo check` passes (0 errors, one existing dead-code warning), and Horizon built/checked the 400-recipe pack (SHA-256 `82db30b04bb7b40457e813fb2a717a7cd4065ddf0da964090bc7d15e938aefba`). The hybrid remote Rust check reached a worker missing nested `wayland-protocols-plasma` XML files, so its result is unusable. The preceding cylinder commit `dc3987d` is pushed, and GitHub run [43360699934](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43360699934) passed both package and Linux client jobs; artifact checksums were verified. Neither the battery slice nor cylinder behavior has in-world verification.
 
 ## 1. Resume here
 
-1. Review the full diff and commit/push the current implementation and documentation to `main`.
-2. Watch run [43360699934](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43360699934) to see whether its native Linux client job completes. Confirm the client artifact contains `horizon-client`, `native-mods.json`, `arcforge.hmod`, `arcforge.hnmod`, `INSTALL.txt`, and `SHA256SUMS` if uploaded.
-3. Verify the published checksums and use the instructions in [CI build setup](ci-build.md). Copy `native-mods.json` into the imported version folder beside `horizon-client`; put and enable `arcforge.hmod` in the instance.
-4. Continue real gameplay checks: ore generation in newly generated chunks; basic recipes and crafting; Heat Cell and Cylinder charge/fluid transfer/save/reload loops; then machine processing. Do not describe all Arcforge gameplay as playable yet.
+1. Review, commit, and push the portable battery source, recipes, and updated docs; then watch the new GitHub Actions run for package and Linux native-client results.
+2. Use the verified artifact instructions in [CI build setup](ci-build.md). Copy `native-mods.json` into the imported version folder beside `horizon-client`; put and enable `arcforge.hmod` in a disposable instance.
+3. Continue real gameplay checks: ore generation in newly generated chunks; basic recipes and crafting; portable battery interoperability; Heat Cell and Cylinder charge/fluid transfer/save/reload loops; then machine processing. Do not describe all Arcforge gameplay as playable yet.
 
 **Observed local smoke:** On the pinned Nightly 2026-11-08 build, the imported client with matching manifest and content pack opened a disposable creative world. `/give arcforge:wrought_heat_cell 1` and `/give arcforge:steel_ingot 1` both succeeded and appeared in inventory. Runtime ore data parsed without skipped Arcforge placed features after conversion to `worldgen/feature/` and flattened target states. Conduit and Solar blockstate multipart definitions still log warnings; machine behavior, ore distribution, and progression were not verified.
 
@@ -131,7 +130,7 @@ See [not-built.md](status/not-built.md) for the organized backlog and [parity-no
 5. Run the checks listed in [verification.md](status/verification.md) after source/content changes. If no in-world test can be run, state that limitation explicitly and do not upgrade the evidence classification.
 6. Keep the user updated during sustained work, and report concrete changed files, behavior, check results, and remaining blockers.
 
-Next: the GitHub Actions content build is complete, but its `.hmod` is not installed in the disposable profile and its native Rust code is not integrated into a Horizon client bundle. After the player reviews the native source and personally chooses whether to accept Horizon's native-code trust prompt, build the pinned native bundle, restart the disposable profile, and verify that Arcforge items register before testing pooled FE/HU rates, face direction, hot-to-cold behavior, chunk loading, legacy charge migration, and save/reload in-world. Both schedulers are implemented in Rust but untested in a world. Solar output faces show static collar/heat-plate overlays on formed blocks; Arcforge's dynamic nozzle-depth rendering is not reproduced. The Firebox Array still lacks ports, alternate fuels, oxygen, flue gas, upgrades, and screen. Canister automation and content-preserving fluid upgrades remain open. Rust tests and an in-world gameplay trial remain outstanding. Direct `horizon-ctl` launch works offline with existing game files; the prior issue was that the instance used a stale native build, and its content pack was missing until it was copied and enabled.
+Next: commit and push the current portable FE Battery slice and documentation; monitor the resulting GitHub package and client build. Then use its matching artifact in a disposable Horizon instance and verify battery registration, item-energy interoperability, and save/reload. The previous CI artifact for `dc3987d` already passed both jobs, but predates these batteries. The wider in-world checks remain: ore distribution, crafting progression, heat/fluid/energy transfer and persistence, conduit visuals, and machine processing. The port remains incomplete. Direct `horizon-ctl` launch works offline with existing game files; use a disposable world for further checks.
 
 ## 7. Documentation map
 

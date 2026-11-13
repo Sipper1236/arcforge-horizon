@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " S ",
+    "TXT",
+    " T "
+  ],
+  "key": {
+    "S": "#c:plates/silver",
+    "T": "arcforge:tempered_alloy",
+    "X": "arcforge:wrought_battery"
+  },
+  "result": {
+    "id": "arcforge:tempered_battery",
+    "count": 1
+  }
+}

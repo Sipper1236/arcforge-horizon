@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " r ",
+    "WSW",
+    "WdW"
+  ],
+  "key": {
+    "r": "#c:rods/copper",
+    "W": "arcforge:wrought_alloy",
+    "S": "#c:plates/silver",
+    "d": "#c:dusts/redstone"
+  },
+  "result": {
+    "id": "arcforge:wrought_battery",
+    "count": 1
+  }
+}

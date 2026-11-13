@@ -116,6 +116,10 @@ const WROUGHT_ENERGY_CELL: &str = "arcforge:wrought_energy_cell";
 const TEMPERED_ENERGY_CELL: &str = "arcforge:tempered_energy_cell";
 const HARDENED_ENERGY_CELL: &str = "arcforge:hardened_energy_cell";
 const ARCFORGED_ENERGY_CELL: &str = "arcforge:arcforged_energy_cell";
+const WROUGHT_BATTERY: &str = "arcforge:wrought_battery";
+const TEMPERED_BATTERY: &str = "arcforge:tempered_battery";
+const HARDENED_BATTERY: &str = "arcforge:hardened_battery";
+const ARCFORGED_BATTERY: &str = "arcforge:arcforged_battery";
 const WRENCH: &str = "arcforge:wrench";
 const FURNACE_PORT: &str = "arcforge:arcforge_furnace_port";
 const FURNACE_BRICKS: &str = "arcforge:arcforge_furnace_bricks";
@@ -912,6 +916,14 @@ impl Hooks for Arcforge {
         for id in pressurized_cylinder::cartridge_ids() {
             register_content!(&mut event.items, id: id.into(), template: "minecraft:bucket".into(), max_stack_size: Some(1));
         }
+        for id in [
+            WROUGHT_BATTERY,
+            TEMPERED_BATTERY,
+            HARDENED_BATTERY,
+            ARCFORGED_BATTERY,
+        ] {
+            register_content!(&mut event.items, id: id.into(), template: "minecraft:redstone".into(), max_stack_size: Some(1));
+        }
         register_content!(&mut event.items, id: TUNGSTEN_HEATING_COIL.into(), template: "minecraft:iron_ingot".into());
         for (id, template) in [
             ("arcforge:hop_cones", "minecraft:wheat"),
@@ -1121,7 +1133,7 @@ impl Hooks for Arcforge {
         _host: &dyn Host,
         event: &mut ItemEnergyBufferEvent<'_>,
     ) -> Option<ItemEnergyBuffer> {
-        energy_cell_item_buffer(event.item)
+        portable_energy_item_buffer(event.item)
     }
 
     fn loot_drops(&self, _host: &mut dyn Host, event: &mut LootDropsEvent<'_>) {
@@ -5436,13 +5448,23 @@ fn energy_cell_spec(id: &str) -> Option<(u64, u64)> {
     }
 }
 
-fn energy_cell_item_buffer(item: &str) -> Option<ItemEnergyBuffer> {
-    let (capacity, rate) = energy_cell_spec(item)?;
+fn portable_energy_item_buffer(item: &str) -> Option<ItemEnergyBuffer> {
+    let (capacity, rate) = energy_cell_spec(item).or_else(|| portable_battery_spec(item))?;
     Some(ItemEnergyBuffer {
         capacity: i32::try_from(capacity).ok()?,
         max_insert: i32::try_from(rate).ok()?,
         max_extract: i32::try_from(rate).ok()?,
     })
+}
+
+fn portable_battery_spec(item: &str) -> Option<(u64, u64)> {
+    match item {
+        WROUGHT_BATTERY => Some((250_000, 1_000)),
+        TEMPERED_BATTERY => Some((1_000_000, 4_000)),
+        HARDENED_BATTERY => Some((4_000_000, 16_000)),
+        ARCFORGED_BATTERY => Some((16_000_000, 64_000)),
+        _ => None,
+    }
 }
 
 fn cache_cell_charge(dimension: &str, pos: [i32; 3], item: &str, energy: i32) {
@@ -9520,7 +9542,7 @@ mod tests {
             (ARCFORGED_ENERGY_CELL, 256_000_000, 262_144),
         ] {
             assert_eq!(
-                energy_cell_item_buffer(item),
+                portable_energy_item_buffer(item),
                 Some(ItemEnergyBuffer {
                     capacity,
                     max_insert: rate,
@@ -9528,7 +9550,7 @@ mod tests {
                 })
             );
         }
-        assert_eq!(energy_cell_item_buffer("minecraft:iron_ingot"), None);
+        assert_eq!(portable_energy_item_buffer("minecraft:iron_ingot"), None);
 
         let recipe_dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
             .join("../content/data/arcforge/recipe/crafting");

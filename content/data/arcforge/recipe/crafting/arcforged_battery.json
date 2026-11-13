@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " C ",
+    "AXA",
+    " S "
+  ],
+  "key": {
+    "C": "#c:gems/arcite",
+    "S": "#c:plates/silver",
+    "A": "arcforge:arcforged_alloy",
+    "X": "arcforge:hardened_battery"
+  },
+  "result": {
+    "id": "arcforge:arcforged_battery",
+    "count": 1
+  }
+}

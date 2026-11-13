@@ -35,5 +35,9 @@
   "block.arcforge.hardened_pressurized_cylinder": "Hardened Pressurized Cylinder",
   "item.arcforge.hardened_gas_cartridge": "Hardened Gas Cartridge",
   "block.arcforge.arcforged_pressurized_cylinder": "Arcforged Pressurized Cylinder",
-  "item.arcforge.arcforged_gas_cartridge": "Arcforged Gas Cartridge"
+  "item.arcforge.arcforged_gas_cartridge": "Arcforged Gas Cartridge",
+  "item.arcforge.wrought_battery": "Wrought Battery",
+  "item.arcforge.tempered_battery": "Tempered Battery",
+  "item.arcforge.hardened_battery": "Hardened Battery",
+  "item.arcforge.arcforged_battery": "Arcforged Battery"
 }

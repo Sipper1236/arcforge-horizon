@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " S ",
+    "HXH",
+    " H "
+  ],
+  "key": {
+    "S": "#c:plates/silver",
+    "H": "arcforge:hardened_alloy",
+    "X": "arcforge:tempered_battery"
+  },
+  "result": {
+    "id": "arcforge:hardened_battery",
+    "count": 1
+  }
+}

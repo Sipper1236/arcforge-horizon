@@ -2,6 +2,17 @@
 
 This file records observed checks only. Re-run checks after Rust or content changes; do not infer current results from an earlier build. For the completion criteria and current resume state, see [goal.md](../goal.md) and [handoff.md](../handoff.md).
 
+## Portable FE Battery local build (2026-11-13)
+
+| Check | Result | What it establishes |
+|---|---|---|
+| `cargo fmt --manifest-path api/Cargo.toml` | Passed. | Rust formatting completed. |
+| Hybrid remote `remote env CARGO_INCREMENTAL=0 cargo check --locked --manifest-path api/Cargo.toml -j16` | Failed on the distributed worker: `wayland-protocols-plasma` could not open nested Plasma protocol XML files; the job was stopped after stalling. The remote wrapper also reported the known missing `bc` utility in its transfer summary. | This remote attempt does not verify the Rust crate. |
+| Local fallback `CARGO_INCREMENTAL=0 cargo check --locked --manifest-path api/Cargo.toml -j6` | Passed: 0 errors; one existing dead-code warning for `EnergyStore::transfer_to`. | Current Rust source, including portable battery registrations, type-checks against the pinned Horizon API. |
+| Horizon content `cargo-horizon-mod build` and `check target/horizon-mod/arcforge.hmod` | Passed: 400 recipes, 3,522,365 bytes, SHA-256 `82db30b04bb7b40457e813fb2a717a7cd4065ddf0da964090bc7d15e938aefba` (unsigned). | Updated recipe, locale, and content pack pass the pinned Horizon checker. |
+| GitHub Actions | The pending battery changes are not yet pushed; no GitHub run covers them. Prior run [43360699934](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43360699934) passed package and Linux client jobs for commit `dc3987d`. | CI success is confirmed for the cylinder slice, not the current battery diff. |
+| In-world battery behavior | Not verified. | Battery charging, item-energy interoperability, and charge persistence remain unproven. |
+
 ## GitHub native client and disposable gameplay smoke check (2026-11-12)
 
 GitHub run [43340862715](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43340862715) built the checked `.hmod` and `.hnmod` plus a Linux x86_64 Horizon client with Arcforge's native Rust source. The first published client ZIP omitted Horizon's generated `native-mods.json`; importing the executable alone therefore started with vanilla registries. The workflow now packages this required manifest beside the executable and includes it in `SHA256SUMS`. The player must copy it beside `horizon-client` in the imported version folder after `import-build`.
