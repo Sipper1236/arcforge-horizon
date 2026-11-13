@@ -97,6 +97,8 @@ const HEAT_OUTPUT_PER_UPGRADE: f64 = 0.125;
 const HEAT_EFFICIENCY_COST_FACTOR: f64 = 0.8;
 const ENERGY_UPGRADE: &str = "arcforge:energy_upgrade";
 const ENERGY_MAX_UPGRADES: u32 = 8;
+const SPEED_UPGRADE: &str = "arcforge:speed_upgrade";
+const SPEED_MAX_UPGRADES: u32 = 8;
 const GEOTHERMAL_HEAT_CAPACITY: u64 = 60_000;
 const GEOTHERMAL_MAX_TEMPERATURE: u32 = 1_400;
 const GEOTHERMAL_LAVA_TANK_CAPACITY: u32 = 8_000;
@@ -458,6 +460,16 @@ impl Hooks for Arcforge {
         host: &mut dyn Host,
         event: &mut horizon_client::mod_api::UseItemOnEvent<'_>,
     ) -> Flow {
+        if event.stack.item.as_ref() == SPEED_UPGRADE
+            && host
+                .mod_block_entity(event.pos)
+                .is_some_and(|entity| supports_speed_upgrade(&entity.id))
+        {
+            let Some(player) = host.acting_player() else {
+                return Flow::Continue;
+            };
+            return use_speed_upgrade(host, event.pos, event.stack, player.uuid);
+        }
         if event.stack.item.as_ref() == ENERGY_UPGRADE
             && host
                 .mod_block_entity(event.pos)
@@ -1016,6 +1028,7 @@ impl Hooks for Arcforge {
         register_content!(&mut event.items, id: WOOD_ASH.into(), template: "minecraft:bone_meal".into());
         register_content!(&mut event.items, id: "arcforge:thermocouple".into(), template: "minecraft:comparator".into());
         register_content!(&mut event.items, id: ENERGY_UPGRADE.into(), template: "minecraft:redstone".into());
+        register_content!(&mut event.items, id: SPEED_UPGRADE.into(), template: "minecraft:sugar".into());
         register_content!(&mut event.items, id: HEAT_UPGRADE.into(), template: "minecraft:magma_cream".into());
         register_content!(&mut event.items, id: THERMOELECTRIC_UPGRADE.into(), template: "minecraft:comparator".into());
         register_content!(&mut event.items, id: "arcforge:receiver_tube".into(), template: "minecraft:glass_pane".into());
@@ -2047,16 +2060,21 @@ fn tick_induction_furnace(host: &dyn Host, entity: &mut ModBlockEntity) {
     ) {
         return;
     }
+    let speed_upgrades =
+        get_i32(&entity.nbt, "SpeedUpgrades").clamp(0, SPEED_MAX_UPGRADES as i32) as u32;
+    let speed = speed_upgrade_multiplier(speed_upgrades);
+    let ticks = speed_upgrade_time(recipe.ticks, speed_upgrades);
     let mut energy = energy::EnergyStore::new(20_000, get_i32(&entity.nbt, "energy").max(0) as u64);
-    let energy_cost = energy_upgrade_cost(
+    let energy_cost = scaled_upgrade_cost(
         20,
+        speed,
         get_i32(&entity.nbt, "EnergyUpgrades").clamp(0, ENERGY_MAX_UPGRADES as i32) as u32,
     );
     if energy.extract(energy_cost, energy_cost) != energy_cost {
         return;
     }
     let cook = get_i32(&entity.nbt, "CookTime").max(0) + 1;
-    if cook >= recipe.ticks as i32 {
+    if cook >= ticks as i32 {
         consume_one(&mut entity.items[0]);
         add_items(
             &mut entity.items[2],
@@ -2069,8 +2087,8 @@ fn tick_induction_furnace(host: &dyn Host, entity: &mut ModBlockEntity) {
     }
     set_i32(&mut entity.nbt, "energy", energy.stored_fe() as i32);
     entity.data.resize(4, 0);
-    entity.data[2] = cook.min(recipe.ticks as i32);
-    entity.data[3] = recipe.ticks.min(i32::MAX as u32) as i32;
+    entity.data[2] = cook.min(ticks as i32);
+    entity.data[3] = ticks.min(i32::MAX as u32) as i32;
 }
 
 fn smelting_recipe(item: &str) -> Option<&'static str> {
@@ -2152,9 +2170,14 @@ fn tick_metal_press(host: &dyn Host, entity: &mut ModBlockEntity) {
     {
         return;
     }
+    let speed_upgrades =
+        get_i32(&entity.nbt, "SpeedUpgrades").clamp(0, SPEED_MAX_UPGRADES as i32) as u32;
+    let speed = speed_upgrade_multiplier(speed_upgrades);
+    let ticks = speed_upgrade_time(recipe.ticks, speed_upgrades);
     let mut energy = energy::EnergyStore::new(20_000, get_i32(&entity.nbt, "energy").max(0) as u64);
-    let energy_cost = energy_upgrade_cost(
+    let energy_cost = scaled_upgrade_cost(
         20,
+        speed,
         get_i32(&entity.nbt, "EnergyUpgrades").clamp(0, ENERGY_MAX_UPGRADES as i32) as u32,
     );
     if energy.stored_fe() < energy_cost {
@@ -2162,7 +2185,7 @@ fn tick_metal_press(host: &dyn Host, entity: &mut ModBlockEntity) {
     }
     energy.extract(energy_cost, energy_cost);
     let cook = get_i32(&entity.nbt, "CookTime").max(0) + 1;
-    if cook >= recipe.ticks as i32 {
+    if cook >= ticks as i32 {
         for _ in 0..recipe.input_count {
             consume_one(&mut entity.items[0]);
         }
@@ -2177,8 +2200,8 @@ fn tick_metal_press(host: &dyn Host, entity: &mut ModBlockEntity) {
     }
     set_i32(&mut entity.nbt, "energy", energy.stored_fe() as i32);
     entity.data.resize(4, 0);
-    entity.data[2] = cook.min(recipe.ticks as i32);
-    entity.data[3] = recipe.ticks as i32;
+    entity.data[2] = cook.min(ticks as i32);
+    entity.data[3] = ticks as i32;
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -2254,16 +2277,21 @@ fn tick_arc_crusher(host: &mut dyn Host, entity: &mut ModBlockEntity) {
     {
         return;
     }
+    let speed_upgrades =
+        get_i32(&entity.nbt, "SpeedUpgrades").clamp(0, SPEED_MAX_UPGRADES as i32) as u32;
+    let speed = speed_upgrade_multiplier(speed_upgrades);
+    let ticks = speed_upgrade_time(recipe.ticks, speed_upgrades);
     let mut energy = energy::EnergyStore::new(20_000, get_i32(&entity.nbt, "energy").max(0) as u64);
-    let energy_cost = energy_upgrade_cost(
+    let energy_cost = scaled_upgrade_cost(
         20,
+        speed,
         get_i32(&entity.nbt, "EnergyUpgrades").clamp(0, ENERGY_MAX_UPGRADES as i32) as u32,
     );
     if energy.extract(energy_cost, energy_cost) != energy_cost {
         return;
     }
     let cook = get_i32(&entity.nbt, "CookTime").max(0) + 1;
-    if cook >= recipe.ticks as i32 {
+    if cook >= ticks as i32 {
         consume_one(&mut entity.items[0]);
         if let Some((output, count)) = &recipe.result {
             add_items(&mut entity.items[1], output, *count);
@@ -2284,8 +2312,8 @@ fn tick_arc_crusher(host: &mut dyn Host, entity: &mut ModBlockEntity) {
     }
     set_i32(&mut entity.nbt, "energy", energy.stored_fe() as i32);
     entity.data.resize(4, 0);
-    entity.data[2] = cook.min(recipe.ticks as i32);
-    entity.data[3] = recipe.ticks as i32;
+    entity.data[2] = cook.min(ticks as i32);
+    entity.data[3] = ticks as i32;
 }
 
 fn crushing_array_positions(center: [i32; 3]) -> impl Iterator<Item = [i32; 3]> {
@@ -2975,6 +3003,11 @@ fn tick_crushing_array(host: &mut dyn Host, entity: &mut ModBlockEntity) {
     }
     let mut energy =
         energy::EnergyStore::new(100_000, get_i32(&entity.nbt, "energy").max(0) as u64);
+    let speed_upgrades =
+        get_i32(&entity.nbt, "SpeedUpgrades").clamp(0, SPEED_MAX_UPGRADES as i32) as u32;
+    let speed = speed_upgrade_multiplier(speed_upgrades);
+    let energy_upgrades =
+        get_i32(&entity.nbt, "EnergyUpgrades").clamp(0, ENERGY_MAX_UPGRADES as i32) as u32;
     let first_lane = get_i32(&entity.nbt, "NextLane").rem_euclid(3) as usize;
     for offset in 0..3 {
         let lane = (first_lane + offset) % 3;
@@ -2990,10 +3023,8 @@ fn tick_crushing_array(host: &mut dyn Host, entity: &mut ModBlockEntity) {
             continue;
         };
         let yield_multiplier = array_yield_multiplier(recipe.ore);
-        let energy_cost = energy_upgrade_cost(
-            16,
-            get_i32(&entity.nbt, "EnergyUpgrades").clamp(0, ENERGY_MAX_UPGRADES as i32) as u32,
-        );
+        let energy_cost = scaled_upgrade_cost(16, speed, energy_upgrades);
+        let ticks = speed_upgrade_time(recipe.ticks, speed_upgrades);
         if recipe.result.as_ref().is_some_and(|(item, count)| {
             !can_add(
                 entity.items[output_slot].as_ref(),
@@ -3011,7 +3042,7 @@ fn tick_crushing_array(host: &mut dyn Host, entity: &mut ModBlockEntity) {
         energy.extract(energy_cost, energy_cost);
         let key = format!("Lane{lane}CookTime");
         let cook = get_i32(&entity.nbt, &key).max(0) + 1;
-        if cook >= recipe.ticks as i32 {
+        if cook >= ticks as i32 {
             consume_one(&mut entity.items[input_slot]);
             if let Some((output, count)) = &recipe.result {
                 add_items(
@@ -3035,7 +3066,7 @@ fn tick_crushing_array(host: &mut dyn Host, entity: &mut ModBlockEntity) {
             set_i32(&mut entity.nbt, &key, cook);
         }
         entity.data.resize(12, 0);
-        entity.data[lane] = cook.min(recipe.ticks as i32);
+        entity.data[lane] = cook.min(ticks as i32);
     }
     // Rotate priority so low FE input cannot permanently starve later lanes.
     set_i32(&mut entity.nbt, "NextLane", ((first_lane + 1) % 3) as i32);
@@ -4488,16 +4519,21 @@ fn tick_infuser(host: &dyn Host, entity: &mut ModBlockEntity) {
             return;
         }
     }
+    let speed_upgrades =
+        get_i32(&entity.nbt, "SpeedUpgrades").clamp(0, SPEED_MAX_UPGRADES as i32) as u32;
+    let speed = speed_upgrade_multiplier(speed_upgrades);
+    let ticks = speed_upgrade_time(recipe.ticks, speed_upgrades);
     let mut energy = energy::EnergyStore::new(20_000, get_i32(&entity.nbt, "energy").max(0) as u64);
-    let energy_cost = energy_upgrade_cost(
+    let energy_cost = scaled_upgrade_cost(
         20,
+        speed,
         get_i32(&entity.nbt, "EnergyUpgrades").clamp(0, ENERGY_MAX_UPGRADES as i32) as u32,
     );
     if energy.extract(energy_cost, energy_cost) != energy_cost {
         return;
     }
     let cook = get_i32(&entity.nbt, "CookTime").max(0) + 1;
-    if cook >= recipe.ticks as i32 {
+    if cook >= ticks as i32 {
         if let Some(count) = recipe.additive_count {
             if let Some(additive) = entity.items[4].as_mut() {
                 additive.count -= count;
@@ -4525,10 +4561,8 @@ fn tick_infuser(host: &dyn Host, entity: &mut ModBlockEntity) {
         energy.stored_fe().min(i32::MAX as u64) as i32,
     );
     entity.data.resize(4, 0);
-    entity.data[2] = get_i32(&entity.nbt, "CookTime")
-        .max(0)
-        .min(recipe.ticks as i32);
-    entity.data[3] = recipe.ticks as i32;
+    entity.data[2] = get_i32(&entity.nbt, "CookTime").max(0).min(ticks as i32);
+    entity.data[3] = ticks as i32;
 }
 
 fn firebox_fuel_ticks(item: &str) -> Option<u32> {
@@ -4543,6 +4577,14 @@ fn firebox_burn_duration(item: &str) -> Option<u32> {
     firebox_fuel_ticks(item).map(|ticks| ticks / FIREBOX_BURN_SPEED)
 }
 
+fn firebox_burn_duration_with_speed(item: &str, speed: f64) -> Option<u32> {
+    firebox_fuel_ticks(item).map(|ticks| {
+        (f64::from(ticks) / (f64::from(FIREBOX_BURN_SPEED) * speed))
+            .round()
+            .max(1.0) as u32
+    })
+}
+
 fn tick_fuel_burner(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity) {
     entity.items.resize(2, None);
     tick_fuel_burner_buckets(entity);
@@ -4552,7 +4594,11 @@ fn tick_fuel_burner(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnt
         FUEL_BURNER_MAX_TEMPERATURE,
         get_i32(&entity.nbt, "HeatHU").max(0) as u64,
     );
-    let mut fuel_taken_milli = get_i32(&entity.nbt, "FuelTakenMilli").clamp(0, 1000) as u32;
+    let speed_upgrades =
+        get_i32(&entity.nbt, "SpeedUpgrades").clamp(0, SPEED_MAX_UPGRADES as i32) as u32;
+    let speed = speed_upgrade_multiplier(speed_upgrades);
+    let burn_milli = (FUEL_BURNER_CREOSOTE_MILLI_MB_PER_TICK as f64 * speed).round() as u32;
+    let mut fuel_taken_milli = get_i32(&entity.nbt, "FuelTakenMilli").clamp(0, 16_000) as u32;
     let at_fuel_temperature = heat_at_temperature(
         FUEL_BURNER_HEAT_CAPACITY,
         FUEL_BURNER_MAX_TEMPERATURE,
@@ -4562,17 +4608,15 @@ fn tick_fuel_burner(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnt
     let mut heat_produced = 0;
     if (has_creosote || fuel_taken_milli > 0)
         && heat.stored_hu() < at_fuel_temperature
-        && fuel_taken_milli < FUEL_BURNER_CREOSOTE_MILLI_MB_PER_TICK
+        && fuel_taken_milli < burn_milli
     {
-        let need_milli = FUEL_BURNER_CREOSOTE_MILLI_MB_PER_TICK - fuel_taken_milli;
+        let need_milli = burn_milli - fuel_taken_milli;
         let need_mb = need_milli.div_ceil(1000);
         let taken = fluid::extract(&mut entity.nbt, 0, "arcforge:creosote", need_mb);
         fuel_taken_milli = fuel_taken_milli.saturating_add(taken.saturating_mul(1000));
     }
-    if heat.stored_hu() < at_fuel_temperature
-        && fuel_taken_milli >= FUEL_BURNER_CREOSOTE_MILLI_MB_PER_TICK
-    {
-        let burned_milli = FUEL_BURNER_CREOSOTE_MILLI_MB_PER_TICK;
+    if heat.stored_hu() < at_fuel_temperature && fuel_taken_milli >= burn_milli {
+        let burned_milli = burn_milli;
         fuel_taken_milli -= burned_milli;
         let base_generated =
             (u64::from(burned_milli) * u64::from(FUEL_BURNER_CREOSOTE_HU_PER_MB) + 500) / 1000;
@@ -4659,9 +4703,13 @@ fn tick_firebox(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity)
     entity.items.resize(2, None);
     let mut heat = heat::HeatStore::new(40_000, 1100, get_i32(&entity.nbt, "HeatHU").max(0) as u64);
     let mut burn = get_i32(&entity.nbt, "BurnTime").max(0) as u32;
+    let speed_upgrades =
+        get_i32(&entity.nbt, "SpeedUpgrades").clamp(0, SPEED_MAX_UPGRADES as i32) as u32;
+    let speed = speed_upgrade_multiplier(speed_upgrades);
     if burn == 0 && heat.stored_hu() < 40_000 {
         let fuel = entity.items[0].as_ref().and_then(|fuel| {
-            firebox_burn_duration(fuel.item.as_ref()).map(|ticks| (fuel.item.to_string(), ticks))
+            firebox_burn_duration_with_speed(fuel.item.as_ref(), speed)
+                .map(|ticks| (fuel.item.to_string(), ticks))
         });
         if let Some((fuel_item, ticks)) = fuel {
             if consume_one(&mut entity.items[0]) {
@@ -4674,7 +4722,7 @@ fn tick_firebox(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity)
     let heat_upgrades =
         get_i32(&entity.nbt, "HeatUpgrades").clamp(0, HEAT_MAX_UPGRADES as i32) as u32;
     let produced = if burn > 0 {
-        heat.add_hu((80.0 * heat_upgrade_multiplier(heat_upgrades)).round() as u64)
+        heat.add_hu((80.0 * speed * heat_upgrade_multiplier(heat_upgrades)).round() as u64)
     } else {
         0
     };
@@ -4744,27 +4792,35 @@ fn tick_geothermal_plant(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlo
         GEOTHERMAL_MAX_TEMPERATURE,
         get_i32(&entity.nbt, "HeatHU").max(0) as u64,
     );
-    let mut lava_burning = get_i32(&entity.nbt, "LavaBurning").clamp(0, i32::MAX) as u32;
+    let speed_upgrades =
+        get_i32(&entity.nbt, "SpeedUpgrades").clamp(0, SPEED_MAX_UPGRADES as i32) as u32;
+    let speed = speed_upgrade_multiplier(speed_upgrades);
+    let mut lava_burning_milli = match entity.nbt.get(&"LavaBurningMilli".into()) {
+        Some(Tag::Int(value)) => (*value).max(0) as u32,
+        _ => get_i32(&entity.nbt, "LavaBurning").max(0) as u32 * 1000,
+    };
     let mut lava_burn_total = get_i32(&entity.nbt, "LavaBurnTotal").max(0) as u32;
     let mut heat_per_tick = 0;
 
     if heat.stored_hu() < GEOTHERMAL_HEAT_CAPACITY {
-        if lava_burning == 0 {
-            lava_burning = crate::fluid::extract(
+        if lava_burning_milli == 0 {
+            lava_burning_milli = crate::fluid::extract(
                 &mut entity.nbt,
                 0,
                 "minecraft:lava",
                 GEOTHERMAL_LAVA_PER_BURN,
-            );
-            lava_burn_total = lava_burning;
+            ) * 1000;
+            lava_burn_total = lava_burning_milli / 1000;
         }
 
         let passive = lava_sources
             .saturating_mul(GEOTHERMAL_LAVA_SOURCE_HEAT_HU_PER_TICK)
             .saturating_add(magma_blocks.saturating_mul(GEOTHERMAL_MAGMA_HEAT_HU_PER_TICK));
-        let lava_heat = if lava_burning > 0 {
-            lava_burning -= 1;
-            GEOTHERMAL_LAVA_HEAT_HU_PER_MB
+        let lava_heat = if lava_burning_milli > 0 {
+            let drain_milli = ((speed * 1000.0).round() as u32).min(lava_burning_milli);
+            lava_burning_milli -= drain_milli;
+            (f64::from(GEOTHERMAL_LAVA_HEAT_HU_PER_MB) * f64::from(drain_milli) / 1000.0).round()
+                as u32
         } else {
             0
         };
@@ -4785,8 +4841,13 @@ fn tick_geothermal_plant(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlo
     set_i32(&mut entity.nbt, "TemperatureC", heat.temperature_c() as i32);
     set_i32(
         &mut entity.nbt,
+        "LavaBurningMilli",
+        lava_burning_milli.min(i32::MAX as u32) as i32,
+    );
+    set_i32(
+        &mut entity.nbt,
         "LavaBurning",
-        lava_burning.min(i32::MAX as u32) as i32,
+        div_ceil_u64(u64::from(lava_burning_milli), 1000).min(i32::MAX as u64) as i32,
     );
     set_i32(
         &mut entity.nbt,
@@ -4802,7 +4863,7 @@ fn tick_geothermal_plant(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlo
     entity.data[0] = heat.stored_hu().min(i32::MAX as u64) as i32;
     entity.data[1] = GEOTHERMAL_HEAT_CAPACITY as i32;
     entity.data[2] = heat.temperature_c() as i32;
-    entity.data[3] = lava_burning.min(i32::MAX as u32) as i32;
+    entity.data[3] = div_ceil_u64(u64::from(lava_burning_milli), 1000).min(i32::MAX as u64) as i32;
     entity.data[4] = lava_burn_total.min(i32::MAX as u32) as i32;
     entity.data[5] = heat_per_tick.min(i32::MAX as u64) as i32;
     entity.data[6] = lava_sources as i32;
@@ -5022,10 +5083,25 @@ fn heat_upgrade_multiplier(upgrades: u32) -> f64 {
     1.0 + HEAT_OUTPUT_PER_UPGRADE * f64::from(upgrades.min(HEAT_MAX_UPGRADES))
 }
 
-fn heat_upgrade_cost(base_cost: u64, upgrades: u32) -> u64 {
+fn speed_upgrade_multiplier(upgrades: u32) -> f64 {
+    2.0_f64.powf(f64::from(upgrades.min(SPEED_MAX_UPGRADES)) / 2.0)
+}
+
+fn speed_upgrade_time(base_time: u32, upgrades: u32) -> u32 {
+    (f64::from(base_time) / speed_upgrade_multiplier(upgrades))
+        .round()
+        .clamp(1.0, f64::from(u32::MAX)) as u32
+}
+
+fn scaled_upgrade_cost(base_cost: u64, rate_multiplier: f64, cost_upgrades: u32) -> u64 {
+    if base_cost == 0 {
+        return 0;
+    }
     (base_cost as f64
-        * HEAT_EFFICIENCY_COST_FACTOR.powf(f64::from(upgrades.min(HEAT_MAX_UPGRADES))))
-    .ceil() as u64
+        * rate_multiplier
+        * 0.8_f64.powf(f64::from(cost_upgrades.min(ENERGY_MAX_UPGRADES))))
+    .ceil()
+    .clamp(1.0, u64::MAX as f64) as u64
 }
 
 fn use_energy_upgrade(host: &mut dyn Host, pos: [i32; 3], held: &ItemStack, player: u128) -> Flow {
@@ -5049,9 +5125,10 @@ fn use_energy_upgrade(host: &mut dyn Host, pos: [i32; 3], held: &ItemStack, play
     if host.take_items(ENERGY_UPGRADE, 1) == 0 {
         return Flow::Continue;
     }
+    let machine = entity.id.clone();
     let mut installed = false;
     let changed = host.change_mod_block_entity(pos, &mut |target| {
-        if target.id != COMBUSTION {
+        if target.id != machine {
             return;
         }
         let current =
@@ -5100,11 +5177,68 @@ fn supports_energy_upgrade(machine: &str) -> bool {
     )
 }
 
-fn energy_upgrade_cost(base_cost: u64, upgrades: u32) -> u64 {
-    if base_cost == 0 {
-        return 0;
+fn supports_speed_upgrade(machine: &str) -> bool {
+    supports_energy_upgrade(machine)
+        || matches!(
+            machine,
+            FIREBOX
+                | GEOTHERMAL_PLANT
+                | FUEL_BURNER
+                | THERMOELECTRIC_PLANT
+                | VULCANIZER
+                | GRAIN_DRYER
+        )
+}
+
+fn use_speed_upgrade(host: &mut dyn Host, pos: [i32; 3], held: &ItemStack, player: u128) -> Flow {
+    let Some(entity) = host.mod_block_entity(pos) else {
+        return Flow::Continue;
+    };
+    if !supports_speed_upgrade(&entity.id) {
+        return Flow::Continue;
     }
-    (base_cost as f64 * 0.8_f64.powf(f64::from(upgrades.min(ENERGY_MAX_UPGRADES)))).ceil() as u64
+    let upgrades = get_i32(&entity.nbt, "SpeedUpgrades").clamp(0, SPEED_MAX_UPGRADES as i32) as u32;
+    if upgrades == SPEED_MAX_UPGRADES {
+        host.action_bar(
+            player,
+            Text::literal(format!(
+                "Speed Upgrades: {upgrades}/{SPEED_MAX_UPGRADES} (maximum)"
+            )),
+        );
+        return Flow::Cancel;
+    }
+    if host.take_items(SPEED_UPGRADE, 1) == 0 {
+        return Flow::Continue;
+    }
+    let machine = entity.id.clone();
+    let mut installed = false;
+    let changed = host.change_mod_block_entity(pos, &mut |target| {
+        if target.id != machine {
+            return;
+        }
+        let current =
+            get_i32(&target.nbt, "SpeedUpgrades").clamp(0, SPEED_MAX_UPGRADES as i32) as u32;
+        if current < SPEED_MAX_UPGRADES {
+            set_i32(&mut target.nbt, "SpeedUpgrades", (current + 1) as i32);
+            installed = true;
+        }
+    });
+    if !changed || !installed {
+        let mut refund = held.clone();
+        refund.count = 1;
+        host.give_stack(player, refund);
+        return Flow::Continue;
+    }
+    host.block_entity_sync(pos);
+    let count = upgrades + 1;
+    host.action_bar(
+        player,
+        Text::literal(format!(
+            "Speed Upgrades: {count}/{SPEED_MAX_UPGRADES} (×{:.2} speed)",
+            speed_upgrade_multiplier(count)
+        )),
+    );
+    Flow::Cancel
 }
 
 fn use_heat_upgrade(
@@ -5230,8 +5364,10 @@ fn use_thermoelectric_upgrade(
     Flow::Cancel
 }
 
-fn thermoelectric_heat_throughput() -> u64 {
-    (80.0 * f64::from(THERMOELECTRIC_MAX_TEMPERATURE - 20) / f64::from(1100 - 20)).round() as u64
+fn thermoelectric_heat_throughput(speed: f64) -> u64 {
+    (80.0 * f64::from(THERMOELECTRIC_MAX_TEMPERATURE - 20) / f64::from(1100 - 20) * speed)
+        .round()
+        .max(1.0) as u64
 }
 
 fn thermoelectric_convert(
@@ -5239,6 +5375,7 @@ fn thermoelectric_convert(
     energy: &mut energy::EnergyStore,
     thermoelectric_upgrades: u32,
     heat_upgrades: u32,
+    speed: f64,
 ) -> (u64, u64) {
     if energy.stored_fe() >= THERMOELECTRIC_FE_CAPACITY || heat.stored_hu() == 0 {
         return (0, 0);
@@ -5253,7 +5390,7 @@ fn thermoelectric_convert(
             + THERMOELECTRIC_UPGRADE_EFFICIENCY
                 * f64::from(thermoelectric_upgrades.min(THERMOELECTRIC_MAX_UPGRADES)));
     let wanted = div_ceil_u64(
-        thermoelectric_heat_throughput().saturating_mul(heat.stored_hu()),
+        thermoelectric_heat_throughput(speed).saturating_mul(heat.stored_hu()),
         THERMOELECTRIC_HEAT_CAPACITY,
     );
     let wanted_fe = (wanted as f64 * efficiency) as u64;
@@ -5282,8 +5419,15 @@ fn tick_thermoelectric_plant(host: &mut dyn Host, pos: [i32; 3], entity: &mut Mo
         .clamp(0, THERMOELECTRIC_MAX_UPGRADES as i32) as u32;
     let heat_upgrades =
         get_i32(&entity.nbt, "HeatUpgrades").clamp(0, HEAT_MAX_UPGRADES as i32) as u32;
-    let (heat_used, fe_generated) =
-        thermoelectric_convert(&mut heat, &mut energy, upgrades, heat_upgrades);
+    let speed_upgrades =
+        get_i32(&entity.nbt, "SpeedUpgrades").clamp(0, SPEED_MAX_UPGRADES as i32) as u32;
+    let (heat_used, fe_generated) = thermoelectric_convert(
+        &mut heat,
+        &mut energy,
+        upgrades,
+        heat_upgrades,
+        speed_upgrade_multiplier(speed_upgrades),
+    );
 
     push_adjacent_arcforge_energy(host, pos, &mut energy, THERMOELECTRIC_MAX_OUTPUT_FE, false);
     set_i32(
@@ -5414,7 +5558,11 @@ fn tick_grain_dryer_recipe(entity: &mut ModBlockEntity, recipe: Option<&DryingRe
     );
     let heat_upgrades =
         get_i32(&entity.nbt, "HeatUpgrades").clamp(0, HEAT_MAX_UPGRADES as i32) as u32;
-    let heat_cost = heat_upgrade_cost(u64::from(recipe.hu_per_tick), heat_upgrades);
+    let speed_upgrades =
+        get_i32(&entity.nbt, "SpeedUpgrades").clamp(0, SPEED_MAX_UPGRADES as i32) as u32;
+    let speed = speed_upgrade_multiplier(speed_upgrades);
+    let ticks = speed_upgrade_time(recipe.ticks, speed_upgrades);
+    let heat_cost = scaled_upgrade_cost(u64::from(recipe.hu_per_tick), speed, heat_upgrades);
     if heat.temperature_c() <= GRAIN_DRYER_MIN_TEMPERATURE || heat.stored_hu() < heat_cost {
         return false;
     }
@@ -5422,7 +5570,7 @@ fn tick_grain_dryer_recipe(entity: &mut ModBlockEntity, recipe: Option<&DryingRe
     set_i32(&mut entity.nbt, "HeatHU", heat.stored_hu() as i32);
     set_i32(&mut entity.nbt, "TemperatureC", heat.temperature_c() as i32);
     let progress = get_i32(&entity.nbt, "CookTime").max(0) as u32 + 1;
-    if progress >= recipe.ticks {
+    if progress >= ticks {
         if let Some((name, amount)) = &recipe.fluid {
             if fluid::extract(&mut entity.nbt, 0, name, *amount) != *amount {
                 set_i32(&mut entity.nbt, "CookTime", 0);
@@ -5445,7 +5593,7 @@ fn tick_grain_dryer_recipe(entity: &mut ModBlockEntity, recipe: Option<&DryingRe
     entity.data[1] = GRAIN_DRYER_HEAT_CAPACITY as i32;
     entity.data[2] = heat.temperature_c() as i32;
     entity.data[3] = get_i32(&entity.nbt, "CookTime");
-    entity.data[4] = recipe.ticks as i32;
+    entity.data[4] = ticks as i32;
     true
 }
 
@@ -5460,7 +5608,11 @@ fn tick_vulcanizer(entity: &mut ModBlockEntity) {
     );
     let heat_upgrades =
         get_i32(&entity.nbt, "HeatUpgrades").clamp(0, HEAT_MAX_UPGRADES as i32) as u32;
-    let heat_cost = heat_upgrade_cost(VULCANIZER_HU_PER_TICK, heat_upgrades);
+    let speed_upgrades =
+        get_i32(&entity.nbt, "SpeedUpgrades").clamp(0, SPEED_MAX_UPGRADES as i32) as u32;
+    let speed = speed_upgrade_multiplier(speed_upgrades);
+    let ticks = speed_upgrade_time(VULCANIZER_TICKS, speed_upgrades);
+    let heat_cost = scaled_upgrade_cost(u64::from(VULCANIZER_HU_PER_TICK), speed, heat_upgrades);
     let input_a = entity.items[0].as_ref();
     let input_b = entity.items[1].as_ref();
     let valid = input_a.is_some_and(|item| {
@@ -5481,14 +5633,14 @@ fn tick_vulcanizer(entity: &mut ModBlockEntity) {
             VULCANIZER_HEAT_CAPACITY as i32,
             heat.temperature_c() as i32,
             progress as i32,
-            VULCANIZER_TICKS as i32,
+            ticks as i32,
         ];
         return;
     }
     heat.remove_hu(heat_cost);
     set_i32(&mut entity.nbt, "HeatHU", heat.stored_hu() as i32);
     set_i32(&mut entity.nbt, "TemperatureC", heat.temperature_c() as i32);
-    if progress + 1 >= VULCANIZER_TICKS {
+    if progress + 1 >= ticks {
         consume_count(&mut entity.items[0], 2);
         consume_count(&mut entity.items[1], 1);
         add_items(&mut entity.items[2], "arcforge:rubber", 2);
@@ -5501,7 +5653,7 @@ fn tick_vulcanizer(entity: &mut ModBlockEntity) {
         VULCANIZER_HEAT_CAPACITY as i32,
         heat.temperature_c() as i32,
         get_i32(&entity.nbt, "Progress"),
-        VULCANIZER_TICKS as i32,
+        ticks as i32,
     ];
 }
 
@@ -5572,12 +5724,16 @@ fn tick_fiberizer(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntit
     }
     let mut heat = heat::HeatStore::new(10_000, 1100, get_i32(&entity.nbt, "HeatHU").max(0) as u64);
     let mut energy = energy::EnergyStore::new(20_000, get_i32(&entity.nbt, "energy").max(0) as u64);
+    let speed_upgrades =
+        get_i32(&entity.nbt, "SpeedUpgrades").clamp(0, SPEED_MAX_UPGRADES as i32) as u32;
+    let speed = speed_upgrade_multiplier(speed_upgrades);
+    let ticks = speed_upgrade_time(recipe.ticks, speed_upgrades);
     let heat_upgrades =
         get_i32(&entity.nbt, "HeatUpgrades").clamp(0, HEAT_MAX_UPGRADES as i32) as u32;
-    let heat_cost = heat_upgrade_cost(u64::from(recipe.hu_per_tick), heat_upgrades);
+    let heat_cost = scaled_upgrade_cost(u64::from(recipe.hu_per_tick), speed, heat_upgrades);
     let energy_upgrades =
         get_i32(&entity.nbt, "EnergyUpgrades").clamp(0, ENERGY_MAX_UPGRADES as i32) as u32;
-    let energy_cost = energy_upgrade_cost(u64::from(recipe.fe_per_tick), energy_upgrades);
+    let energy_cost = scaled_upgrade_cost(u64::from(recipe.fe_per_tick), speed, energy_upgrades);
     if heat.temperature_c() < recipe.min_temperature_c
         || heat.stored_hu() < heat_cost
         || energy.stored_fe() < energy_cost
@@ -5588,7 +5744,7 @@ fn tick_fiberizer(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntit
     heat.remove_hu(heat_cost);
     energy.extract(energy_cost, energy_cost);
     let cook = get_i32(&entity.nbt, "CookTime").max(0).saturating_add(1);
-    if cook >= recipe.ticks as i32 {
+    if cook >= ticks as i32 {
         consume_one(&mut entity.items[0]);
         add_items(
             &mut entity.items[1],
@@ -5614,7 +5770,7 @@ fn tick_fiberizer(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntit
     entity.data[0] = energy.stored_fe().min(i32::MAX as u64) as i32;
     entity.data[1] = heat.stored_hu().min(i32::MAX as u64) as i32;
     entity.data[2] = get_i32(&entity.nbt, "CookTime").max(0);
-    entity.data[3] = recipe.ticks as i32;
+    entity.data[3] = ticks as i32;
     entity.data[4] = heat.temperature_c() as i32;
     host.set_block_property(pos, "lit", "true");
 }
@@ -5775,10 +5931,16 @@ fn tick_sifter(host: &mut dyn Host, entity: &mut ModBlockEntity) {
     if !sifter_outputs_fit(entity, &recipe) {
         return;
     }
-    let ticks = ((recipe.ticks as f32 / mesh.speed_multiplier).round() as u32).max(1);
-    let base_draw = (recipe.energy_per_tick as f32 * mesh.speed_multiplier).ceil() as u32;
-    let draw = energy_upgrade_cost(
-        u64::from(base_draw),
+    let speed_upgrades =
+        get_i32(&entity.nbt, "SpeedUpgrades").clamp(0, SPEED_MAX_UPGRADES as i32) as u32;
+    let speed = speed_upgrade_multiplier(speed_upgrades) * f64::from(mesh.speed_multiplier);
+    let mesh_ticks = (f64::from(recipe.ticks) / f64::from(mesh.speed_multiplier))
+        .round()
+        .max(1.0) as u32;
+    let ticks = speed_upgrade_time(mesh_ticks, speed_upgrades);
+    let draw = scaled_upgrade_cost(
+        u64::from(recipe.energy_per_tick),
+        speed,
         get_i32(&entity.nbt, "EnergyUpgrades").clamp(0, ENERGY_MAX_UPGRADES as i32) as u32,
     )
     .min(u64::from(u32::MAX)) as u32;
@@ -5873,10 +6035,15 @@ fn tick_combustion_plant(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlo
     );
     let mut burn = get_i32(&entity.nbt, "BurnTime").max(0);
     let mut burn_total = get_i32(&entity.nbt, "BurnDuration").max(0);
+    let speed_upgrades =
+        get_i32(&entity.nbt, "SpeedUpgrades").clamp(0, SPEED_MAX_UPGRADES as i32) as u32;
+    let speed = speed_upgrade_multiplier(speed_upgrades);
     let energy_upgrades =
         get_i32(&entity.nbt, "EnergyUpgrades").clamp(0, ENERGY_MAX_UPGRADES as i32) as u32;
-    let energy_per_tick =
-        (COMBUSTION_FE_PER_TICK as f64 * (1.0 + 0.125 * f64::from(energy_upgrades))).round() as u64;
+    let energy_per_tick = (COMBUSTION_FE_PER_TICK as f64
+        * speed
+        * (1.0 + 0.125 * f64::from(energy_upgrades)))
+    .round() as u64;
 
     if energy.stored_fe() < COMBUSTION_CAPACITY_FE {
         if burn == 0 {
@@ -5889,8 +6056,10 @@ fn tick_combustion_plant(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlo
                 })
             });
             if let Some((fuel_item, Some(furnace_ticks))) = fuel {
-                let burn_speed = COMBUSTION_BURN_SPEED as i32;
-                let duration = (furnace_ticks + burn_speed - 1) / burn_speed;
+                let burn_speed = f64::from(COMBUSTION_BURN_SPEED) * speed;
+                let duration = (f64::from(furnace_ticks) / burn_speed)
+                    .round()
+                    .clamp(1.0, f64::from(i32::MAX)) as i32;
                 if consume_one(&mut entity.items[0]) {
                     burn = duration;
                     burn_total = duration;
