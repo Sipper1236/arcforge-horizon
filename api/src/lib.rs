@@ -88,6 +88,9 @@ const FIBERIZER: &str = "arcforge:fiberizer";
 const VULCANIZER: &str = "arcforge:vulcanizer";
 const GRAIN_DRYER: &str = "arcforge:grain_dryer";
 const THERMOELECTRIC_PLANT: &str = "arcforge:thermoelectric_plant";
+const THERMOELECTRIC_UPGRADE: &str = "arcforge:thermoelectric_upgrade";
+const THERMOELECTRIC_MAX_UPGRADES: u32 = 8;
+const THERMOELECTRIC_UPGRADE_EFFICIENCY: f64 = 0.0625;
 const GEOTHERMAL_HEAT_CAPACITY: u64 = 60_000;
 const GEOTHERMAL_MAX_TEMPERATURE: u32 = 1_400;
 const GEOTHERMAL_LAVA_TANK_CAPACITY: u32 = 8_000;
@@ -449,6 +452,16 @@ impl Hooks for Arcforge {
         host: &mut dyn Host,
         event: &mut horizon_client::mod_api::UseItemOnEvent<'_>,
     ) -> Flow {
+        if event.stack.item.as_ref() == THERMOELECTRIC_UPGRADE
+            && host
+                .mod_block_entity(event.pos)
+                .is_some_and(|entity| entity.id == THERMOELECTRIC_PLANT)
+        {
+            let Some(player) = host.acting_player() else {
+                return Flow::Continue;
+            };
+            return use_thermoelectric_upgrade(host, event.pos, event.stack, player.uuid);
+        }
         if energy_item_spec(&event.stack.item).is_some()
             && host
                 .mod_block_entity(event.pos)
@@ -966,6 +979,7 @@ impl Hooks for Arcforge {
         register_content!(&mut event.items, id: PINE_RESIN.into(), template: "minecraft:slime_ball".into());
         register_content!(&mut event.items, id: WOOD_ASH.into(), template: "minecraft:bone_meal".into());
         register_content!(&mut event.items, id: "arcforge:thermocouple".into(), template: "minecraft:comparator".into());
+        register_content!(&mut event.items, id: THERMOELECTRIC_UPGRADE.into(), template: "minecraft:comparator".into());
         register_content!(&mut event.items, id: "arcforge:receiver_tube".into(), template: "minecraft:glass_pane".into());
         register_content!(&mut event.items, id: "arcforge:trough_mirror".into(), template: "minecraft:iron_ingot".into());
         register_content!(&mut event.items, id: CREOSOTE_BUCKET.into(), template: "minecraft:bucket".into(), max_stack_size: Some(1));
@@ -4931,6 +4945,66 @@ fn thermoelectric_efficiency(temperature_c: u32) -> f64 {
     }
 }
 
+fn use_thermoelectric_upgrade(
+    host: &mut dyn Host,
+    pos: [i32; 3],
+    held: &ItemStack,
+    player: u128,
+) -> Flow {
+    let Some(entity) = host.mod_block_entity(pos) else {
+        return Flow::Continue;
+    };
+    if entity.id != THERMOELECTRIC_PLANT {
+        return Flow::Continue;
+    }
+    let upgrades = get_i32(&entity.nbt, "ThermoelectricUpgrades")
+        .clamp(0, THERMOELECTRIC_MAX_UPGRADES as i32) as u32;
+    if upgrades == THERMOELECTRIC_MAX_UPGRADES {
+        host.action_bar(
+            player,
+            Text::literal(format!(
+                "Thermoelectric Plant upgrades: {upgrades}/{THERMOELECTRIC_MAX_UPGRADES} (maximum)"
+            )),
+        );
+        return Flow::Cancel;
+    }
+    if host.take_items(THERMOELECTRIC_UPGRADE, 1) == 0 {
+        return Flow::Continue;
+    }
+    let mut installed = false;
+    let changed = host.change_mod_block_entity(pos, &mut |target| {
+        if target.id != THERMOELECTRIC_PLANT {
+            return;
+        }
+        let current = get_i32(&target.nbt, "ThermoelectricUpgrades")
+            .clamp(0, THERMOELECTRIC_MAX_UPGRADES as i32) as u32;
+        if current < THERMOELECTRIC_MAX_UPGRADES {
+            set_i32(
+                &mut target.nbt,
+                "ThermoelectricUpgrades",
+                (current + 1) as i32,
+            );
+            installed = true;
+        }
+    });
+    if !changed || !installed {
+        let mut refund = held.clone();
+        refund.count = 1;
+        host.give_stack(player, refund);
+        return Flow::Continue;
+    }
+    host.block_entity_sync(pos);
+    host.action_bar(
+        player,
+        Text::literal(format!(
+            "Thermoelectric Plant upgrades: {}/{THERMOELECTRIC_MAX_UPGRADES} (+{:.2}% efficiency)",
+            upgrades + 1,
+            THERMOELECTRIC_UPGRADE_EFFICIENCY * 100.0
+        )),
+    );
+    Flow::Cancel
+}
+
 fn thermoelectric_heat_throughput() -> u64 {
     (80.0 * f64::from(THERMOELECTRIC_MAX_TEMPERATURE - 20) / f64::from(1100 - 20)).round() as u64
 }
@@ -4938,11 +5012,15 @@ fn thermoelectric_heat_throughput() -> u64 {
 fn thermoelectric_convert(
     heat: &mut heat::HeatStore,
     energy: &mut energy::EnergyStore,
+    upgrades: u32,
 ) -> (u64, u64) {
     if energy.stored_fe() >= THERMOELECTRIC_FE_CAPACITY || heat.stored_hu() == 0 {
         return (0, 0);
     }
-    let efficiency = thermoelectric_efficiency(heat.temperature_c());
+    let efficiency = thermoelectric_efficiency(heat.temperature_c())
+        * (1.0
+            + THERMOELECTRIC_UPGRADE_EFFICIENCY
+                * f64::from(upgrades.min(THERMOELECTRIC_MAX_UPGRADES)));
     let wanted = div_ceil_u64(
         thermoelectric_heat_throughput().saturating_mul(heat.stored_hu()),
         THERMOELECTRIC_HEAT_CAPACITY,
@@ -4969,7 +5047,9 @@ fn tick_thermoelectric_plant(host: &mut dyn Host, pos: [i32; 3], entity: &mut Mo
         THERMOELECTRIC_FE_CAPACITY,
         get_i32(&entity.nbt, "energy").max(0) as u64,
     );
-    let (heat_used, fe_generated) = thermoelectric_convert(&mut heat, &mut energy);
+    let upgrades = get_i32(&entity.nbt, "ThermoelectricUpgrades")
+        .clamp(0, THERMOELECTRIC_MAX_UPGRADES as i32) as u32;
+    let (heat_used, fe_generated) = thermoelectric_convert(&mut heat, &mut energy, upgrades);
 
     push_adjacent_arcforge_energy(host, pos, &mut energy, THERMOELECTRIC_MAX_OUTPUT_FE, false);
     set_i32(
@@ -7669,7 +7749,7 @@ mod tests {
         assert_eq!(heat_at_full_efficiency.temperature_c(), 1100);
         let mut energy = energy::EnergyStore::new(THERMOELECTRIC_FE_CAPACITY, 0);
         assert_eq!(
-            thermoelectric_convert(&mut heat_at_full_efficiency, &mut energy),
+            thermoelectric_convert(&mut heat_at_full_efficiency, &mut energy, 0),
             (80, 80)
         );
         assert_eq!(energy.stored_fe(), 80);
@@ -7681,7 +7761,7 @@ mod tests {
         );
         let mut nearly_full_energy = energy::EnergyStore::new(THERMOELECTRIC_FE_CAPACITY, 49_999);
         assert_eq!(
-            thermoelectric_convert(&mut full_heat, &mut nearly_full_energy),
+            thermoelectric_convert(&mut full_heat, &mut nearly_full_energy, 0),
             (0, 0)
         );
         assert_eq!(full_heat.stored_hu(), THERMOELECTRIC_HEAT_CAPACITY);

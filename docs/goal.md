@@ -6,6 +6,10 @@ Port the complete survival gameplay scope of the pinned Arcforge release to Hori
 
 The current code is an early prototype, not a complete port. Continue implementing real gameplay from the scope in the root [README](../README.md), preserve Arcforge's recognizable mechanics and progression, and update the as-built and remaining-work documents whenever implementation changes.
 
+## Current milestone — Thermoelectric Efficiency Upgrades, 2026-11-13
+
+The Thermoelectric Efficiency Upgrade item is registered, has a source-shaped survival recipe, and installs through the existing item-on-block hook. Up to eight cards are saved on a Thermoelectric Plant; each adds 6.25% to the source temperature efficiency curve. Installation feedback shows the count and incremental efficiency. Source and content changes are prepared locally; next build and package the matching client through the authorized GitHub Actions workflow, verify its artifact, then report the exact in-game checks needed. No test suite was run.
+
 ## Player progression
 
 The desired experience is to discover new ores, generate power, build machines, make steel, and automate production, while staying close to Arcforge. The alpha may follow Arcforge's original chapter order; use the pinned [progression map](plan/progression.md) for player unlocks and build prerequisites early when needed. Do not invent easier recipes that bypass source gates without documenting an explicit alpha simplification.

@@ -2,6 +2,10 @@
 
 This file records observed checks only. Re-run checks after Rust or content changes; do not infer current results from an earlier build. For the completion criteria and current resume state, see [goal.md](../goal.md) and [handoff.md](../handoff.md).
 
+## Thermoelectric Efficiency Upgrade — pending verification (2026-11-13)
+
+The item registration, source-shaped recipe, saved per-plant upgrade count, eight-card cap, +6.25% efficiency per card, and action-bar feedback are implemented locally. No GitHub build or in-world behavior check has been performed for this slice yet. Verify crafting, installation, ninth-card rejection, FE output increase at fixed heat, and save/reload after the matching client build is available.
+
 ## Energy Cell feature package builds (2026-11-13)
 
 | Check | Result | What it establishes |
