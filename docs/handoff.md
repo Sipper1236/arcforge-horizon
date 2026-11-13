@@ -3,11 +3,11 @@
 **Snapshot date:** 2026-11-13
 **Project:** `/home/rayyan/Projects/arcforge-horizon`  
 **Active goal:** see [goal.md](goal.md)  
-**Status:** Portable FE Battery items and recipes are committed as `1585e3d`. Its CI client exposed and reproduced a Cylinder gauge registry crash; fix `f78b881` uses Horizon's supported enum state property. GitHub run [43366816469](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43366816469) passed package and Linux client jobs; the 41,184,952-byte bundle's internal checksums passed. The corrected client opened the disposable `arcforge-battery-test` world with an offline name, registered `arcforge:wrought_battery`, and `/give` plus inventory/event checks confirmed one item; save and quit succeeded. Battery charging, energy transfer, and persistence remain unverified. The hybrid remote Rust check is still unusable because its distributed worker lacks nested `wayland-protocols-plasma` XML files.
+**Status:** Portable FE Battery items and recipes are committed as `1585e3d`. Its CI client exposed and reproduced a Cylinder gauge registry crash; fix `f78b881` uses Horizon's supported enum state property. GitHub run [43366816469](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43366816469) passed package and Linux client jobs; the 41,184,952-byte bundle's internal checksums passed. The corrected client opened the disposable `arcforge-battery-test` world with an offline name and registered the battery. A Wrought Gas Cartridge then transferred all 32,000 mB of oxygen into a Wrought Cylinder, whose gauge reached level 2; save and quit succeeded. The reverse transfer, player menu access, save/reload, and battery behavior remain unverified. The hybrid remote Rust check is still unusable because its distributed worker lacks nested `wayland-protocols-plasma` XML files.
 
 ## 1. Resume here
 
-1. Build targeted gameplay evidence for the battery item-energy capability, charging/interoperability, and save/reload; inspect Cylinder slot transfer and saved gas next.
+1. Build targeted gameplay evidence for battery item-energy behavior and persistence; check Cylinder reverse transfer, ordinary break/place charge retention, and saved gas after reload. The one-way Wrought gas transfer is verified, but right-click does not open a player menu in this Horizon build.
 2. Continue real gameplay checks: ore generation in newly generated chunks; basic recipes and crafting; Heat Cell transfer/save/reload; then machine processing. Do not describe all Arcforge gameplay as playable yet.
 3. Use the verified artifact instructions in [CI build setup](ci-build.md); the corrected Linux client is available from run [43366816469](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43366816469).
 
