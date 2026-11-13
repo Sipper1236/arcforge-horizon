@@ -3,13 +3,12 @@
 **Snapshot date:** 2026-11-13
 **Project:** `/home/rayyan/Projects/arcforge-horizon`  
 **Active goal:** see [goal.md](goal.md)  
-**Status:** Gas Cartridge hand insertion/extraction is committed as `45d4633`. In the disposable world, the corrected client transferred 2,000 mB oxygen from a cartridge into a Wrought Cylinder, extracted it back, and retained 2,000 mB in the Cylinder after save/reload. The current uncommitted visibility fix enlarges the five-stage Cylinder gauge, assigns its alpha texture to the cutout render layer, and adds a Wrench action-bar readout with gas name and exact amount/capacity. It passed local Rust `cargo check`; remote SSH and local sccache were unavailable, so this was a direct local fallback. The visibility changes still need a GitHub build and matching-client visual/runtime check.
+**Status:** Cylinder visibility fix `1e5d989` passed local compilation and GitHub run [43488089381](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43488089381), including the complete Linux client build and verified artifact checksums. The matching client and content pack were installed in the disposable profile. The Wrench displayed `Cylinder: arcforge:oxygen, 8000/64000 mB (gauge 0/4)`, and the user confirmed that the larger gauge and neighboring-block opacity work in-game. Earlier disposable-world checks verified hand insertion/extraction and gas persistence through save/reload.
 
 ## 1. Resume here
 
-1. Build the Cylinder visibility fix on GitHub, install the matching artifact in the disposable profile, and verify the enlarged gauge, opaque neighboring blocks, and Wrench amount readout in-game. Then check ordinary Cylinder break/place retention; battery item-energy behavior and persistence also need runtime evidence.
-2. Continue real gameplay checks: ore generation in newly generated chunks; basic recipes and crafting; Heat Cell transfer/save/reload; then machine processing. Do not describe all Arcforge gameplay as playable yet.
-3. Use the verified artifact instructions in [CI build setup](ci-build.md); the corrected Linux client is available from run [43366816469](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43366816469).
+1. Continue gameplay checks: ordinary Cylinder break/place retention; battery item-energy behavior and persistence; then ore generation, recipes, and machine processing. Do not describe all Arcforge gameplay as playable yet.
+2. Use the verified artifact instructions in [CI build setup](ci-build.md); the matching visibility-fix client is available from run [43488089381](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43488089381).
 
 **Observed local smoke:** On the pinned Nightly 2026-11-08 build, the imported client with matching manifest and content pack opened a disposable creative world. `/give arcforge:wrought_heat_cell 1` and `/give arcforge:steel_ingot 1` both succeeded and appeared in inventory. Runtime ore data parsed without skipped Arcforge placed features after conversion to `worldgen/feature/` and flattened target states. Conduit and Solar blockstate multipart definitions still log warnings; machine behavior, ore distribution, and progression were not verified.
 

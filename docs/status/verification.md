@@ -360,6 +360,6 @@ The previous disposable-world check verified 2,000 mB Wrought oxygen hand insert
 | `cargo fmt --manifest-path api/Cargo.toml` | Passed. | Rust formatting is clean. |
 | Local `cargo check --locked --manifest-path api/Cargo.toml -j6` | Passed with zero errors and the existing unused `EnergyStore::transfer_to` warning. Remote SSH timed out and local sccache startup failed, so this used the direct local compiler fallback. | The Wrench and transfer readout code type-checks against the pinned API. |
 | Cylinder model JSON edits | 25 models parsed successfully; `git diff --check` passed. | All tiers and five gauge stages carry the larger display and cutout render type. |
-| Matching-client render and Wrench readout | Pending GitHub Actions build and disposable-world check. | Neighbor opacity and in-game readability are not yet confirmed. |
+| Matching-client render and Wrench readout | GitHub run [43488089381](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43488089381) passed both jobs; all client bundle hashes verified. In the disposable world, Wrench inspection displayed `Cylinder: arcforge:oxygen, 8000/64000 mB (gauge 0/4)`. The user confirmed the larger gauge and opaque adjacent blocks in-game. | The user-visible gauge, readout, and neighboring-block render issue are confirmed fixed on the matching client. |
 
 No Horizon API or engine changes were made. No Rust tests were added or run.
