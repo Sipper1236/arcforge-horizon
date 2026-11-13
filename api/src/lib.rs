@@ -499,6 +499,25 @@ impl Hooks for Arcforge {
                 player.selected_slot as i32,
             );
         }
+        if pressurized_cylinder::cartridge_spec(&event.stack.item).is_some()
+            && host
+                .mod_block_entity(event.pos)
+                .is_some_and(|entity| pressurized_cylinder::cylinder_capacity(&entity.id).is_some())
+        {
+            let Some(face) = fluid_bucket_face(event.face) else {
+                return Flow::Continue;
+            };
+            let Some(player) = host.acting_player() else {
+                return Flow::Continue;
+            };
+            return use_gas_cartridge(
+                host,
+                event.pos,
+                face,
+                event.stack,
+                player.selected_slot as i32,
+            );
+        }
         if event.stack.item.as_ref() != WRENCH {
             return Flow::Continue;
         }
@@ -3953,6 +3972,62 @@ fn use_arcforge_fluid_container(
     let updated = item_with_fluid(held, &actual, extracted);
     if !replace_carried_stack(host, selected_slot, held, updated) {
         host.fluid_insert(pos, face, &actual, extracted as i32);
+        return Flow::Continue;
+    }
+    Flow::Cancel
+}
+
+fn use_gas_cartridge(
+    host: &mut dyn Host,
+    pos: [i32; 3],
+    face: Direction,
+    held: &ItemStack,
+    selected_slot: i32,
+) -> Flow {
+    let Some((capacity, rate)) = pressurized_cylinder::cartridge_spec(&held.item) else {
+        return Flow::Continue;
+    };
+    let contents = pressurized_cylinder::item_fluid(held);
+    if contents
+        .as_ref()
+        .is_some_and(|(gas, amount)| *amount > capacity || !fluid_conduit::is_arcforge_gas(gas))
+    {
+        return Flow::Continue;
+    }
+
+    if let Some((gas, amount)) = contents {
+        let offered = amount.min(rate);
+        let remaining = host
+            .fluid_insert(pos, face, &gas, offered as i32)
+            .clamp(0, offered as i32);
+        let inserted = offered - remaining as u32;
+        if inserted == 0 {
+            return Flow::Continue;
+        }
+        let updated = item_with_fluid(held, &gas, amount - inserted);
+        if !replace_carried_stack(host, selected_slot, held, updated) {
+            host.fluid_extract(host.dimension(), pos, face, inserted as i32);
+            return Flow::Continue;
+        }
+        return Flow::Cancel;
+    }
+
+    let Some((gas, extracted)) =
+        host.fluid_extract(host.dimension(), pos, face, capacity.min(rate) as i32)
+    else {
+        return Flow::Continue;
+    };
+    let extracted = extracted.clamp(0, capacity.min(rate) as i32) as u32;
+    if extracted == 0 {
+        return Flow::Continue;
+    }
+    if !fluid_conduit::is_arcforge_gas(&gas) {
+        host.fluid_insert(pos, face, &gas, extracted as i32);
+        return Flow::Continue;
+    }
+    let updated = item_with_fluid(held, &gas, extracted);
+    if !replace_carried_stack(host, selected_slot, held, updated) {
+        host.fluid_insert(pos, face, &gas, extracted as i32);
         return Flow::Continue;
     }
     Flow::Cancel
