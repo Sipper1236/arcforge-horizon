@@ -162,9 +162,15 @@ jobs:
             --minecraft "$PWD/ci-minecraft" \
             --version nightly-2026-11-08-fdc87ae
 
+      - name: Stage the native mod source for Horizon's symlink-safe packer
+        run: |
+          mkdir -p target/native-build/arcforge/api
+          cp horizon-mixin.toml target/native-build/arcforge/
+          cp -a api/Cargo.toml api/Cargo.lock api/src target/native-build/arcforge/api/
+
       - name: Build Arcforge into a Linux Horizon client
         run: |
-          horizon-source/launcher/target/debug/horizon-launcher native-build "$PWD" \
+          horizon-source/launcher/target/debug/horizon-launcher native-build "$PWD/target/native-build/arcforge" \
             --instance arcforge-ci \
             --version nightly-2026-11-08-fdc87ae \
             --profile performance \
