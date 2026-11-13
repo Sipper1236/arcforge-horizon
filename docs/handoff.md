@@ -3,7 +3,7 @@
 **Snapshot date:** 2026-11-13
 **Project:** `/home/rayyan/Projects/arcforge-horizon`  
 **Active goal:** see [goal.md](goal.md)  
-**Status:** The user confirmed the Cylinder gauge and neighboring-block opacity fix works in-game. Earlier checks also verified cartridge hand transfer and gas persistence. Portable Battery hand transfer, Energy Cell charge stages, stack limits, and Wrench FE readout are committed and built in GitHub Actions; Energy Cell behavior still needs in-game verification. The current uncommitted slice adds the Thermoelectric Efficiency Upgrade recipe/item, saved eight-card installation, +6.25% efficiency per card, and action-bar feedback. It has not yet been built by GitHub Actions or tested in-world. Continue with a package/client build and artifact verification before giving the user test steps.
+**Status:** The user confirmed the Cylinder gauge and neighboring-block opacity fix works in-game. Earlier checks also verified cartridge hand transfer and gas persistence. Portable Battery hand transfer, Energy Cell charge stages, stack limits, and Wrench FE readout are committed and built in GitHub Actions; Energy Cell behavior still needs in-game verification. Commit `6ace306` adds the Thermoelectric Efficiency Upgrade recipe/item, saved eight-card installation, +6.25% efficiency per card, and action-bar feedback. It has not yet been built by GitHub Actions or tested in-world. Continue with a package/client build and artifact verification before giving the user test steps.
 
 ## 1. Resume here
 
