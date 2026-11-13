@@ -17,9 +17,7 @@ Push a change under `api/`, `content/`, `tools/`, or the workflow, or use **Acti
 
 ## Current verification
 
-GitHub run [43506438439](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43506438439) passed both package and Linux native-client jobs for commit `461fb88`. The 41,288,319-byte playable-client ZIP passed archive integrity and its internal SHA256SUMS; outer SHA-256: `34290a097b5e6c085c21deb29d019e89552b3db8c1cfd0b0cd113c8102566121`. The current source adds Wrench inspection for Energy Cell FE and gauge stage, so this artifact predates that change. Energy Cell behavior is not yet verified in-game.
-
-GitHub run [43510577279](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43510577279) for commit `2513e2d` has passed its package job, including Rust compilation and Horizon content checks. Its Linux native-client build is in progress. This revision adds Wrench inspection for exact Energy Cell FE and charge stage.
+GitHub run [43510577279](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43510577279) for commit `2513e2d` passed both package and Linux native-client jobs. The 41,288,224-byte playable-client ZIP passed archive integrity and its internal SHA256SUMS; outer SHA-256: `09240cd0193f78a64cb8dcfb721d16614358fc216a2b30c96c0873b3ba0cc389`. This revision includes Wrench inspection for exact Energy Cell FE and charge stage. Energy Cell behavior is not yet verified in-game.
 
 
 The initial native client artifact omitted Horizon's generated `native-mods.json`, so importing its executable alone did not activate Arcforge's registries. The workflow now packages that file too. Runtime verification also found a duplicate `arcforge:raw_rubber` item registration; it is now declared once through the shared catalog. Ore feature JSON now uses Horizon 26.3's flattened `worldgen/feature/` format, so ore generation can be read by the pinned build. The imported executable plus its manifest and content pack passed an isolated item-registration smoke check; full progression and machine behavior still need in-world play verification.
