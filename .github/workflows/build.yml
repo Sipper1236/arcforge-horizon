@@ -188,8 +188,10 @@ jobs:
           native_version_dir="$(find "$HORIZON_LAUNCHER_HOME/versions" -mindepth 1 -maxdepth 1 -type d -name 'native-fdc87ae-*' -print -quit)"
           test -n "$native_version_dir"
           test -x "$native_version_dir/horizon-client"
+          test -s "$native_version_dir/native-mods.json"
           mkdir -p target/arcforge-linux-x86_64
           cp "$native_version_dir/horizon-client" target/arcforge-linux-x86_64/horizon-client
+          cp "$native_version_dir/native-mods.json" target/arcforge-linux-x86_64/
           cp target/mod-files/arcforge.hmod target/arcforge-linux-x86_64/
           cp target/mod-files/arcforge.hnmod target/arcforge-linux-x86_64/
           cat > target/arcforge-linux-x86_64/INSTALL.txt <<'EOF'
@@ -204,9 +206,23 @@ jobs:
               --version nightly-2026-11-08-fdc87ae --trust-unsigned
 
           Use the imported version for an instance, and install arcforge.hmod in that instance
-          for recipes, loot, tags, and other content. arcforge.hnmod is the matching source bundle.
+          for recipes, loot, tags, and other content. The imported executable also needs its
+          matching native-mods.json beside horizon-client in that imported version's folder;
+          without it Horizon does not activate the compiled mod registrations.
+
+          On Linux, the default folder is:
+            ${XDG_DATA_HOME:-$HOME/.local/share}/horizon-launcher/versions/<imported-version>/
+          If HORIZON_LAUNCHER_HOME is set, use $HORIZON_LAUNCHER_HOME/versions/<imported-version>/.
+          Replace <imported-version> with the tag printed by import-build, then run:
+
+            launcher_data="${HORIZON_LAUNCHER_HOME:-${XDG_DATA_HOME:-$HOME/.local/share}/horizon-launcher}"
+            cp ./native-mods.json "$launcher_data/versions/<imported-version>/native-mods.json"
+
+          Put arcforge.hmod in the instance's horizon-mods/ folder and enable mod.arcforge:true
+          in that instance's horizon-mods.txt (or switch it on in Options > Mods).
+          arcforge.hnmod is the matching native source bundle.
           EOF
-          (cd target/arcforge-linux-x86_64 && sha256sum horizon-client arcforge.hmod arcforge.hnmod > SHA256SUMS)
+          (cd target/arcforge-linux-x86_64 && sha256sum horizon-client native-mods.json arcforge.hmod arcforge.hnmod > SHA256SUMS)
           file target/arcforge-linux-x86_64/horizon-client
           python3 - <<'PY'
           from pathlib import Path

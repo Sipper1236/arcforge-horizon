@@ -7,9 +7,9 @@ The client job reads Horizon's pinned Minecraft hashes from its checked-out `res
 ## Artifacts
 
 - `arcforge-<commit>`: `.hmod`, `.hnmod`, checksums, and a combined install ZIP.
-- `arcforge-playable-linux-x86_64-<commit>`: importable Horizon client executable plus the matching mod files and installation instructions.
+- `arcforge-playable-linux-x86_64-<commit>`: Horizon client executable, the native build's required `native-mods.json`, matching mod files, checksums, and installation instructions.
 
-The client artifact is for the Horizon Nightly commit pinned in the workflow. Import it into that Horizon version, then enable/install the bundled `arcforge.hmod` in the target instance. The executable contains the native Rust code; the `.hmod` supplies recipes, loot, tags, and other data.
+The client artifact is for the Horizon Nightly commit pinned in the workflow. Import it into that Horizon version and copy the included `native-mods.json` beside `horizon-client` in the imported version folder. Horizon uses that file to activate the compiled native registrations; importing only the executable starts vanilla registries. Then enable `arcforge.hmod` in the target instance for recipes, loot, tags, and other data. The `.hnmod` is the matching native source bundle.
 
 ## Re-run the build
 
@@ -17,4 +17,4 @@ Push a change under `api/`, `content/`, `tools/`, or the workflow, or use **Acti
 
 ## Current verification
 
-GitHub run [43339016409](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43339016409) passed preparation after fetching the pinned libraries, then native-build rejected the nested Horizon source checkout's `CLAUDE.md` symlink. The workflow now stages only the mod manifest and API source outside that checkout before invoking native-build. The same investigation found duplicate content declarations that caused Horizon to reject all native item/block registrations for Arcforge; those duplicate files were removed and their block states moved into Rust. A successful new client build, import, and in-world smoke check are still required before calling the mod playable.
+The initial native client artifact omitted Horizon's generated `native-mods.json`, so importing its executable alone did not activate Arcforge's registries. The workflow now packages that file too. Runtime verification also found a duplicate `arcforge:raw_rubber` item registration; it is now declared once through the shared catalog. Ore feature JSON now uses Horizon 26.3's flattened `worldgen/feature/` format, so ore generation can be read by the pinned build. The imported executable plus its manifest and content pack passed an isolated item-registration smoke check; full progression and machine behavior still need in-world play verification.

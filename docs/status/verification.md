@@ -2,19 +2,23 @@
 
 This file records observed checks only. Re-run checks after Rust or content changes; do not infer current results from an earlier build. For the completion criteria and current resume state, see [goal.md](../goal.md) and [handoff.md](../handoff.md).
 
-## GitHub client pipeline and native registry correction (2026-11-12)
+## GitHub native client and disposable gameplay smoke check (2026-11-12)
 
-The native client workflow now gets the pinned Minecraft 26.3 version metadata and client jar directly from Mojang. It checks the canonical accepted version JSON SHA-1 `11f1aefe473eefba0af62e3286c33b692807b2eb` and client jar SHA-1 `e877b6a07acd633fb3bb475002175cec036e7b87`, and uses them only as temporary inputs; neither is included in uploaded artifacts. No private Actions secrets are required. Runtime diagnosis found that `arc_crushing_array_casing` and `resin_tap` were declared both by native Rust hooks and by `.hmod` registry JSON. Horizon validates native declarations atomically, so these duplicate blocks caused all Arcforge native items and blocks to be rejected. The redundant registry JSON files are removed and their custom states now live in Rust block declarations.
+GitHub run [43340862715](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43340862715) built the checked `.hmod` and `.hnmod` plus a Linux x86_64 Horizon client with Arcforge's native Rust source. The first published client ZIP omitted Horizon's generated `native-mods.json`; importing the executable alone therefore started with vanilla registries. The workflow now packages this required manifest beside the executable and includes it in `SHA256SUMS`. The player must copy it beside `horizon-client` in the imported version folder after `import-build`.
+
+A disposable local native build found a second atomic registry error: `arcforge:raw_rubber` was declared by both the shared item catalog and an extra item entry. It is now declared once. The same runtime check found that this Horizon pin expects ore features in flattened `worldgen/feature/` JSON, with target block IDs as namespaced strings. All 15 features were converted from the older nested `configured_feature` representation.
 
 | Check | Result | What it establishes |
 |---|---|---|
-| `cargo fmt --manifest-path api/Cargo.toml` | Passed. | Rust sources are formatted. |
-| `cargo check --locked --manifest-path api/Cargo.toml` | Passed: 0 errors; one existing unused `EnergyStore::transfer_to` warning remains. | The updated native declarations compile against the pinned API. |
-| Horizon `cargo-horizon-mod build` and `check target/horizon-mod/arcforge.hmod` | Passed; 388 recipe JSON files; archive SHA-256 `adea46ed6d9067acb750bf95c024bcf894a26aca93619ce3ba7198b7188f3931` (unsigned). | The pack builds and no longer contains duplicate block declarations. |
-| GitHub Actions run [43339016409](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43339016409) | Mod package job passed; client job verified the Mojang client and all required libraries, then Horizon preparation succeeded. Native build failed because `native-build` found `horizon-source/CLAUDE.md` as a symlink inside the source folder it scanned. | The game preparation path is now verified; no native client artifact was produced. The next workflow patch stages only the mod manifest/API into an isolated folder. |
-| Import and in-world registration/smoke check | Not yet run on the corrected build. | Playability is not yet established. |
+| `cargo fmt --check --manifest-path api/Cargo.toml` | Passed. | Rust formatting is clean. |
+| `cargo check --locked --manifest-path api/Cargo.toml` | Passed: 0 errors; one existing unused `EnergyStore::transfer_to` warning remains. | Native registrations compile against the pinned API. |
+| Horizon `cargo-horizon-mod build` and `check target/horizon-mod/arcforge.hmod` | Passed after worldgen conversion; 3,515,870 bytes, SHA-256 `e710c4199b9d0289c6b110cab7d0f163f3b61b67c4c4b49c1325a7a580630183` (unsigned). | The updated content bundle passes Horizon's checker. |
+| Horizon launcher `native-build` on a disposable instance | Passed: `native-fdc87ae-d2eeca097da2`; after the one-line registry fix, incremental rebuild `native-fdc87ae-6b53986d7fb7` passed in 48 seconds. | The full mod source builds through the supported launcher flow. |
+| Imported-client smoke with matching `native-mods.json` and `.hmod` | Passed: the world opened; `/give arcforge:wrought_heat_cell 1` and `/give arcforge:steel_ingot 1` succeeded; the inventory contained both. The mod content pack loaded. | The manifest is required for imported-client native registration, and custom item/block IDs now register. |
+| Ore worldgen startup | Passed after schema conversion: no invalid feature fields, missing block identifiers, or skipped Arcforge placed features were logged. | Horizon accepts the converted ore features. Deposit frequency and actual in-world ore distribution were not sampled. |
+| Broader machine/recipe/heat/energy/fluid behavior | Not verified. | A running world and registered IDs do not establish functional progression or machine parity. |
 
-The first attempt after removing the secret requirement was GitHub Actions run [43337382492](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43337382492). Its mod packaging job passed; the client job downloaded and verified the client jar but Horizon preparation found that the Minecraft install also needs its Maven library artifacts. `tools/fetch_mojang_inputs.py` reads the pinned hashes from Horizon's `research-lock.json`, downloads the client, version JSON, and all 66 Linux library artifacts, and checks their SHA-1 and declared sizes. Run [43339016409](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43339016409) proved this input set completes Horizon preparation, then exposed the nested-checkout symlink issue in `native-build`. A clean source staging path is now in the workflow and awaits a new CI result.
+Horizon still logs unsupported multipart properties for conduit and Solar Thermal Array blockstate definitions. The current smoke check therefore does not establish their visual appearance. The local smoke artifacts and world are isolated under `/tmp/arcforge-smoke-*`; the launcher build cache is under `~/.local/share/arcforge-smoke-launcher`.
 
 ## Previous Heat Cells alpha build (2026-11-12)
 
@@ -208,18 +212,18 @@ The Solar Thermal Array helper is wired into the native crate. The controller, c
 
 The Horizon client logged that optional `libflite.so.1` narration could not load during an earlier render; it still presented a frame. A prior launch attempt for `Arcforge Port Test` returned `Sign in with a Microsoft account that owns Minecraft: Java Edition to play`; the offline-account command also requires an owning account. Thus no gameplay world could be opened for this verification. No machine was placed or exercised in a gameplay scenario. The native `.hnmod` build passed, but its hooks have not yet been exercised in-game. No save/reload, hopper, LAN, dedicated-server, or migration test has been recorded.
 
-## Required next checks
+## Remaining gameplay checks
 
-1. Launch the disposable instance with its native build and open a disposable world with the mod enabled.
-2. Place machines and verify the opening recipe/power/heat loop.
-3. Test save/reload, output backpressure, hopper/handler access, and LAN parity before marking the slice behavior-tested.
+1. In a new world, sample generated ore distribution and test representative mining drops.
+2. Craft the opening machines and verify a simple recipe/power/heat loop.
+3. Test Heat Cell transfer and persistence, output backpressure, hopper/handler access, and LAN parity before marking those slices behavior-tested.
 
 ## FE/HU conduit active glow (2026-11-08)
 
 Both pooled schedulers now set the imported `active` blockstate across all network members while the pool contains FE/HU and for up to ten game ticks after the last transfer, matching Arcforge's idle glow interval. Rust formatting and `cargo check --locked --manifest-path api/Cargo.toml` passed after the change; the existing unused `EnergyStore::transfer_to` warning remains. No Rust tests, Horizon content rebuild, native bundle build, or in-world visual check was run for this change. The code compiles, but the rendered glow and tick behavior remain unverified in a Minecraft world.
 
 
-## Current install/play readiness snapshot (2026-11-08)
+## Historical install/play diagnosis before the current native build (2026-11-08)
 
 The user reported that no Arcforge items appear in the game. The disposable `arcforge-port-test` instance has `horizon-mods/arcforge.hmod` installed and `horizon-mods.txt` enables `mod.arcforge:true`; its archive is still the older 380-recipe build (SHA-256 `6fd8cc039fc035b0145108daa01a2931a93bed6ebd845649124008ee93622d80`); the new checked 384-recipe archive has not been copied into the instance. The `.hmod` is content only: registered items and blocks come from the native Rust bundle. That profile still points at stale `native-66f3981-6165e0307f55`, built against Horizon `66f3981f522b24c250b21523a70080965b940424`, before current source edits and the pinned Horizon `fdc87aecdbd116bf1e08adcd062fcbaea8c2e2ca`. A direct `/give @s arcforge:arc_crusher` against that build returned `Unknown item 'arcforge:arc_crusher'`; this confirms the reported symptom. Current source registers machine blocks with `item: true`, and materials through the native item-registration hook. The defect is that this current source has not been built into the selected game bundle.
 

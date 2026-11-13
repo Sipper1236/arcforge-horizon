@@ -889,8 +889,6 @@ impl Hooks for Arcforge {
         }
         register_content!(&mut event.items, id: TUNGSTEN_HEATING_COIL.into(), template: "minecraft:iron_ingot".into());
         for (id, template) in [
-            ("arcforge:raw_rubber", "minecraft:slime_ball"),
-            ("arcforge:synthetic_rubber", "minecraft:slime_ball"),
             ("arcforge:hop_cones", "minecraft:wheat"),
             ("arcforge:dried_hops", "minecraft:wheat"),
             ("arcforge:dried_grain", "minecraft:wheat"),
@@ -7676,18 +7674,15 @@ mod tests {
     fn silver_ore_worldgen_drops_and_smelting_are_connected() {
         let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../content/data");
         let feature: serde_json::Value = serde_json::from_slice(
-            &std::fs::read(root.join("arcforge/worldgen/configured_feature/ore_silver.json"))
+            &std::fs::read(root.join("arcforge/worldgen/feature/ore_silver.json"))
                 .expect("silver feature"),
         )
         .expect("valid silver feature");
         assert_eq!(feature["type"], "minecraft:ore");
-        assert_eq!(feature["config"]["size"], 9);
+        assert_eq!(feature["size"], 9);
+        assert_eq!(feature["targets"][0]["state"], "arcforge:silver_ore");
         assert_eq!(
-            feature["config"]["targets"][0]["state"]["Name"],
-            "arcforge:silver_ore"
-        );
-        assert_eq!(
-            feature["config"]["targets"][1]["state"]["Name"],
+            feature["targets"][1]["state"],
             "arcforge:deepslate_silver_ore"
         );
 
@@ -7743,19 +7738,14 @@ mod tests {
 
         for (name, block, count, size, min_y, max_y, shape, discard) in ores {
             let configured: serde_json::Value = serde_json::from_slice(
-                &std::fs::read(root.join(format!(
-                    "arcforge/worldgen/configured_feature/ore_{name}.json"
-                )))
-                .expect("configured ore feature"),
+                &std::fs::read(root.join(format!("arcforge/worldgen/feature/ore_{name}.json")))
+                    .expect("configured ore feature"),
             )
             .expect("valid configured ore feature");
             assert_eq!(configured["type"], "minecraft:ore");
-            assert_eq!(configured["config"]["size"], size);
-            assert_eq!(
-                configured["config"]["discard_chance_on_air_exposure"],
-                discard
-            );
-            assert_eq!(configured["config"]["targets"].as_array().unwrap().len(), 2);
+            assert_eq!(configured["size"], size);
+            assert_eq!(configured["discard_chance_on_air_exposure"], discard);
+            assert_eq!(configured["targets"].as_array().unwrap().len(), 2);
 
             let placed: serde_json::Value = serde_json::from_slice(
                 &std::fs::read(
@@ -7890,14 +7880,12 @@ mod tests {
 
         for (name, feature_name, count, size, min_y, max_y, shape, biome) in features {
             let configured: serde_json::Value = serde_json::from_slice(
-                &std::fs::read(root.join(format!(
-                    "arcforge/worldgen/configured_feature/{feature_name}.json"
-                )))
-                .expect("special configured feature"),
+                &std::fs::read(root.join(format!("arcforge/worldgen/feature/{feature_name}.json")))
+                    .expect("special configured feature"),
             )
             .expect("valid special configured feature");
             assert_eq!(configured["type"], "minecraft:ore");
-            assert_eq!(configured["config"]["size"], size);
+            assert_eq!(configured["size"], size);
 
             let placed: serde_json::Value = serde_json::from_slice(
                 &std::fs::read(root.join(format!(
