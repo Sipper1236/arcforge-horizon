@@ -6,9 +6,9 @@ Port the complete survival gameplay scope of the pinned Arcforge release to Hori
 
 The current code is an early prototype, not a complete port. Continue implementing real gameplay from the scope in the root [README](../README.md), preserve Arcforge's recognizable mechanics and progression, and update the as-built and remaining-work documents whenever implementation changes.
 
-## Current milestone — Thermoelectric Efficiency Upgrades, 2026-11-13
+## Current milestone — shared Heat Upgrades, 2026-11-13
 
-Commit `6ace306` registers the Thermoelectric Efficiency Upgrade item, adds its source-shaped survival recipe, and installs it through the existing item-on-block hook. Up to eight cards are saved on a Thermoelectric Plant; each adds 6.25% to the source temperature efficiency curve. Installation feedback shows the count and incremental efficiency. The local Rust check and GitHub run [43514858076](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43514858076) passed; the playable bundle and internal checksums are verified. Next, verify crafting, installation, output scaling, and save/reload in-game. No test suite was run.
+The shared Heat Upgrade now has its source-shaped recipe and installs on Firebox, Geothermal Plant, Fuel Burner, Thermoelectric Plant, Fiberizer, Vulcanizer, and Grain Dryer through the existing item-use hook. Up to eight cards are saved per machine. Heat output machines gain 12.5% output per card; heat-consuming processors pay the source `0.8^n` HU cost; the Thermoelectric Plant gets the source efficiency increase capped at 100% base efficiency before its separate Thermoelectric upgrades. Local Rust compilation and formatting pass; GitHub Actions build and runtime checks are pending. No test suite was run.
 
 ## Player progression
 

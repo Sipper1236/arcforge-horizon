@@ -6,6 +6,10 @@ This file records observed checks only. Re-run checks after Rust or content chan
 
 Commit `6ace306` adds the item registration, source-shaped recipe, saved per-plant upgrade count, eight-card cap, +6.25% efficiency per card, and action-bar feedback. GitHub run [43514858076](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43514858076) passed both package and Linux native-client jobs. The 41,291,150-byte playable ZIP passed `unzip -t` and internal SHA256SUMS; outer SHA-256: `4d98ef3eb92caf45acce0d8e0afc8b7de384d03e58ffead409ec60c823f2d350`. Internal hashes: horizon-client `629cb56626f3ba4e4c9026e22c3f0c8680e3f585ddf2d03428311b572d3f6529`, native-mods.json `b66ceb37aa8e76b4e40c69afbd38dc90594c274e0cf8d11d5e497fd2bcab0194`, arcforge.hmod `16e3c380e3967532793ee412e8defd2795f370b692873eca07ff751d88c6491a`, arcforge.hnmod `f7639a9f9863196ed39f7418bf651df99d08e1e5e818e5e6ba461becfd9c1bc3`. In-world checks are still outstanding: craft/install the upgrade, verify the eight-card limit and output scaling, and save/reload the plant.
 
+## Shared Heat Upgrade — pending verification (2026-11-13)
+
+The source-shaped recipe and local implementation install up to eight Heat Upgrades on Firebox, Geothermal Plant, Fuel Burner, Thermoelectric Plant, Fiberizer, Vulcanizer, and Grain Dryer. The first three heat producers get +12.5% output per upgrade; the processors reduce HU cost by 0.8^n; Thermoelectric applies the source curve improvement capped at 100% before its separate Thermoelectric upgrades. `cargo check` and `cargo fmt --check` pass locally. GitHub packaging/client build and in-world behavior have not yet been verified. Check crafting, each machine's effect, ninth-card rejection, and save/reload.
+
 ## Energy Cell feature package builds (2026-11-13)
 
 | Check | Result | What it establishes |
