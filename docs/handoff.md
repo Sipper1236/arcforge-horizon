@@ -3,11 +3,11 @@
 **Snapshot date:** 2026-11-13
 **Project:** `/home/rayyan/Projects/arcforge-horizon`  
 **Active goal:** see [goal.md](goal.md)  
-**Status:** The current local diff adds four portable FE Battery items and recipes; it is not committed or pushed yet. Local `cargo check` passes (0 errors, one existing dead-code warning), and Horizon built/checked the 400-recipe pack (SHA-256 `82db30b04bb7b40457e813fb2a717a7cd4065ddf0da964090bc7d15e938aefba`). The hybrid remote Rust check reached a worker missing nested `wayland-protocols-plasma` XML files, so its result is unusable. The preceding cylinder commit `dc3987d` is pushed, and GitHub run [43360699934](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43360699934) passed both package and Linux client jobs; artifact checksums were verified. Neither the battery slice nor cylinder behavior has in-world verification.
+**Status:** Portable FE Battery items and recipes are committed and pushed as `1585e3d`. Local `cargo check` passes (0 errors, one existing dead-code warning), and Horizon built/checked the 400-recipe pack (SHA-256 `82db30b04bb7b40457e813fb2a717a7cd4065ddf0da964090bc7d15e938aefba`). The hybrid remote Rust check reached a worker missing nested `wayland-protocols-plasma` XML files, so its result is unusable. GitHub run [43364355794](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43364355794) passed its package job for this commit; its Linux client job was in progress at the last successful status query, and subsequent GitHub API requests timed out. The previous run [43360699934](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43360699934) passed both jobs for the cylinder slice and its artifact checksums were verified. Neither battery nor cylinder behavior has in-world verification.
 
 ## 1. Resume here
 
-1. Review, commit, and push the portable battery source, recipes, and updated docs; then watch the new GitHub Actions run for package and Linux native-client results.
+1. Recheck GitHub run [43364355794](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43364355794) and verify whether its Linux native-client job completed and uploaded an artifact; update this handoff with the final result.
 2. Use the verified artifact instructions in [CI build setup](ci-build.md). Copy `native-mods.json` into the imported version folder beside `horizon-client`; put and enable `arcforge.hmod` in a disposable instance.
 3. Continue real gameplay checks: ore generation in newly generated chunks; basic recipes and crafting; portable battery interoperability; Heat Cell and Cylinder charge/fluid transfer/save/reload loops; then machine processing. Do not describe all Arcforge gameplay as playable yet.
 
