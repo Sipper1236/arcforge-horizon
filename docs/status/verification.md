@@ -2,7 +2,19 @@
 
 This file records observed checks only. Re-run checks after Rust or content changes; do not infer current results from an earlier build. For the completion criteria and current resume state, see [goal.md](../goal.md) and [handoff.md](../handoff.md).
 
-## Heat Cells alpha slice (2026-11-12)
+## GitHub client pipeline and native registry correction (2026-11-12)
+
+The native client workflow now gets the pinned Minecraft 26.3 version metadata and client jar directly from Mojang. It checks the canonical accepted version JSON SHA-1 `11f1aefe473eefba0af62e3286c33b692807b2eb` and client jar SHA-1 `e877b6a07acd633fb3bb475002175cec036e7b87`, and uses them only as temporary inputs; neither is included in uploaded artifacts. No private Actions secrets are required. Runtime diagnosis found that `arc_crushing_array_casing` and `resin_tap` were declared both by native Rust hooks and by `.hmod` registry JSON. Horizon validates native declarations atomically, so these duplicate blocks caused all Arcforge native items and blocks to be rejected. The redundant registry JSON files are removed and their custom states now live in Rust block declarations.
+
+| Check | Result | What it establishes |
+|---|---|---|
+| `cargo fmt --manifest-path api/Cargo.toml` | Passed. | Rust sources are formatted. |
+| `cargo check --locked --manifest-path api/Cargo.toml` | Passed: 0 errors; one existing unused `EnergyStore::transfer_to` warning remains. | The updated native declarations compile against the pinned API. |
+| Horizon `cargo-horizon-mod build` and `check target/horizon-mod/arcforge.hmod` | Passed; 388 recipe JSON files; archive SHA-256 `adea46ed6d9067acb750bf95c024bcf894a26aca93619ce3ba7198b7188f3931` (unsigned). | The pack builds and no longer contains duplicate block declarations. |
+| GitHub Actions | Not yet run for these changes. | The hosted Linux client artifact remains unverified until the new workflow completes. |
+| Import and in-world registration/smoke check | Not yet run on the corrected build. | Playability is not yet established. |
+
+## Previous Heat Cells alpha build (2026-11-12)
 
 Added Wrought, Tempered, Hardened, and Arcforged Heat Cells with tier capacities, transfer caps, maximum temperatures, passive leakage, five-level heat visuals, charge-preserving block drops/placement, source-shaped tier recipes, and explosion-aware loot tables. The alpha uses automatic six-side connections; screens, capsules, insulation upgrades, redstone/side controls, and charge-preserving tier upgrades are not implemented. No gameplay world was used for verification.
 
@@ -12,10 +24,10 @@ Added Wrought, Tempered, Hardened, and Arcforged Heat Cells with tier capacities
 | `cargo check --locked --manifest-path api/Cargo.toml` | Passed: 0 errors; the existing unused `EnergyStore::transfer_to` warning remains. | Heat Cell hooks and the native crate compile against the pinned API. |
 | Horizon `cargo-horizon-mod build` in `content/` | Passed; 388 recipe JSON files are present. | Heat Cell recipes and loot package with the existing content. |
 | Horizon `cargo-horizon-mod check target/horizon-mod/arcforge.hmod` | Passed; 3,517,204 bytes; SHA-256 `40c675764f93faf5953bff98c74605000f2e5e5183743e663ffcd3ba9913e790` (unsigned). | The content bundle passes Horizon's checker. This does not prove runtime item registration or crafting. |
-| GitHub Actions run [43329802649](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43329802649) on commit `6621649` | Mod package job passed: formatting, crate check, content build/check, and `.hnmod` packaging. Artifact [13993968359](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43329802649/artifacts/13993968359) downloaded; SHA-256 values verified: `.hmod` `40c675764f93faf5953bff98c74605000f2e5e5183743e663ffcd3ba9913e790`, `.hnmod` `e276b80d61d0790f1f27017a659d546572a02b2a30546b8fd7fad46d2b97fb37`. Full workflow is failed because the native-client job's private-input preflight found the required Minecraft archive secrets absent. | GitHub produced the current source/data mod artifact. It did not build a playable client. |
+| GitHub Actions run [43329802649](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43329802649) on commit `6621649` | Mod package job passed: formatting, crate check, content build/check, and `.hnmod` packaging. Artifact [13993968359](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43329802649/artifacts/13993968359) downloaded; SHA-256 values verified. The separate client job failed at the former private-input preflight. | Historical run: GitHub produced the source/data mod package but no playable client. The current workflow has removed that preflight and fetches pinned official inputs from Mojang. |
 | Rust tests, native client build, and in-world Heat Cell trial | Not run. | Runtime transfer/loss rates, state persistence, item charge round-trip, and visuals remain unverified. |
 
-The changes are committed as `6621649` on `main` and included in the verified GitHub artifact. The native client and in-world behavior remain outstanding.
+Commit `6621649` is the prior baseline. The registry and workflow fixes above are pending GitHub verification. The native client and in-world behavior remain outstanding.
 
 ## Conduit tick entity lookup correction (2026-11-08)
 

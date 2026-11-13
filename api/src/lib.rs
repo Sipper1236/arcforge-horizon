@@ -679,6 +679,25 @@ impl Hooks for Arcforge {
         register_content!(&mut event.blocks, id: ARC_CRUSHER.into(), template: "minecraft:blast_furnace".into(), item: true);
         register_content!(&mut event.blocks, id: ARC_CRUSHING_ARRAY.into(), template: "minecraft:stonecutter".into(), item: true);
         register_content!(&mut event.blocks, id: ARC_CRUSHING_ARRAY_CASING.into(), template: "minecraft:stone".into(), item: true);
+        if let Some(block) = event
+            .blocks
+            .iter_mut()
+            .find(|block| block.id == ARC_CRUSHING_ARRAY_CASING)
+        {
+            block.state_properties = serde_json::from_value(serde_json::json!({
+                "facing": { "type": "enum", "values": ["north", "east", "south", "west"] },
+                "lit": { "type": "boolean" },
+                "part": { "type": "enum", "values": ["none", "center", "other"] }
+            }))
+            .expect("valid Crushing Array casing block states");
+            block.default_state = [
+                ("facing".to_owned(), "north".to_owned()),
+                ("lit".to_owned(), "false".to_owned()),
+                ("part".to_owned(), "none".to_owned()),
+            ]
+            .into_iter()
+            .collect();
+        }
         register_content!(&mut event.blocks, id: INDUCTION_FURNACE.into(), template: "minecraft:blast_furnace".into(), item: true);
         register_content!(&mut event.blocks, id: METAL_PRESS.into(), template: "minecraft:blast_furnace".into(), item: true);
         register_content!(&mut event.blocks, id: SIFTER.into(), template: "minecraft:blast_furnace".into(), item: true);
@@ -698,6 +717,15 @@ impl Hooks for Arcforge {
         register_content!(&mut event.blocks, id: ARCFORGED_FLUID_TANK.into(), template: "minecraft:glass".into(), item: true);
         register_content!(&mut event.blocks, id: THERMOELECTRIC_PLANT.into(), template: "minecraft:blast_furnace".into(), item: true);
         register_content!(&mut event.blocks, id: RESIN_TAP.into(), template: "minecraft:tripwire_hook".into(), item: true);
+        if let Some(block) = event.blocks.iter_mut().find(|block| block.id == RESIN_TAP) {
+            block.state_properties = serde_json::from_value(serde_json::json!({
+                "content": { "type": "enum", "values": ["empty", "latex", "resin"] }
+            }))
+            .expect("valid Resin Tap block states");
+            block.default_state = [("content".to_owned(), "empty".to_owned())]
+                .into_iter()
+                .collect();
+        }
         register_content!(&mut event.blocks, id: FIBERIZER.into(), template: "minecraft:blast_furnace".into(), item: true);
         register_content!(&mut event.blocks, id: VULCANIZER.into(), template: "minecraft:blast_furnace".into(), item: true);
         register_content!(&mut event.blocks, id: GRAIN_DRYER.into(), template: "minecraft:blast_furnace".into(), item: true);

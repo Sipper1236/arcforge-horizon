@@ -1,35 +1,20 @@
 # GitHub Actions build
 
-The workflow at `.github/workflows/build.yml` runs formatting, native-crate checks, content-pack build/check, and `.hnmod` packaging on pushes and pull requests. It uploads `arcforge.hmod`, `arcforge.hnmod`, checksums, and a combined ZIP.
+`.github/workflows/build.yml` builds and checks the Rust mod, builds and checks the Horizon `.hmod`, packages the native `.hnmod`, and uploads a combined mod bundle. On pushes to `main` and manual dispatches, it also builds a Linux x86_64 Horizon client containing the Arcforge native code.
 
-On pushes and manual dispatches, a second job also prepares the pinned Horizon Nightly, compiles Arcforge into a Linux x86_64 Horizon client, and uploads an importable client bundle. Horizon requires the matching Minecraft 26.3 client install to prepare a game version. Its account-free launch option does not provide those files, and the workflow does not download game files for an unauthenticated account or publish them in this public repository.
+The client job downloads Minecraft 26.3's version JSON and client jar directly from Mojang's official `piston-meta` and `piston-data` endpoints. It verifies the official version JSON and client SHA-1 pins before using those files as temporary build inputs. The workflow does not publish the Minecraft jar or package it in the artifact. No Actions secrets or Microsoft account token are required. Horizon's offline launch option removes the account requirement at play time; it does not remove the need for version data during preparation.
 
-## Provide the build input privately
+## Artifacts
 
-The client job needs an archive hosted somewhere private and reachable by GitHub Actions. The archive must contain only these two paths, relative to its root:
+- `arcforge-<commit>`: `.hmod`, `.hnmod`, checksums, and a combined install ZIP.
+- `arcforge-playable-linux-x86_64-<commit>`: importable Horizon client executable plus the matching mod files and installation instructions.
 
-```text
-versions/26.3/26.3.jar
-versions/26.3/26.3.json
-```
+The client artifact is for the Horizon Nightly commit pinned in the workflow. Import it into that Horizon version, then enable/install the bundled `arcforge.hmod` in the target instance. The executable contains the native Rust code; the `.hmod` supplies recipes, loot, tags, and other data.
 
-Create it from a Minecraft 26.3 installation you own. For the official `.minecraft` folder on this machine, the command is:
+## Re-run the build
 
-```sh
-tar -C "$HOME/.minecraft" -czf horizon-minecraft-26.3.tar.gz \
-  versions/26.3/26.3.jar versions/26.3/26.3.json
-sha256sum horizon-minecraft-26.3.tar.gz
-```
-
-Keep this archive private. Do not add it to the repository, a public release, or the workflow artifacts. Upload it to a private HTTPS object/file store that permits GitHub's runner to download it, then add these repository Actions secrets under **Settings → Secrets and variables → Actions**:
-
-- `HORIZON_MINECRAFT_ARCHIVE_URL`: the private, time-limited download URL.
-- `HORIZON_MINECRAFT_ARCHIVE_SHA256`: the SHA-256 printed above.
-
-The workflow checks the archive checksum and accepts only the pinned version JSON and client jar paths. It then runs Horizon's normal `prepare --minecraft ...` command, which validates the files against Horizon's pinned game hashes and fetches the remaining preparation inputs. No Microsoft account token is needed when the owned client files are supplied.
-
-Once both secrets are configured, push a source change or run **Actions → Build Arcforge for Horizon → Run workflow**. The resulting artifact is named `arcforge-playable-linux-x86_64-<commit>`. It contains the Linux client executable and the matching `.hmod` and `.hnmod`; it does not contain Minecraft's client assets. Import the client into the same Horizon Nightly listed in `INSTALL.txt`, then install `arcforge.hmod` in the instance.
+Push a change under `api/`, `content/`, `tools/`, or the workflow, or use **Actions → Build Arcforge for Horizon → Run workflow**. The workflow runs the native client job only for pushes and manual dispatches; pull requests still build and upload the reviewable mod packages.
 
 ## Current verification
 
-Run [43329802649](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43329802649) on commit `6621649` passed formatting, native crate check, content build/check, and mod packaging. Its checked mod artifact is [available here](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43329802649/artifacts/13993968359); I downloaded it and verified both checksums. The separate Linux client job stopped immediately because the required private archive secrets are not configured. A successful Linux client build, import, launch, and in-world gameplay check are still pending.
+The previous workflow run [43329802649](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43329802649) built the mod packages but did not reach client compilation because it expected a private Minecraft archive. The workflow now uses SHA-1-pinned Mojang inputs instead. The same investigation found two content block declaration files duplicated native block declarations, which caused Horizon to reject all native item/block registrations for Arcforge; those redundant declarations were removed. A successful current GitHub run, import, and in-world smoke check are still required before calling the mod playable.
