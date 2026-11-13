@@ -1494,10 +1494,10 @@ impl Hooks for Arcforge {
                 faces: [
                     vec![3, 4, 5, 6, 7, 8],
                     vec![0, 1, 2],
-                    vec![0, 1, 2],
-                    vec![0, 1, 2],
-                    vec![0, 1, 2],
-                    vec![0, 1, 2],
+                    vec![],
+                    vec![],
+                    vec![],
+                    vec![],
                 ],
                 inputs: vec![0, 1, 2],
                 outputs: vec![3, 4, 5, 6, 7, 8],
@@ -1676,7 +1676,7 @@ impl Hooks for Arcforge {
                 capacity: 100_000,
                 max_insert: 1000,
                 max_extract: 0,
-                insert_faces: [true; 6],
+                insert_faces: [false, false, false, true, false, false],
                 extract_faces: [false; 6],
             })
         } else if event.block == INDUCTION_FURNACE {
