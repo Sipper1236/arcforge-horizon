@@ -14,6 +14,8 @@ The native client workflow now gets the pinned Minecraft 26.3 version metadata a
 | GitHub Actions | Not yet run for these changes. | The hosted Linux client artifact remains unverified until the new workflow completes. |
 | Import and in-world registration/smoke check | Not yet run on the corrected build. | Playability is not yet established. |
 
+The first attempt after removing the secret requirement was GitHub Actions run [43337382492](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43337382492). Its mod packaging job passed; the client job downloaded and verified the client jar but Horizon preparation found that the Minecraft install also needs its Maven library artifacts. `tools/fetch_mojang_inputs.py` now reads the pinned hashes from Horizon's `research-lock.json`, downloads the client, version JSON, and all 66 Linux library artifacts, and checks their SHA-1 and declared sizes. Local execution verified all 66 library files; the updated workflow has not been pushed or run yet.
+
 ## Previous Heat Cells alpha build (2026-11-12)
 
 Added Wrought, Tempered, Hardened, and Arcforged Heat Cells with tier capacities, transfer caps, maximum temperatures, passive leakage, five-level heat visuals, charge-preserving block drops/placement, source-shaped tier recipes, and explosion-aware loot tables. The alpha uses automatic six-side connections; screens, capsules, insulation upgrades, redstone/side controls, and charge-preserving tier upgrades are not implemented. No gameplay world was used for verification.

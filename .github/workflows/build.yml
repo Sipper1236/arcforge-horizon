@@ -152,51 +152,9 @@ jobs:
       - name: Fetch the pinned Minecraft 26.3 inputs from Mojang
         run: |
           set -euo pipefail
-          mkdir -p "$PWD/ci-minecraft"
-          python3 - "$PWD/ci-minecraft" <<'PY'
-          import hashlib
-          import json
-          import pathlib
-          import sys
-          import time
-          import urllib.request
-          import urllib.error
-
-          destination = pathlib.Path(sys.argv[1])
-          version_json_url = "https://piston-meta.mojang.com/v1/packages/11f1aefe473eefba0af62e3286c33b692807b2eb/26.3.json"
-          expected_manifest_sha1 = "11f1aefe473eefba0af62e3286c33b692807b2eb"
-          expected_client_sha1 = "e877b6a07acd633fb3bb475002175cec036e7b87"
-
-          def download(url):
-              request = urllib.request.Request(url, headers={"User-Agent": "Arcforge-GitHub-Actions/1.0"})
-              for attempt in range(3):
-                  try:
-                      with urllib.request.urlopen(request, timeout=60) as response:
-                          return response.read()
-                  except (urllib.error.URLError, TimeoutError):
-                      if attempt == 2:
-                          raise
-                      time.sleep(attempt + 1)
-
-          manifest_bytes = download(version_json_url)
-          manifest_sha1 = hashlib.sha1(manifest_bytes).hexdigest()
-          if manifest_sha1 != expected_manifest_sha1:
-              raise SystemExit(f"Minecraft version JSON SHA-1 mismatch: {manifest_sha1}")
-          manifest = json.loads(manifest_bytes)
-          if manifest.get("id") != "26.3":
-              raise SystemExit(f"Unexpected Minecraft version: {manifest.get('id')!r}")
-          client = manifest["downloads"]["client"]
-          if client.get("sha1") != expected_client_sha1:
-              raise SystemExit("Minecraft client hash differs from the pinned official hash")
-          client_bytes = download(client["url"])
-          if hashlib.sha1(client_bytes).hexdigest() != expected_client_sha1:
-              raise SystemExit("Downloaded Minecraft client SHA-1 does not match Mojang's pin")
-          version_dir = destination / "versions" / "26.3"
-          version_dir.mkdir(parents=True, exist_ok=True)
-          (version_dir / "26.3.json").write_bytes(manifest_bytes)
-          (version_dir / "26.3.jar").write_bytes(client_bytes)
-          print(f"Fetched official Minecraft 26.3 client ({len(client_bytes)} bytes); verified both Mojang SHA-1 pins.")
-          PY
+          python3 tools/fetch_mojang_inputs.py \
+            --research-lock horizon-source/research-lock.json \
+            --destination "$PWD/ci-minecraft"
 
       - name: Prepare Horizon from the supplied Minecraft install
         run: |

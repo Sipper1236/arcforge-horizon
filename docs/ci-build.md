@@ -2,7 +2,7 @@
 
 `.github/workflows/build.yml` builds and checks the Rust mod, builds and checks the Horizon `.hmod`, packages the native `.hnmod`, and uploads a combined mod bundle. On pushes to `main` and manual dispatches, it also builds a Linux x86_64 Horizon client containing the Arcforge native code.
 
-The client job downloads Minecraft 26.3's version JSON and client jar directly from Mojang's official `piston-meta` and `piston-data` endpoints. It verifies the official version JSON and client SHA-1 pins before using those files as temporary build inputs. The workflow does not publish the Minecraft jar or package it in the artifact. No Actions secrets or Microsoft account token are required. Horizon's offline launch option removes the account requirement at play time; it does not remove the need for version data during preparation.
+The client job reads Horizon's pinned Minecraft hashes from its checked-out `research-lock.json`, then downloads the matching version JSON, client jar, and Linux library artifacts directly from Mojang. `tools/fetch_mojang_inputs.py` verifies each artifact's SHA-1 and listed size. These files stay on the ephemeral runner; they are not published or packaged in the artifact. Horizon can prepare the client without downloading the optional sound asset store. No Actions secrets or Microsoft account token are required. Horizon's offline launch option removes the account requirement at play time; it does not remove the need for pinned game files during preparation.
 
 ## Artifacts
 
@@ -17,4 +17,4 @@ Push a change under `api/`, `content/`, `tools/`, or the workflow, or use **Acti
 
 ## Current verification
 
-The previous workflow run [43329802649](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43329802649) built the mod packages but did not reach client compilation because it expected a private Minecraft archive. The workflow now uses SHA-1-pinned Mojang inputs instead. The same investigation found two content block declaration files duplicated native block declarations, which caused Horizon to reject all native item/block registrations for Arcforge; those redundant declarations were removed. A successful current GitHub run, import, and in-world smoke check are still required before calling the mod playable.
+GitHub run [43337382492](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43337382492) passed the mod-package job and verified the official client files, but Horizon preparation failed because it also needed the version's Maven library JARs. The new helper downloads and verifies those Linux libraries too. The same investigation found duplicate content declarations that caused Horizon to reject all native item/block registrations for Arcforge; those duplicate files were removed and their block states moved into Rust. A successful new client build, import, and in-world smoke check are still required before calling the mod playable.
