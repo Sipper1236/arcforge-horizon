@@ -8,7 +8,7 @@ The current code is an early prototype, not a complete port. Continue implementi
 
 ## Current milestone — Thermoelectric Efficiency Upgrades, 2026-11-13
 
-Commit `6ace306` registers the Thermoelectric Efficiency Upgrade item, adds its source-shaped survival recipe, and installs it through the existing item-on-block hook. Up to eight cards are saved on a Thermoelectric Plant; each adds 6.25% to the source temperature efficiency curve. Installation feedback shows the count and incremental efficiency. The local Rust check passed; next build and package the matching client through the authorized GitHub Actions workflow, verify its artifact, then report the exact in-game checks needed. No test suite was run.
+Commit `6ace306` registers the Thermoelectric Efficiency Upgrade item, adds its source-shaped survival recipe, and installs it through the existing item-on-block hook. Up to eight cards are saved on a Thermoelectric Plant; each adds 6.25% to the source temperature efficiency curve. Installation feedback shows the count and incremental efficiency. The local Rust check and GitHub run [43514858076](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43514858076) passed; the playable bundle and internal checksums are verified. Next, verify crafting, installation, output scaling, and save/reload in-game. No test suite was run.
 
 ## Player progression
 
