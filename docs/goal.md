@@ -8,7 +8,7 @@ The current code is an early prototype, not a complete port. Continue implementi
 
 ## Current milestone — shared Heat Upgrades, 2026-11-13
 
-The shared Heat Upgrade now has its source-shaped recipe and installs on Firebox, Geothermal Plant, Fuel Burner, Thermoelectric Plant, Fiberizer, Vulcanizer, and Grain Dryer through the existing item-use hook. Up to eight cards are saved per machine. Heat output machines gain 12.5% output per card; heat-consuming processors pay the source `0.8^n` HU cost; the Thermoelectric Plant gets the source efficiency increase capped at 100% base efficiency before its separate Thermoelectric upgrades. Local Rust compilation and formatting pass; GitHub Actions build and runtime checks are pending. No test suite was run.
+Commit `7abff4a` adds the source Heat Upgrade recipe and installs it on Firebox, Geothermal Plant, Fuel Burner, Thermoelectric Plant, Fiberizer, Vulcanizer, and Grain Dryer through the existing item-use hook. Up to eight cards are saved per machine. Heat output machines gain 12.5% output per card; heat-consuming processors pay the source `0.8^n` HU cost; the Thermoelectric Plant gets the source efficiency increase capped at 100% base efficiency before its separate Thermoelectric upgrades. Local Rust compilation and formatting pass; GitHub Actions build and runtime checks are pending. No test suite was run.
 
 ## Player progression
 
