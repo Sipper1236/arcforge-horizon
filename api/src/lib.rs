@@ -735,7 +735,7 @@ impl Hooks for Arcforge {
             register_content!(&mut event.blocks, id: id.into(), template: "minecraft:iron_block".into(), item: true);
             if let Some(block) = event.blocks.iter_mut().find(|block| block.id == id) {
                 block.state_properties = serde_json::from_value(serde_json::json!({
-                    "level": { "type": "int", "min": 0, "max": 4 }
+                    "level": { "type": "enum", "values": ["0", "1", "2", "3", "4"] }
                 }))
                 .expect("valid Pressurized Cylinder gauge block state");
                 block.default_state = [("level".to_owned(), "0".to_owned())].into_iter().collect();
