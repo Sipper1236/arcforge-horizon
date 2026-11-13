@@ -548,6 +548,13 @@ impl Hooks for Arcforge {
             show_cylinder_status(host, event.pos);
             return Flow::Cancel;
         }
+        if host
+            .mod_block_entity(event.pos)
+            .is_some_and(|entity| energy_cell_spec(&entity.id).is_some())
+        {
+            show_energy_cell_status(host, event.pos);
+            return Flow::Cancel;
+        }
         if let Some((controller_pos, tower)) = solar::controller_for_part(host, event.pos) {
             let Some(side) = energy_conduit_side(event.face) else {
                 return Flow::Continue;
@@ -4096,6 +4103,25 @@ fn show_cylinder_status(host: &mut dyn Host, pos: [i32; 3]) {
     let line = format!("Cylinder: {contents}, {amount}/{capacity} mB (gauge {level}/4)");
     if let Some(player) = host.acting_player() {
         host.action_bar(player.uuid, Text::literal(line));
+    }
+}
+
+fn show_energy_cell_status(host: &mut dyn Host, pos: [i32; 3]) {
+    let Some(entity) = host.mod_block_entity(pos) else {
+        return;
+    };
+    let Some((capacity, _)) = energy_cell_spec(&entity.id) else {
+        return;
+    };
+    let amount = (get_i32(&entity.nbt, "energy").max(0) as u64).min(capacity);
+    let level = energy_cell_charge_level(amount, capacity);
+    if let Some(player) = host.acting_player() {
+        host.action_bar(
+            player.uuid,
+            Text::literal(format!(
+                "Energy Cell: {amount}/{capacity} FE (gauge {level}/4)"
+            )),
+        );
     }
 }
 
