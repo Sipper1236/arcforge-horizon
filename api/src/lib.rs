@@ -843,6 +843,9 @@ impl Hooks for Arcforge {
         ] {
             register_content!(&mut event.blocks, id: id.into(), template: "minecraft:iron_block".into(), item: true);
             if let Some(block) = event.blocks.iter_mut().find(|block| block.id == id) {
+                block.components = [("minecraft:max_stack_size".to_owned(), serde_json::json!(1))]
+                    .into_iter()
+                    .collect();
                 block.state_properties = serde_json::from_value(serde_json::json!({
                     "charge": { "type": "enum", "values": ["0", "1", "2", "3", "4"] }
                 }))
