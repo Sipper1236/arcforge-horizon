@@ -363,3 +363,9 @@ The previous disposable-world check verified 2,000 mB Wrought oxygen hand insert
 | Matching-client render and Wrench readout | GitHub run [43488089381](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43488089381) passed both jobs; all client bundle hashes verified. In the disposable world, Wrench inspection displayed `Cylinder: arcforge:oxygen, 8000/64000 mB (gauge 0/4)`. The user confirmed the larger gauge and opaque adjacent blocks in-game. | The user-visible gauge, readout, and neighboring-block render issue are confirmed fixed on the matching client. |
 
 No Horizon API or engine changes were made. No Rust tests were added or run.
+
+## Portable Energy Item hand transfer (2026-11-13)
+
+A mod-side `use_item_on` path now transfers FE between the four portable Battery tiers or Energy Cell items and the four Energy Cell blocks. Charged items insert, empty items extract; every move is bounded by the item and block capacities and transfer rates. The block entity's saved `energy` and the item's `horizon_energy` custom data are updated with rollback if the carried-stack exchange fails. The action bar reports both stored amounts and the moved FE. To preserve per-item component semantics without changing stack counts, this interaction requires a single item in the held stack. This adapts Arcforge's separate Energy Cell GUI input/output slots to a direct hand interaction within the pinned hooks.
+
+The change uses only existing Horizon hooks. It has not yet passed the next GitHub Actions build or a matching-client runtime/persistence check. No Rust tests were added or run.

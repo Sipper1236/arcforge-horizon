@@ -27,7 +27,11 @@ The port is complete when every feature in the pinned README inventory is one of
 
 The final quality pass must cover each progression chapter, clean installation, existing saves, save/reload, inventory and resource retention, output backpressure, supported automation, LAN/dedicated-server consistency, performance bounds, and source/content parity. API changes are outside this objective.
 
-## Current milestone — Heat Cell alpha slice, 2026-11-12
+## Current milestone — Energy Cell hand transfer, 2026-11-13
+
+Charged/empty Arcforge Energy Cell items and portable Batteries now have a mod-side hand interaction with Energy Cell blocks. Transfers honor item and cell capacities/rates, synchronize the saved item component and block entity, and show an action-bar amount. Stack sizes above one are rejected with a prompt to split first, avoiding per-item component duplication. This is an alpha replacement for the source's separate GUI slots. Formatting and Rust compile checks will be supplied by the upcoming GitHub build; no tests were added or run. Matching-client behavior and save/reload still need verification.
+
+## Earlier milestone — Heat Cell alpha slice, 2026-11-12
 
 Four Heat Cell tiers are implemented with bounded HU storage/transfer, leakage, blockstate heat levels, charge-preserving block drops/placement, and crafting/loot data. `cargo check --locked --manifest-path api/Cargo.toml` passed, and Horizon built and checked the 388-recipe content pack (SHA-256 `40c675764f93faf5953bff98c74605000f2e5e5183743e663ffcd3ba9913e790`). Commit `6621649` is pushed. GitHub run [43329802649](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43329802649) passed the complete mod-package job; its artifact checksums are verified. In-world behavior remains unverified. Screens, capsule slots, insulation, redstone/side controls, and charge-preserving upgrades remain absent.
 
@@ -37,7 +41,7 @@ The project has a broad early gameplay prototype: ore worldgen and material reci
 
 ### Latest work — Portable FE Batteries (2026-11-13)
 
-Four portable FE Battery items now expose Horizon item-energy capabilities at the pinned Arcforge capacities and rates, with four source-shaped recipes and localized names. Charge is not copied by tier upgrades, and the Arcforge Energy Cell charging interaction is unavailable through the pinned hooks. The Cylinder visibility fix in commit `1e5d989` passed local compilation and GitHub run [43488089381](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43488089381), including the Linux client build and bundle checksums. In the matching disposable client, Wrench inspection displayed the exact gas and amount/capacity, and the user confirmed the enlarged gauge and opaque neighboring blocks in-game. Cartridge hand insertion/extraction and Cylinder gas persistence also passed disposable-world checks. Battery transfer/charging/persistence and ordinary Cylinder break/place retention remain unverified.
+Four portable FE Battery items now expose Horizon item-energy capabilities at the pinned Arcforge capacities and rates, with four source-shaped recipes and localized names. Charge is not copied by tier upgrades. A mod-side hand-transfer path from charged/empty energy items to Energy Cells is in source and awaits CI/runtime verification. The Cylinder visibility fix in commit `1e5d989` passed local compilation and GitHub run [43488089381](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43488089381), including the Linux client build and bundle checksums. In the matching disposable client, Wrench inspection displayed the exact gas and amount/capacity, and the user confirmed the enlarged gauge and opaque neighboring blocks in-game. Cartridge hand insertion/extraction and Cylinder gas persistence also passed disposable-world checks. Battery transfer/persistence and ordinary Cylinder break/place retention remain unverified.
 
 The preceding cylinder slice is pushed as `dc3987d`. GitHub run [43360699934](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43360699934) completed successfully for both package and Linux native-client jobs. Its artifacts and checksums were downloaded and verified. This confirms CI built the cylinder slice, not the newer local battery changes or full gameplay behavior.
 

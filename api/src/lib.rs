@@ -444,6 +444,21 @@ impl Hooks for Arcforge {
         host: &mut dyn Host,
         event: &mut horizon_client::mod_api::UseItemOnEvent<'_>,
     ) -> Flow {
+        if energy_item_spec(&event.stack.item).is_some()
+            && host
+                .mod_block_entity(event.pos)
+                .is_some_and(|entity| energy_cell_spec(&entity.id).is_some())
+        {
+            let Some(player) = host.acting_player() else {
+                return Flow::Continue;
+            };
+            return use_energy_item_on_cell(
+                host,
+                event.pos,
+                event.stack,
+                player.selected_slot as i32,
+            );
+        }
         if event.stack.item.as_ref() == "minecraft:bucket"
             || event.stack.item.as_ref() == LATEX_BUCKET
         {
@@ -5553,8 +5568,12 @@ fn energy_cell_spec(id: &str) -> Option<(u64, u64)> {
     }
 }
 
+fn energy_item_spec(item: &str) -> Option<(u64, u64)> {
+    energy_cell_spec(item).or_else(|| portable_battery_spec(item))
+}
+
 fn portable_energy_item_buffer(item: &str) -> Option<ItemEnergyBuffer> {
-    let (capacity, rate) = energy_cell_spec(item).or_else(|| portable_battery_spec(item))?;
+    let (capacity, rate) = energy_item_spec(item)?;
     Some(ItemEnergyBuffer {
         capacity: i32::try_from(capacity).ok()?,
         max_insert: i32::try_from(rate).ok()?,
@@ -5605,6 +5624,99 @@ fn item_energy_amount(stack: &ItemStack, capacity: u64) -> u64 {
     }
 }
 
+fn use_energy_item_on_cell(
+    host: &mut dyn Host,
+    pos: [i32; 3],
+    held: &ItemStack,
+    selected_slot: i32,
+) -> Flow {
+    let Some(item_buffer) = portable_energy_item_buffer(&held.item) else {
+        return Flow::Continue;
+    };
+    let Some(cell) = host.mod_block_entity(pos) else {
+        return Flow::Continue;
+    };
+    let Some((cell_capacity, cell_rate)) = energy_cell_spec(&cell.id) else {
+        return Flow::Continue;
+    };
+    // A stack can contain identical charged items, but the energy component is
+    // stored per item. Ask the player to split it first rather than applying
+    // one transfer to every item in the stack.
+    if held.count != 1 {
+        if let Some(player) = host.acting_player() {
+            host.action_bar(
+                player.uuid,
+                Text::literal("Split the energy item stack before transferring FE"),
+            );
+        }
+        return Flow::Cancel;
+    }
+    let old_cell_energy = get_i32(&cell.nbt, "energy").max(0) as u64;
+    let old_cell_energy = old_cell_energy.min(cell_capacity);
+    let old_item_energy = item_energy_amount(held, item_buffer.capacity as u64);
+    let (moved, new_cell_energy, new_item_energy) = if old_item_energy > 0 {
+        let moved = old_item_energy
+            .min(item_buffer.max_extract.max(0) as u64)
+            .min(cell_rate)
+            .min(cell_capacity - old_cell_energy);
+        (moved, old_cell_energy + moved, old_item_energy - moved)
+    } else {
+        let moved = old_cell_energy
+            .min(item_buffer.max_insert.max(0) as u64)
+            .min(cell_rate)
+            .min(item_buffer.capacity.max(0) as u64);
+        (moved, old_cell_energy - moved, moved)
+    };
+
+    if moved == 0 {
+        if let Some(player) = host.acting_player() {
+            host.action_bar(
+                player.uuid,
+                Text::literal(format!(
+                    "Energy Cell: {old_cell_energy}/{cell_capacity} FE; item: {old_item_energy}/{} FE",
+                    item_buffer.capacity
+                )),
+            );
+        }
+        return Flow::Cancel;
+    }
+
+    let mut updated = held.clone();
+    set_item_energy(&mut updated, new_item_energy as i32);
+    let mut updated_cell = false;
+    let changed = host.change_mod_block_entity(pos, &mut |entity| {
+        if entity.id == cell.id
+            && (get_i32(&entity.nbt, "energy").max(0) as u64).min(cell_capacity) == old_cell_energy
+        {
+            set_i32(&mut entity.nbt, "energy", new_cell_energy as i32);
+            updated_cell = true;
+        }
+    });
+    if !changed || !updated_cell {
+        return Flow::Continue;
+    }
+    if !replace_carried_stack(host, selected_slot, held, updated) {
+        host.change_mod_block_entity(pos, &mut |entity| {
+            if entity.id == cell.id {
+                set_i32(&mut entity.nbt, "energy", old_cell_energy as i32);
+            }
+        });
+        host.block_entity_sync(pos);
+        return Flow::Continue;
+    }
+    host.block_entity_sync(pos);
+    if let Some(player) = host.acting_player() {
+        host.action_bar(
+            player.uuid,
+            Text::literal(format!(
+                "Energy Cell: {new_cell_energy}/{cell_capacity} FE; item: {new_item_energy}/{} FE; moved {moved} FE",
+                item_buffer.capacity
+            )),
+        );
+    }
+    Flow::Cancel
+}
+
 fn take_cell_charge(dimension: &str, pos: [i32; 3]) -> Option<(String, i32)> {
     let mut pending = PENDING_CELL_CHARGES
         .lock()
@@ -5614,9 +5726,6 @@ fn take_cell_charge(dimension: &str, pos: [i32; 3]) -> Option<(String, i32)> {
 }
 
 fn set_item_energy(stack: &mut ItemStack, amount: i32) {
-    if amount <= 0 {
-        return;
-    }
     let mut custom_data = match stack
         .extra
         .as_deref()
@@ -5625,7 +5734,11 @@ fn set_item_energy(stack: &mut ItemStack, amount: i32) {
         Some(Tag::Compound(data)) => data.clone(),
         _ => horizon_client::mod_api::Compound::default(),
     };
-    custom_data.insert("horizon_energy".into(), Tag::Int(amount));
+    if amount > 0 {
+        custom_data.insert("horizon_energy".into(), Tag::Int(amount));
+    } else {
+        custom_data.remove(&"horizon_energy".into());
+    }
     stack
         .extra
         .get_or_insert_with(Box::default)
