@@ -27,5 +27,13 @@
   "item.arcforge.steel_mesh": "Steel Mesh",
   "item.arcforge.invar_mesh": "Invar Mesh",
   "item.arcforge.tungsten_mesh": "Tungsten Mesh",
-  "item.arcforge.silicon_carbide_mesh": "Silicon Carbide Mesh"
+  "item.arcforge.silicon_carbide_mesh": "Silicon Carbide Mesh",
+  "block.arcforge.wrought_pressurized_cylinder": "Wrought Pressurized Cylinder",
+  "item.arcforge.wrought_gas_cartridge": "Wrought Gas Cartridge",
+  "block.arcforge.tempered_pressurized_cylinder": "Tempered Pressurized Cylinder",
+  "item.arcforge.tempered_gas_cartridge": "Tempered Gas Cartridge",
+  "block.arcforge.hardened_pressurized_cylinder": "Hardened Pressurized Cylinder",
+  "item.arcforge.hardened_gas_cartridge": "Hardened Gas Cartridge",
+  "block.arcforge.arcforged_pressurized_cylinder": "Arcforged Pressurized Cylinder",
+  "item.arcforge.arcforged_gas_cartridge": "Arcforged Gas Cartridge"
 }

@@ -3,14 +3,14 @@
 **Snapshot date:** 2026-11-12
 **Project:** `/home/rayyan/Projects/arcforge-horizon`  
 **Active goal:** see [goal.md](goal.md)  
-**Status:** GitHub run [43340862715](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43340862715) built the content package, native source bundle, and Linux client. Local disposable runtime checks uncovered and fixed the duplicate `raw_rubber` registry entry and 26.3 ore-feature schema mismatch. A supported Horizon native build and imported-client smoke now register Arcforge items when the matching `native-mods.json` is installed beside the imported executable. The workflow packaging/docs fix for that manifest and the runtime corrections are in the current working tree and still need to be committed, pushed, and rebuilt on GitHub.
+**Status:** The current uncommitted slice adds Pressurized Cylinders and Gas Cartridges. Rust `cargo check` passes locally with sccache; Horizon built and checked the content archive at 396 recipes (SHA-256 `795bc42c2285ceb9c4363d0476440855c33eede11aea798379d60fd62a49f5bd`). The hybrid remote Rust check reached a distributed worker missing files from `wayland-protocols-plasma`; local fallback passed. This slice has no in-world verification and has not yet been pushed or built by GitHub Actions. The previously verified client/import smoke and the full project status remain below.
 
 ## 1. Resume here
 
-1. Review `git status`, then commit and push the current changes to `main`.
+1. Review the full diff and commit/push the current implementation and documentation to `main`.
 2. Watch GitHub Actions **Build Arcforge for Horizon**. Confirm both the mod package and native Linux client jobs pass and that the client artifact contains `horizon-client`, `native-mods.json`, `arcforge.hmod`, `arcforge.hnmod`, `INSTALL.txt`, and `SHA256SUMS`.
 3. Verify the published checksums and use the instructions in [CI build setup](ci-build.md). Copy `native-mods.json` into the imported version folder beside `horizon-client`; put and enable `arcforge.hmod` in the instance.
-4. Continue real gameplay checks: ore generation in newly generated chunks; basic recipes and crafting; one Heat Cell charge/transfer/save/reload loop; then machine processing. Do not describe all Arcforge gameplay as playable yet.
+4. Continue real gameplay checks: ore generation in newly generated chunks; basic recipes and crafting; Heat Cell and Cylinder charge/fluid transfer/save/reload loops; then machine processing. Do not describe all Arcforge gameplay as playable yet.
 
 **Observed local smoke:** On the pinned Nightly 2026-11-08 build, the imported client with matching manifest and content pack opened a disposable creative world. `/give arcforge:wrought_heat_cell 1` and `/give arcforge:steel_ingot 1` both succeeded and appeared in inventory. Runtime ore data parsed without skipped Arcforge placed features after conversion to `worldgen/feature/` and flattened target states. Conduit and Solar blockstate multipart definitions still log warnings; machine behavior, ore distribution, and progression were not verified.
 

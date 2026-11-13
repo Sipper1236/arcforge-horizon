@@ -218,6 +218,20 @@ The Horizon client logged that optional `libflite.so.1` narration could not load
 2. Craft the opening machines and verify a simple recipe/power/heat loop.
 3. Test Heat Cell transfer and persistence, output backpressure, hopper/handler access, and LAN parity before marking those slices behavior-tested.
 
+## Pressurized Cylinder and Gas Cartridge slice (2026-11-12)
+
+Four Cylinder tiers accept the 22 known Arcforge gas IDs. Their top inventory slot drains a cartridge into the cylinder, while the bottom slot fills a cartridge, bounded by cartridge tier rate and capacity. Four cartridge tiers use capacities of 32,000 / 128,000 / 512,000 / 2,048,000 mB and rates of 2,000 / 8,000 / 32,000 / 128,000 mB per tick. The cylinders store 64,000 / 256,000 / 1,024,000 / 4,096,000 mB, expose a five-level gauge state, and cache gas for ordinary drop and placement hooks. The pinned crafting preparation hook cannot copy cartridge data during tier upgrades, so the source upgrade shapes are regular crafting recipes and lose contents.
+
+| Check | Observed result | What it establishes |
+|---|---|---|
+| `cargo fmt --manifest-path api/Cargo.toml` | Passed. | Rust formatting is clean. |
+| Hybrid remote Rust check | Attempted through `remote`; a distributed sccache worker failed to open files inside `wayland-protocols-plasma`. | Remote compilation did not establish a successful check; the failure is in the remote worker's incomplete dependency files. |
+| Local fallback `RUSTC_WRAPPER=sccache CARGO_INCREMENTAL=0 cargo check --locked --manifest-path api/Cargo.toml -j6` | Passed: 0 errors; one existing unused `EnergyStore::transfer_to` warning. | Current native source type-checks against Horizon `fdc87aecdbd116bf1e08adcd062fcbaea8c2e2ca`. |
+| Horizon content build and check | Passed; 396 recipe JSON files; 3,520,889-byte archive; SHA-256 `795bc42c2285ceb9c4363d0476440855c33eede11aea798379d60fd62a49f5bd` (unsigned). | The eight shaped recipes, names, and four cylinder loot tables package and pass Horizon's content checker. |
+| Rust tests, native bundle, in-world test | Not run for this slice. | Cylinder registration, slot access, gas transfer, fill-state rendering, drops, placement, save/reload, and multiplayer behavior remain unverified. |
+
+The remote CLI also printed `bc: command not found` in its transfer summary; the Rust build error came from the distributed worker's missing dependency files. Local sccache fallback succeeded. No Horizon API changes were made.
+
 ## FE/HU conduit active glow (2026-11-08)
 
 Both pooled schedulers now set the imported `active` blockstate across all network members while the pool contains FE/HU and for up to ten game ticks after the last transfer, matching Arcforge's idle glow interval. Rust formatting and `cargo check --locked --manifest-path api/Cargo.toml` passed after the change; the existing unused `EnergyStore::transfer_to` warning remains. No Rust tests, Horizon content rebuild, native bundle build, or in-world visual check was run for this change. The code compiles, but the rendered glow and tick behavior remain unverified in a Minecraft world.

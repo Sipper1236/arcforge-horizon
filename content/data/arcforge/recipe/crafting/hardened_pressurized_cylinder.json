@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "PHP",
+    "HXH",
+    "GHG"
+  ],
+  "key": {
+    "X": "arcforge:tempered_pressurized_cylinder",
+    "H": "arcforge:hardened_alloy",
+    "P": "#c:plates/steel",
+    "G": "arcforge:rubber_gasket"
+  },
+  "result": {
+    "id": "arcforge:hardened_pressurized_cylinder",
+    "count": 1
+  }
+}

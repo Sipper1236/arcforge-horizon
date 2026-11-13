@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " T ",
+    "TXT",
+    "GTG"
+  ],
+  "key": {
+    "T": "arcforge:tempered_alloy",
+    "X": "arcforge:wrought_gas_cartridge",
+    "G": "arcforge:rubber_gasket"
+  },
+  "result": {
+    "id": "arcforge:tempered_gas_cartridge",
+    "count": 1
+  }
+}

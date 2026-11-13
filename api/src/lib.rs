@@ -39,6 +39,7 @@ mod fluid_conduit;
 mod heat;
 mod heat_cell;
 mod item_conduit;
+mod pressurized_cylinder;
 mod solar;
 mod thermal;
 
@@ -255,6 +256,12 @@ impl Hooks for Arcforge {
             heat_cell::restore_from_item(host, event.pos, event.stack);
             host.set_block_property(event.pos, "heat", "0");
         }
+        if pressurized_cylinder::cylinder_capacity(&event.stack.item).is_some() {
+            pressurized_cylinder::restore_from_item(host, event.pos, event.stack);
+            if let Some(level) = pressurized_cylinder::item_fill_level(event.stack) {
+                host.set_block_property(event.pos, "level", &level);
+            }
+        }
         if let Some((capacity, _)) = energy_cell_spec(&event.stack.item) {
             let energy = item_energy_amount(event.stack, capacity);
             if energy > 0 {
@@ -391,6 +398,11 @@ impl Hooks for Arcforge {
                 1 => event.stack.item.as_ref() == "arcforge:sulfur_dust",
                 _ => false,
             };
+            return if valid { Flow::Continue } else { Flow::Cancel };
+        }
+        if pressurized_cylinder::cylinder_capacity(&event.entity.id).is_some() {
+            let valid = matches!(event.slot, 0 | 1)
+                && pressurized_cylinder::cartridge_accepts_stack(event.stack);
             return if valid { Flow::Continue } else { Flow::Cancel };
         }
         if event.entity.id == GRAIN_DRYER {
@@ -715,6 +727,16 @@ impl Hooks for Arcforge {
         register_content!(&mut event.blocks, id: TEMPERED_FLUID_TANK.into(), template: "minecraft:glass".into(), item: true);
         register_content!(&mut event.blocks, id: HARDENED_FLUID_TANK.into(), template: "minecraft:glass".into(), item: true);
         register_content!(&mut event.blocks, id: ARCFORGED_FLUID_TANK.into(), template: "minecraft:glass".into(), item: true);
+        for id in pressurized_cylinder::cylinder_ids() {
+            register_content!(&mut event.blocks, id: id.into(), template: "minecraft:iron_block".into(), item: true);
+            if let Some(block) = event.blocks.iter_mut().find(|block| block.id == id) {
+                block.state_properties = serde_json::from_value(serde_json::json!({
+                    "level": { "type": "int", "min": 0, "max": 4 }
+                }))
+                .expect("valid Pressurized Cylinder gauge block state");
+                block.default_state = [("level".to_owned(), "0".to_owned())].into_iter().collect();
+            }
+        }
         register_content!(&mut event.blocks, id: THERMOELECTRIC_PLANT.into(), template: "minecraft:blast_furnace".into(), item: true);
         register_content!(&mut event.blocks, id: RESIN_TAP.into(), template: "minecraft:tripwire_hook".into(), item: true);
         if let Some(block) = event.blocks.iter_mut().find(|block| block.id == RESIN_TAP) {
@@ -885,6 +907,9 @@ impl Hooks for Arcforge {
             HARDENED_CANISTER,
             ARCFORGED_CANISTER,
         ] {
+            register_content!(&mut event.items, id: id.into(), template: "minecraft:bucket".into(), max_stack_size: Some(1));
+        }
+        for id in pressurized_cylinder::cartridge_ids() {
             register_content!(&mut event.items, id: id.into(), template: "minecraft:bucket".into(), max_stack_size: Some(1));
         }
         register_content!(&mut event.items, id: TUNGSTEN_HEATING_COIL.into(), template: "minecraft:iron_ingot".into());
@@ -1082,7 +1107,12 @@ impl Hooks for Arcforge {
         if matches!(event.item, CREOSOTE_BUCKET | LATEX_BUCKET) {
             Some(1000)
         } else {
-            canister_spec(event.item).map(|(capacity, _)| capacity as i32)
+            canister_spec(event.item)
+                .map(|(capacity, _)| capacity as i32)
+                .or_else(|| {
+                    pressurized_cylinder::cartridge_spec(event.item)
+                        .map(|(capacity, _)| capacity as i32)
+                })
         }
     }
 
@@ -1114,6 +1144,19 @@ impl Hooks for Arcforge {
                 .filter(|drop| drop.item.as_ref() == item.as_str())
             {
                 heat_cell::set_item_heat(drop, heat);
+            }
+        }
+        if let Some((item, fluid, amount)) =
+            pressurized_cylinder::take_charge(event.context.dimension, pos)
+        {
+            if let Some(fluid) = fluid.as_deref() {
+                for drop in event
+                    .drops
+                    .iter_mut()
+                    .filter(|drop| drop.item.as_ref() == item.as_str())
+                {
+                    *drop = item_with_fluid(drop, fluid, amount);
+                }
             }
         }
     }
@@ -1159,6 +1202,7 @@ impl Hooks for Arcforge {
             || event.block == HARDENED_ENERGY_CELL
             || event.block == ARCFORGED_ENERGY_CELL
             || heat_cell::spec(event.block).is_some()
+            || pressurized_cylinder::cylinder_capacity(event.block).is_some()
         {
             Some((event.block.to_owned(), Default::default()))
         } else {
@@ -1199,6 +1243,7 @@ impl Hooks for Arcforge {
             || item_conduit::spec(event.block).is_some()
             || thermal::spec(event.block).is_some()
             || heat_cell::spec(event.block).is_some()
+            || pressurized_cylinder::cylinder_capacity(event.block).is_some()
         {
             event.ticks = true;
         }
@@ -1209,7 +1254,22 @@ impl Hooks for Arcforge {
         _host: &dyn horizon_client::mod_api::Host,
         event: &mut BlockEntityContainerEvent<'_>,
     ) -> Option<ModContainer> {
-        if event.block == VULCANIZER {
+        if pressurized_cylinder::cylinder_capacity(event.block).is_some() {
+            Some(ModContainer {
+                slots: 2,
+                faces: [
+                    vec![1],
+                    vec![0],
+                    vec![0, 1],
+                    vec![0, 1],
+                    vec![0, 1],
+                    vec![0, 1],
+                ],
+                inputs: vec![0, 1],
+                outputs: vec![0, 1],
+                menu: Some("minecraft:hopper".into()),
+            })
+        } else if event.block == VULCANIZER {
             Some(ModContainer {
                 slots: 3,
                 faces: [
@@ -1405,7 +1465,11 @@ impl Hooks for Arcforge {
         _host: &dyn Host,
         event: &mut horizon_client::mod_api::BlockEntityAcceptsFluidEvent<'_>,
     ) -> Flow {
-        if event.block == GEOTHERMAL_PLANT && event.fluid != "minecraft:lava" {
+        if pressurized_cylinder::cylinder_capacity(event.block).is_some()
+            && !pressurized_cylinder::accepts_gas(event.block, event.fluid)
+        {
+            Flow::Cancel
+        } else if event.block == GEOTHERMAL_PLANT && event.fluid != "minecraft:lava" {
             Flow::Cancel
         } else if matches!(
             event.block,
@@ -1573,6 +1637,13 @@ impl Hooks for Arcforge {
                 inputs: vec![0],
                 outputs: vec![0],
             })
+        } else if let Some(capacity) = pressurized_cylinder::cylinder_capacity(event.block) {
+            Some(horizon_client::mod_api::ModFluidTanks {
+                tanks: vec![capacity as i32],
+                faces: [vec![0], vec![0], vec![0], vec![0], vec![0], vec![0]],
+                inputs: vec![0],
+                outputs: vec![0],
+            })
         } else if event.block == GEOTHERMAL_PLANT {
             Some(horizon_client::mod_api::ModFluidTanks {
                 tanks: vec![GEOTHERMAL_LAVA_TANK_CAPACITY as i32],
@@ -1612,6 +1683,15 @@ impl Hooks for Arcforge {
         event: &mut BlockEntityTickEvent<'_>,
     ) {
         match event.entity.id.as_str() {
+            id if pressurized_cylinder::cylinder_capacity(id).is_some() => {
+                pressurized_cylinder::tick(host.dimension(), event.pos, event.entity);
+                let capacity = pressurized_cylinder::cylinder_capacity(&event.entity.id).unwrap();
+                let stored = fluid::amount(&event.entity.nbt, 0).min(capacity);
+                let level = ((stored as u64 * 5) / capacity as u64).min(4).to_string();
+                if host.block_property(event.pos, "level").as_deref() != Some(&level) {
+                    host.set_block_property(event.pos, "level", &level);
+                }
+            }
             MACHINE => tick_steelworks(host, event.entity),
             COMBUSTION => tick_combustion_plant(host, event.pos, event.entity),
             CARBONIZER => tick_carbonizer(host, event.entity),

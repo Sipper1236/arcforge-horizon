@@ -1,14 +1,14 @@
 # Current implementation
 
-This is an as-built snapshot, not a claim of Arcforge parity. **Build checkpoint (2026-11-12):** Four Heat Cell tiers are implemented as automatic heat buffers with source-shaped crafting/loot data. Runtime diagnosis found duplicate `.hmod` and native Rust declarations for the Crushing Array casing and Resin Tap; these duplicates made Horizon reject all Arcforge native item/block declarations. Their states now live in Rust and the duplicate files are removed. CI uses `tools/fetch_mojang_inputs.py` to download Horizon-pinned Minecraft client and Linux library inputs from Mojang and verify each file without publishing them. GitHub run [43339016409](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43339016409) passed preparation but native-build rejected a symlink in the nested Horizon checkout. The workflow now stages the manifest and API into a clean folder. The active completion target is in [goal.md](../goal.md), and the resumable project state is in [handoff.md](../handoff.md). For verification strength, see [verification.md](verification.md). The code targets Arcforge commit `8843cb02cf9132f278f6a8e804b6d78837d3cbcb` and Horizon Nightly 2026-11-08, commit `fdc87aecdbd116bf1e08adcd062fcbaea8c2e2ca`.
+This is an as-built snapshot, not a claim of Arcforge parity. **Current slice:** four Pressurized Cylinder tiers and four Gas Cartridge tiers now store and transfer the 22 pinned Arcforge gas IDs through the existing Horizon fluid hooks. Cylinder gas is saved, carried through block drops, and restored on placement. The crate compiles and the content archive builds and passes Horizon's checker. This does not verify cylinder registration, slot transfer, or gas network behavior in a running world. The active completion target is in [goal.md](../goal.md), and the resumable project state is in [handoff.md](../handoff.md). For verification strength, see [verification.md](verification.md). The code targets Arcforge commit `8843cb02cf9132f278f6a8e804b6d78837d3cbcb` and Horizon Nightly 2026-11-08, commit `fdc87aecdbd116bf1e08adcd062fcbaea8c2e2ca`.
 
 ## Native crate and registered content
 
-`api/src/lib.rs` registers a Metal Press, Sifter, Arc Crusher, a three-lane Arc Crushing Array controller and its formed casing multiblock, Carbonizer, Induction Furnace, Infuser, Resin Tap, Firebox, Firebox Array controller and casing, Pressure Glass, Solar Thermal Array controller/casing/collectors, Fuel Burner, all four Fluid Tank tiers, Thermoelectric Plant, four Energy Conduit tiers, four Item Conduit tiers, four Fluid Conduit tiers, four thermal conduit tiers, four Energy Cell tiers, four Heat Cell tiers, a Wrench that rotates supported single-block machines and configures conduit, Solar heat-port, and energy-generator faces, seven Steel tools, four Steel armor pieces, Fiberizer, Vulcanizer, Grain Dryer, Arcforge Furnace port, Steelworks prototype, Combustion Plant, coke block, treated wood, Arcforge furnace bricks, Creosote/Latex buckets and four tiered portable canisters, the tungsten heating coil, and processing materials.
+`api/src/lib.rs` registers a Metal Press, Sifter, Arc Crusher, a three-lane Arc Crushing Array controller and its formed casing multiblock, Carbonizer, Induction Furnace, Infuser, Resin Tap, Firebox, Firebox Array controller and casing, Pressure Glass, Solar Thermal Array controller/casing/collectors, Fuel Burner, all four Fluid Tank tiers, four Pressurized Cylinder tiers, Thermoelectric Plant, four Energy Conduit tiers, four Item Conduit tiers, four Fluid Conduit tiers, four thermal conduit tiers, four Energy Cell tiers, four Heat Cell tiers, a Wrench that rotates supported single-block machines and configures conduit, Solar heat-port, and energy-generator faces, seven Steel tools, four Steel armor pieces, Fiberizer, Vulcanizer, Grain Dryer, Arcforge Furnace port, Steelworks prototype, Combustion Plant, coke block, treated wood, Arcforge furnace bricks, Creosote/Latex buckets, four liquid Canisters and four Gas Cartridges, the tungsten heating coil, and processing materials.
 
 ## Recipe data present
 
-The content directory contains 388 recipe JSON files (Arcforge machine recipes and vanilla recipe types):
+The content directory contains 396 recipe JSON files (Arcforge machine recipes and vanilla recipe types):
 
 | Recipe group | Files |
 |---|---:|
@@ -35,6 +35,8 @@ The content directory contains 388 recipe JSON files (Arcforge machine recipes a
 | Energy cell tier crafting | 4 |
 | Fluid tank tier upgrades | 3 |
 | Portable canister crafting/upgrades | 4 |
+| Pressurized Cylinder crafting/upgrades | 4 |
+| Gas Cartridge crafting/upgrades | 4 |
 | Raw-material storage crafting | 20 |
 | Refined material storage and gasket crafting | 25 |
 | Invar Dust crafting | 1 |
@@ -47,13 +49,14 @@ The content directory contains 388 recipe JSON files (Arcforge machine recipes a
 | Composite material crafting | 1 |
 | Induction Furnace Arcforge smelting catalog | 32 |
 | Heat Cell crafting recipes | 4 |
-| **Total** | **388** |
+| **Total** | **396** |
 
 Files existing does not by itself prove the complete recipe graph or survival progression works.
 
 ## Implemented behavior in source
 
 - **Pressurized Conduits:** four tiers route the 22 Arcforge gases listed in the pinned source through separate networks at 400/1,600/6,400/25,600 mB/t, with recipes, tags, and loot. The gas list matches upstream `gas_properties.json`. This source compiles and the content archive passes Horizon's checker; arbitrary third-party gas classification is unsupported by the pinned API, and network behavior is not in-world verified.
+- **Pressurized Cylinders and Gas Cartridges:** four Cylinder blocks store 64,000 / 256,000 / 1,024,000 / 4,096,000 mB and only accept the 22 Arcforge gas IDs recognized by Pressurized Conduits. Four Gas Cartridge items hold 32,000 / 128,000 / 512,000 / 2,048,000 mB and transfer at 2,000 / 8,000 / 32,000 / 128,000 mB per tick. The Cylinder's top inventory slot drains a cartridge into its tank; the bottom slot fills a cartridge. A saved level property drives the source five-stage gauge. A per-tick snapshot preserves the gas on ordinary block drops, and placement restores it. Four source-pattern recipes exist for each tier family; Horizon's crafting hook does not expose input components, so shaped tier-upgrade recipes do not preserve stored gas. The generic menu, six-sided tank access, lack of a gas tint/comparator and in-world verification are still gaps. Unknown third-party gas identifiers remain unsupported by the pinned API.
 
 - **Heat Cells:** all four tiers are registered with source-derived HU capacities, transfer rates, maximum temperatures, and passive loss rates. Stored HU persists in block-entity data, transfers only downhill through adjacent supported heat connections within the tier's total per-tick rate, and updates the existing five-level heat blockstate. Mining and placement carry charge in custom data. Four source-shaped crafting recipes and explosion-aware loot tables are packaged. The alpha automatically connects all six sides; custom screens, capsule slots, insulation upgrades, redstone controls, side configuration, and charge-preserving tier upgrades are not implemented. No in-world transfer, loss, persistence, or visual check has been run.
 

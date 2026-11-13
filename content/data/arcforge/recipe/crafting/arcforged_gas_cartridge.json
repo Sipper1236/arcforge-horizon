@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " C ",
+    "AXA",
+    "GAG"
+  ],
+  "key": {
+    "C": "#c:gems/arcite",
+    "A": "arcforge:arcforged_alloy",
+    "X": "arcforge:hardened_gas_cartridge",
+    "G": "arcforge:rubber_gasket"
+  },
+  "result": {
+    "id": "arcforge:arcforged_gas_cartridge",
+    "count": 1
+  }
+}
