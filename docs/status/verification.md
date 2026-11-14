@@ -1,5 +1,11 @@
 # Verification record
 
+## Fiberizer two-slot screen and live Furnace coke diagnosis (2026-11-14)
+
+Commit `6a02895` replaces the Fiberizer's mismatched nine-slot generic menu with a two-slot custom menu and adds a native screen showing FE, HU, temperature, required temperature, and recipe progress. GitHub run [43629143095](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43629143095) passed formatting, the native crate check, Horizon content build/check, and packaging. Its Linux client job is still in progress; no runtime screen verification is claimed.
+
+The user's live Furnace screen showed a formed structure with iron in slot 300, one Coal Coke in fuel/reagent slot 303, empty outputs, 20°C, zero burn time, and progress 0/400 for the 1200°C steel recipe. Source behavior requires `coke_count > recipe.coke` to start heating, then consumes `recipe.coke` when the batch completes. Thus the one-coke attempt cannot start; two coke are required for this one-coke recipe. The user was told to add a second coke. That follow-up result has not yet been observed. Inspection was read-only via `horizon-ctl`; no block or inventory was changed by the agent.
+
 ## Arc Crusher screen and processing — matching client verified (2026-11-14)
 
 Commit `6078ace` adds the native screen and commit `516bf9f` fixes its progress-bar macro. The initial run [43615910858](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43615910858) failed at compile time; the corrected commit passed both package and Linux client jobs in run [43616251460](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43616251460). The matching client was installed into the disposable `arcforge-battery-test` profile and opened the screen with three slots, live FE/capacity and recipe status. With 20,000 FE injected into the test block, coal advanced to 20/200 ticks and then completed: one `arcforge:carbon_dust` appeared, progress reset, and 4,000 FE had been consumed. This verifies one recipe's live status and output, not the full 83-recipe catalog or output-backpressure behavior. No Rust tests were added or run.
