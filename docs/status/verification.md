@@ -4,7 +4,7 @@ This file records observed checks only. Re-run checks after Rust or content chan
 
 ## Crushing Array Wrench progress readout — build verification (2026-11-13)
 
-Using the Wrench on the Array's center casing now reports stored FE and the progress of each of its three lanes in the action bar. Idle lanes are identified explicitly. `cargo fmt --check`, `git diff --check`, and the remote locked `cargo check` pass; only the pre-existing unused `EnergyStore::transfer_to` warning remains. No tests were run. Commit `bd4be83` is building in GitHub run [43532339226](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43532339226); in-world display verification is pending.
+Using the Wrench on the Array's center casing now reports stored FE and the progress of each of its three lanes in the action bar. Idle lanes are identified explicitly. `cargo fmt --check`, `git diff --check`, and the remote locked `cargo check` pass; only the pre-existing unused `EnergyStore::transfer_to` warning remains. No tests were run. Commit `bd4be83` passed the GitHub package job in run [43532339226](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43532339226). The 2,143,713-byte bundle ZIP passed `unzip -t` and its internal SHA256SUMS; `arcforge.hmod` is `a92250ac8a8da4c0d0312d18917133dbd4c8ca6621d29f8a9585c7857f5c76c8`, `arcforge.hnmod` is `0335517149d8b55b6e13d0fcce840e946128f7a216721b15138109a9ae7089aa`, and the outer ZIP is `c060dc9ef707c942cf55de0e2888a2ebf2d497a493b9e7812a56c52125355de6`. The matching Linux client build and in-world display verification are pending.
 
 ## Crushing Array default ports — package verification (2026-11-13)
 
