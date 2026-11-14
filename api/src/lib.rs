@@ -1790,6 +1790,21 @@ impl Hooks for Arcforge {
         event: &mut horizon_client::mod_api::ScreenEvent<'_>,
     ) -> Option<NativeScreen> {
         match event.block {
+            INFUSER => Some(NativeScreen {
+                width: 176.0,
+                height: 228.0,
+                slots: vec![
+                    Some([10.0, 30.0]),
+                    Some([146.0, 30.0]),
+                    Some([46.0, 48.0]),
+                    Some([118.0, 48.0]),
+                    Some([46.0, 72.0]),
+                ],
+                inventory_y: 142.0,
+                inventory_x: 8.0,
+                own_labels: true,
+                own_background: false,
+            }),
             FURNACE_PORT => Some(NativeScreen {
                 width: 176.0,
                 height: 202.0,
@@ -1824,6 +1839,54 @@ impl Hooks for Arcforge {
         host: &dyn Host,
         event: &mut horizon_client::mod_api::ScreenDrawEvent<'_>,
     ) {
+        if event.block == INFUSER {
+            let [ox, oy] = event.origin;
+            let data = event.data;
+            let batch = &mut *event.batch;
+            macro_rules! infuser_text {
+                ($label:expr, $x:expr, $y:expr, $color:expr $(,)?) => {
+                    host.text(batch, $label, [ox + $x, oy + $y], $color, true)
+                };
+            }
+            macro_rules! infuser_fill {
+                ($rect:expr, $color:expr) => {
+                    host.fill(
+                        batch,
+                        [ox + ($rect)[0], oy + ($rect)[1], ($rect)[2], ($rect)[3]],
+                        $color,
+                    )
+                };
+            }
+
+            infuser_text!("Infuser", 8.0, 6.0, 0xFFFFFFFF);
+            infuser_text!("Bucket In", 8.0, 16.0, 0xFFBBBBBB);
+            infuser_text!("Bucket Out", 112.0, 16.0, 0xFFBBBBBB);
+            infuser_text!("Input", 46.0, 34.0, 0xFFBBBBBB);
+            infuser_text!("Output", 118.0, 34.0, 0xFFBBBBBB);
+            infuser_text!("Additive", 46.0, 58.0, 0xFFBBBBBB);
+
+            let fluid = data.first().copied().unwrap_or_default().clamp(0, 8_000);
+            let energy = data.get(1).copied().unwrap_or_default().max(0);
+            let progress = data.get(2).copied().unwrap_or_default().max(0);
+            let duration = data.get(3).copied().unwrap_or_default().max(0);
+            infuser_text!(&format!("FE {energy}/20000"), 8.0, 88.0, 0xFFE0E0E0,);
+            infuser_text!(&format!("Fluid {fluid}/8000 mB"), 8.0, 99.0, 0xFFE0E0E0,);
+            if duration > 0 {
+                infuser_text!(
+                    &format!("Progress {progress}/{duration} t"),
+                    8.0,
+                    110.0,
+                    0xFFE0E0E0,
+                );
+                infuser_fill!([8.0, 122.0, 160.0, 6.0], 0xFF383838);
+                let fraction = (progress as f32 / duration as f32).clamp(0.0, 1.0);
+                infuser_fill!([8.0, 122.0, 160.0 * fraction, 6.0], 0xFF62B64F);
+            } else {
+                infuser_text!("Waiting for recipe inputs", 8.0, 110.0, 0xFFAAAAAA);
+            }
+            infuser_text!("Inventory", 8.0, 132.0, 0xFFFFFFFF);
+            return;
+        }
         if event.block == ARC_CRUSHER {
             let [ox, oy] = event.origin;
             let data = event.data;
@@ -5023,13 +5086,25 @@ fn tick_infuser_buckets(entity: &mut ModBlockEntity) {
     }
 }
 
+fn sync_infuser_screen_data(entity: &mut ModBlockEntity, ticks: u32) {
+    entity.data.resize(4, 0);
+    entity.data[0] = fluid::amount(&entity.nbt, 0).min(8_000) as i32;
+    entity.data[1] = get_i32(&entity.nbt, "energy").max(0);
+    entity.data[2] = get_i32(&entity.nbt, "CookTime")
+        .max(0)
+        .min(ticks.min(i32::MAX as u32) as i32);
+    entity.data[3] = ticks.min(i32::MAX as u32) as i32;
+}
+
 fn tick_infuser(host: &dyn Host, entity: &mut ModBlockEntity) {
     if entity.items.len() != 5 {
         return;
     }
     tick_infuser_buckets(entity);
+    sync_infuser_screen_data(entity, 0);
     let Some(input) = entity.items[2].as_ref() else {
         set_i32(&mut entity.nbt, "CookTime", 0);
+        sync_infuser_screen_data(entity, 0);
         return;
     };
     let additive = entity.items[4].as_ref();
@@ -5039,28 +5114,32 @@ fn tick_infuser(host: &dyn Host, entity: &mut ModBlockEntity) {
         infuser_candidate(host, input, fluid_name.as_deref(), fluid_amount, additive)
     else {
         set_i32(&mut entity.nbt, "CookTime", 0);
+        sync_infuser_screen_data(entity, 0);
         return;
     };
     let recipe = candidate.recipe;
+    let speed_upgrades =
+        get_i32(&entity.nbt, "SpeedUpgrades").clamp(0, SPEED_MAX_UPGRADES as i32) as u32;
+    let speed = speed_upgrade_multiplier(speed_upgrades);
+    let ticks = speed_upgrade_time(recipe.ticks, speed_upgrades);
     if !can_add(
         entity.items[3].as_ref(),
         &recipe.output.item,
         recipe.output.count,
     ) {
+        sync_infuser_screen_data(entity, ticks);
         return;
     }
     if recipe.additive_count.is_some() && !candidate.additive_ready {
+        sync_infuser_screen_data(entity, ticks);
         return;
     }
     if let Some((name, amount)) = &recipe.fluid {
         if fluid_name.as_deref() != Some(name.as_str()) || fluid_amount < *amount {
+            sync_infuser_screen_data(entity, ticks);
             return;
         }
     }
-    let speed_upgrades =
-        get_i32(&entity.nbt, "SpeedUpgrades").clamp(0, SPEED_MAX_UPGRADES as i32) as u32;
-    let speed = speed_upgrade_multiplier(speed_upgrades);
-    let ticks = speed_upgrade_time(recipe.ticks, speed_upgrades);
     let mut energy = energy::EnergyStore::new(20_000, get_i32(&entity.nbt, "energy").max(0) as u64);
     let energy_cost = scaled_upgrade_cost(
         20,
@@ -5068,6 +5147,7 @@ fn tick_infuser(host: &dyn Host, entity: &mut ModBlockEntity) {
         get_i32(&entity.nbt, "EnergyUpgrades").clamp(0, ENERGY_MAX_UPGRADES as i32) as u32,
     );
     if energy.extract(energy_cost, energy_cost) != energy_cost {
+        sync_infuser_screen_data(entity, ticks);
         return;
     }
     let cook = get_i32(&entity.nbt, "CookTime").max(0) + 1;
@@ -5098,9 +5178,7 @@ fn tick_infuser(host: &dyn Host, entity: &mut ModBlockEntity) {
         "energy",
         energy.stored_fe().min(i32::MAX as u64) as i32,
     );
-    entity.data.resize(4, 0);
-    entity.data[2] = get_i32(&entity.nbt, "CookTime").max(0).min(ticks as i32);
-    entity.data[3] = ticks as i32;
+    sync_infuser_screen_data(entity, ticks);
 }
 
 fn firebox_fuel_ticks(item: &str) -> Option<u32> {
