@@ -5336,9 +5336,7 @@ fn tick_fuel_burner(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnt
         get_i32(&entity.nbt, "SpeedUpgrades").clamp(0, SPEED_MAX_UPGRADES as i32) as u32;
     let speed = speed_upgrade_multiplier(speed_upgrades);
     let fuel_id = fluid::name(&entity.nbt, 0);
-    let fuel = fuel_id
-        .as_deref()
-        .and_then(fuel_burner::fuel);
+    let fuel = fuel_id.as_deref().and_then(fuel_burner::fuel);
     let burn_milli = fuel
         .map(|fuel| (fuel.burn_millimb_per_tick as f64 * speed).round() as u32)
         .unwrap_or(0);
