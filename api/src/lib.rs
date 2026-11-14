@@ -2109,7 +2109,7 @@ impl Hooks for Arcforge {
                 0xFFE0E0E0,
             );
             text!(
-                &format!("Min {required_heat}C Coke {available_coke}/{coke_needed}"),
+                &format!("Min {required_heat}C Coke {available_coke} (need {coke_needed})"),
                 8.0,
                 98.0,
                 0xFFE0E0E0,
