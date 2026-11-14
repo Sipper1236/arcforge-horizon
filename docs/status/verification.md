@@ -2,6 +2,10 @@
 
 This file records observed checks only. Re-run checks after Rust or content changes; do not infer current results from an earlier build. For the completion criteria and current resume state, see [goal.md](../goal.md) and [handoff.md](../handoff.md).
 
+## Conduit and Solar block-state schemas — package verification (2026-11-14)
+
+Commit `158d858` declares the side properties used by all four tiers of Energy, Thermal, Item, Fluid, and Pressurized Conduits, including `active` where their models select it. It also declares the Solar Array controller/casing/collector `formed`, `part`, `base`, and port properties with matching defaults. Remote `cargo fmt` and locked `cargo check` passed; only the existing unused `EnergyStore::transfer_to` warning remains. GitHub run [43540533024](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43540533024) passed the package, native check, and content build/check jobs. Its Linux client job is still building. No tests were run; corrected in-world conduit and Solar renders still need visual confirmation.
+
 ## Conduit handbook corrections — playable build verification (2026-11-14)
 
 Commit `c4c5682` updates the Engineer's Handbook to describe the implemented Energy, Thermal, Item, Fluid, and Pressurized Conduit behaviors and clarify which faces the Wrench configures. GitHub run [43537740114](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43537740114) passed both package and Linux client jobs. The 41,305,273-byte playable ZIP passed archive integrity checks and all internal SHA256SUMS; outer SHA-256 is `62ae5e988e4872da9a626e0f2200c6ef217ef7be2540eff35a63db08e31a1f2c`. Internal hashes: `horizon-client` `26aaf8f1b067ab9b3a95adcdf68d42648861bb040d29059e83b2c81e69c79d87`, `native-mods.json` `ca72f4f81f97fcabd27364ad6e7d6e1f92f63407f18dbddb2b7c04a495726112`, `arcforge.hmod` `b33ed57407bd4c2d6a6eb971592b7bf5ba2065936506ba45eebc16e98afbb241`, and `arcforge.hnmod` `177a4ad33884d53620a9b1722d0d61ef898af1eb69500729270c591368d7fc94`. This proves build and package integrity; conduit gameplay still needs in-world verification.
