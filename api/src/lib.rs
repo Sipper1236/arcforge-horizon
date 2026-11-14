@@ -1789,25 +1789,34 @@ impl Hooks for Arcforge {
         _host: &dyn Host,
         event: &mut horizon_client::mod_api::ScreenEvent<'_>,
     ) -> Option<NativeScreen> {
-        if event.block != FURNACE_PORT {
-            return None;
+        match event.block {
+            FURNACE_PORT => Some(NativeScreen {
+                width: 176.0,
+                height: 202.0,
+                slots: vec![
+                    Some([20.0, 30.0]),
+                    Some([44.0, 30.0]),
+                    Some([68.0, 30.0]),
+                    Some([44.0, 54.0]),
+                    Some([128.0, 30.0]),
+                    Some([128.0, 54.0]),
+                ],
+                inventory_y: 118.0,
+                inventory_x: 8.0,
+                own_labels: true,
+                own_background: false,
+            }),
+            ARC_CRUSHER => Some(NativeScreen {
+                width: 176.0,
+                height: 196.0,
+                slots: vec![Some([28.0, 31.0]), Some([100.0, 31.0]), Some([124.0, 31.0])],
+                inventory_y: 112.0,
+                inventory_x: 8.0,
+                own_labels: true,
+                own_background: false,
+            }),
+            _ => None,
         }
-        Some(NativeScreen {
-            width: 176.0,
-            height: 202.0,
-            slots: vec![
-                Some([20.0, 30.0]),
-                Some([44.0, 30.0]),
-                Some([68.0, 30.0]),
-                Some([44.0, 54.0]),
-                Some([128.0, 30.0]),
-                Some([128.0, 54.0]),
-            ],
-            inventory_y: 118.0,
-            inventory_x: 8.0,
-            own_labels: true,
-            own_background: false,
-        })
     }
 
     fn screen_draw(
@@ -1815,6 +1824,59 @@ impl Hooks for Arcforge {
         host: &dyn Host,
         event: &mut horizon_client::mod_api::ScreenDrawEvent<'_>,
     ) {
+        if event.block == ARC_CRUSHER {
+            let [ox, oy] = event.origin;
+            let data = event.data;
+            let batch = &mut *event.batch;
+            macro_rules! crusher_text {
+                ($label:expr, $x:expr, $y:expr, $color:expr $(,)?) => {
+                    host.text(batch, $label, [ox + $x, oy + $y], $color, true)
+                };
+            }
+            macro_rules! crusher_fill {
+                ($rect:expr, $color:expr) => {
+                    host.fill(
+                        batch,
+                        [ox + ($rect)[0], oy + ($rect)[1], ($rect)[2], ($rect)[3]],
+                        $color,
+                    )
+                };
+            }
+
+            crusher_text!("Arc Crusher", 8.0, 6.0, 0xFFFFFFFF);
+            crusher_text!("Input", 27.0, 19.0, 0xFFBBBBBB);
+            crusher_text!("Out", 103.0, 19.0, 0xFFBBBBBB);
+            crusher_text!("Bonus", 130.0, 19.0, 0xFFBBBBBB);
+            let energy = data.first().copied().unwrap_or_default().max(0);
+            let capacity = data.get(1).copied().unwrap_or(20_000).max(1);
+            let progress = data.get(2).copied().unwrap_or_default().max(0);
+            let duration = data.get(3).copied().unwrap_or_default().max(0);
+            crusher_text!(
+                &format!("Energy {energy}/{capacity} FE"),
+                8.0,
+                60.0,
+                0xFFE0E0E0,
+            );
+            if duration > 0 {
+                crusher_text!(
+                    &format!("Progress {progress}/{duration} t"),
+                    8.0,
+                    72.0,
+                    0xFFE0E0E0,
+                );
+            } else {
+                crusher_text!("No matching recipe", 8.0, 72.0, 0xFFAAAAAA);
+            }
+            crusher_fill!([8.0, 88.0, 160.0, 8.0], 0xFF383838);
+            let progress_fraction = if duration > 0 {
+                (progress as f32 / duration as f32).clamp(0.0, 1.0)
+            } else {
+                0.0
+            };
+            crusher_fill!([8.0, 88.0, 160.0 * progress_fraction, 8.0], 0xFF62B64F,);
+            crusher_text!("Inventory", 8.0, 100.0, 0xFFFFFFFF);
+            return;
+        }
         if event.block != FURNACE_PORT {
             return;
         }
@@ -2560,12 +2622,19 @@ fn tick_arc_crusher(host: &mut dyn Host, entity: &mut ModBlockEntity) {
     }
     let Some(input) = entity.items[0].as_ref() else {
         set_i32(&mut entity.nbt, "CookTime", 0);
+        sync_arc_crusher_screen_data(entity, 0, 0);
         return;
     };
     let Some(recipe) = crushing_recipe(host, input) else {
         set_i32(&mut entity.nbt, "CookTime", 0);
+        sync_arc_crusher_screen_data(entity, 0, 0);
         return;
     };
+    let speed_upgrades =
+        get_i32(&entity.nbt, "SpeedUpgrades").clamp(0, SPEED_MAX_UPGRADES as i32) as u32;
+    let speed = speed_upgrade_multiplier(speed_upgrades);
+    let ticks = speed_upgrade_time(recipe.ticks, speed_upgrades);
+    let current_progress = get_i32(&entity.nbt, "CookTime").max(0) as u32;
     if recipe
         .result
         .as_ref()
@@ -2575,12 +2644,9 @@ fn tick_arc_crusher(host: &mut dyn Host, entity: &mut ModBlockEntity) {
             .as_ref()
             .is_some_and(|(item, count)| !can_add(entity.items[2].as_ref(), item, *count))
     {
+        sync_arc_crusher_screen_data(entity, current_progress, ticks);
         return;
     }
-    let speed_upgrades =
-        get_i32(&entity.nbt, "SpeedUpgrades").clamp(0, SPEED_MAX_UPGRADES as i32) as u32;
-    let speed = speed_upgrade_multiplier(speed_upgrades);
-    let ticks = speed_upgrade_time(recipe.ticks, speed_upgrades);
     let mut energy = energy::EnergyStore::new(20_000, get_i32(&entity.nbt, "energy").max(0) as u64);
     let energy_cost = scaled_upgrade_cost(
         20,
@@ -2588,6 +2654,7 @@ fn tick_arc_crusher(host: &mut dyn Host, entity: &mut ModBlockEntity) {
         get_i32(&entity.nbt, "EnergyUpgrades").clamp(0, ENERGY_MAX_UPGRADES as i32) as u32,
     );
     if energy.extract(energy_cost, energy_cost) != energy_cost {
+        sync_arc_crusher_screen_data(entity, current_progress, ticks);
         return;
     }
     let cook = get_i32(&entity.nbt, "CookTime").max(0) + 1;
@@ -2611,9 +2678,19 @@ fn tick_arc_crusher(host: &mut dyn Host, entity: &mut ModBlockEntity) {
         set_i32(&mut entity.nbt, "CookTime", cook);
     }
     set_i32(&mut entity.nbt, "energy", energy.stored_fe() as i32);
+    sync_arc_crusher_screen_data(
+        entity,
+        get_i32(&entity.nbt, "CookTime").max(0) as u32,
+        ticks,
+    );
+}
+
+fn sync_arc_crusher_screen_data(entity: &mut ModBlockEntity, progress: u32, duration: u32) {
     entity.data.resize(4, 0);
-    entity.data[2] = cook.min(ticks as i32);
-    entity.data[3] = ticks as i32;
+    entity.data[0] = get_i32(&entity.nbt, "energy").clamp(0, 20_000);
+    entity.data[1] = 20_000;
+    entity.data[2] = progress.min(duration) as i32;
+    entity.data[3] = duration.min(i32::MAX as u32) as i32;
 }
 
 fn crushing_array_positions(center: [i32; 3]) -> impl Iterator<Item = [i32; 3]> {
