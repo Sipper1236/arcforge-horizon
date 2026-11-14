@@ -10,12 +10,24 @@
     "arcforge:wrought_thermal_conduit",
     "arcforge:tempered_thermal_conduit",
     "arcforge:hardened_thermal_conduit",
-    "arcforge:arcforged_thermal_conduit"
+    "arcforge:arcforged_thermal_conduit",
+    "arcforge:wrought_item_conduit",
+    "arcforge:tempered_item_conduit",
+    "arcforge:hardened_item_conduit",
+    "arcforge:arcforged_item_conduit",
+    "arcforge:wrought_fluid_conduit",
+    "arcforge:tempered_fluid_conduit",
+    "arcforge:hardened_fluid_conduit",
+    "arcforge:arcforged_fluid_conduit",
+    "arcforge:wrought_pressurized_conduit",
+    "arcforge:tempered_pressurized_conduit",
+    "arcforge:hardened_pressurized_conduit",
+    "arcforge:arcforged_pressurized_conduit"
   ],
   "pages": [
     {
       "type": "text",
-      "text": "The alpha registers Energy Conduits for FE and Thermal Conduits for HU. Item, fluid, gas and pressurized conduits are not implemented yet. Conduits connect to adjacent blocks of their own type. Each segment has its own buffer and rate; Arcforge's network-wide pooled rate is not implemented.\n# The Wrench\nCraft it from three iron ingots and a copper ingot. Right-click a conduit face to cycle Auto, Input, Output and Disabled. Auto permits either direction, Input receives, Output sends, and Disabled disconnects. The Wrench also sets supported Solar heat-output faces, configures adjacent-transfer output faces on the Combustion and Thermoelectric Plants, and rotates supported single-block machines. Other Wrench modes, sneaking reverse-cycle, dismantling, and conduit joint controls are not implemented."
+      "text": "Four tiers each of Energy, Thermal, Item, Fluid, and Pressurized Conduits are available. Energy Conduits share FE across connected networks. Thermal Conduits move HU with a per-segment rate. Item Conduits move items between configured output and input faces, up to 8 / 16 / 32 / 64 items per operation. Fluid Conduits move one liquid at a time at 200 / 800 / 3,200 / 12,800 mB/t; Pressurized Conduits move one of the supported Arcforge gases at 400 / 1,600 / 6,400 / 25,600 mB/t. Mixed-tier networks use the slowest tier. Item and fluid conduits move directly between connected blocks; they do not buffer items or fluids, animate packets, or support filters.\n# The Wrench\nCraft it from three iron ingots and a copper ingot. Right-click Energy, Thermal, or Item Conduit faces to cycle Auto, Input, Output, and Disabled. Auto permits either direction, Input receives, Output sends, and Disabled disconnects. Fluid and Pressurized Conduits detect compatible sided tanks automatically. The Wrench also sets supported Solar heat-output faces, configures adjacent-transfer output faces on the Combustion and Thermoelectric Plants, and rotates supported single-block machines. Other Wrench modes, sneaking reverse-cycle, dismantling, and conduit joint controls are not implemented."
     },
     {
       "type": "text",
