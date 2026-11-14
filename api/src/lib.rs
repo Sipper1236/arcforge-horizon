@@ -616,6 +616,13 @@ impl Hooks for Arcforge {
             show_energy_cell_status(host, event.pos);
             return Flow::Cancel;
         }
+        if host.mod_block_entity(event.pos).is_some_and(|entity| {
+            entity.id == ARC_CRUSHING_ARRAY_CASING
+                && host.block_property(event.pos, "part").as_deref() == Some("center")
+        }) {
+            show_crushing_array_status(host, event.pos);
+            return Flow::Cancel;
+        }
         if let Some((controller_pos, tower)) = solar::controller_for_part(host, event.pos) {
             let Some(side) = energy_conduit_side(event.face) else {
                 return Flow::Continue;
@@ -4220,6 +4227,38 @@ fn show_energy_cell_status(host: &mut dyn Host, pos: [i32; 3]) {
             Text::literal(format!(
                 "Energy Cell: {amount}/{capacity} FE (gauge {level}/4)"
             )),
+        );
+    }
+}
+
+fn show_crushing_array_status(host: &mut dyn Host, pos: [i32; 3]) {
+    let Some(entity) = host.mod_block_entity(pos) else {
+        return;
+    };
+    if entity.id != ARC_CRUSHING_ARRAY_CASING
+        || host.block_property(pos, "part").as_deref() != Some("center")
+    {
+        return;
+    }
+    let speed_upgrades =
+        get_i32(&entity.nbt, "SpeedUpgrades").clamp(0, SPEED_MAX_UPGRADES as i32) as u32;
+    let lanes = (0..3)
+        .map(|lane| {
+            let input = entity.items.get(lane).and_then(Option::as_ref);
+            let Some(recipe) = input.and_then(|input| crushing_recipe(host, input)) else {
+                return format!("L{} idle", lane + 1);
+            };
+            let cook = get_i32(&entity.nbt, &format!("Lane{lane}CookTime")).max(0) as u32;
+            let total = speed_upgrade_time(recipe.ticks, speed_upgrades);
+            format!("L{} {}/{}t", lane + 1, cook.min(total), total)
+        })
+        .collect::<Vec<_>>()
+        .join(" ");
+    let energy = (get_i32(&entity.nbt, "energy").max(0) as u64).min(100_000);
+    if let Some(player) = host.acting_player() {
+        host.action_bar(
+            player.uuid,
+            Text::literal(format!("Crushing Array: {energy}/100000 FE | {lanes}")),
         );
     }
 }

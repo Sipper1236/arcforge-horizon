@@ -2,6 +2,10 @@
 
 This file records observed checks only. Re-run checks after Rust or content changes; do not infer current results from an earlier build. For the completion criteria and current resume state, see [goal.md](../goal.md) and [handoff.md](../handoff.md).
 
+## Crushing Array Wrench progress readout — local verification (2026-11-13)
+
+Using the Wrench on the Array's center casing now reports stored FE and the progress of each of its three lanes in the action bar. Idle lanes are identified explicitly. `cargo fmt --check`, `git diff --check`, and the remote locked `cargo check` pass; only the pre-existing unused `EnergyStore::transfer_to` warning remains. No tests were run. GitHub Actions packaging and Linux client build are pending for this local change; in-world display verification is also pending.
+
 ## Crushing Array default ports — package verification (2026-11-13)
 
 The Array's fixed north-facing default sided capabilities now match Arcforge's default `SideConfig`: top input slots 0–2, bottom output slots 3–8, and south/back energy input. Side item insertion continues to reject non-controller casings. The pinned API's block-wide container and energy hooks cannot inspect a particular casing's position and saved side settings, so Wrench-configurable face modes remain deferred. `remote env CARGO_INCREMENTAL=0 cargo check --locked --manifest-path api/Cargo.toml -j16` passed on `rx580`; the only warning was the pre-existing unused `EnergyStore::transfer_to` method. No tests were run. Commit `ad227c0` passed the package job in run [43530636592](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43530636592). Its 2,143,430-byte bundle ZIP passed `unzip -t` and internal SHA256SUMS; `arcforge.hmod` is `a92250ac8a8da4c0d0312d18917133dbd4c8ca6621d29f8a9585c7857f5c76c8`, `arcforge.hnmod` is `ab949170ae929d0772ee2f2bc03826bd3daab87f7a217ca5421699445f572afc`, and the outer ZIP is `215c498dcd43798824acc882057cced33af50bdd552b79de755e2e3219264f53`. The matching Linux client build and in-world item/energy automation checks are pending.
