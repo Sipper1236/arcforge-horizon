@@ -10,7 +10,7 @@
   "pages": [
     {
       "type": "text",
-      "text": "Steel is the backbone of Arcforge. It takes two multiblocks.\n# 1. Coal coke\nBuild a Carbonizer and bake coal (or carbon dust) into coal coke. It needs no fuel, just time. Coal gives creosote as a by-product.\n# 2. Steel\nBuild the Arcforge Furnace. Burn coal coke to heat it to 1,200°C, then put iron in its metal slot and coal coke in its coke slot: each smelt makes a steel ingot and some slag.\nThe same furnace makes the tier alloys later on. See the Steelmaking chapter."
+      "text": "Steel is the backbone of Arcforge. It takes two multiblocks.\n# 1. Coal coke\nBuild a Carbonizer and bake coal (or carbon dust) into coal coke. It needs no fuel, just time. Coal gives creosote as a by-product.\n# 2. Steel\nBuild the Arcforge Furnace. For a cold start, put one Iron Ingot in the first input and two Coal Coke in the coke slot. One coke starts heating; the other is consumed by the steel recipe. Leave both additive slots empty. The Furnace must reach 1,200°C and be formed; each smelt makes a Steel Ingot and Slag. Its screen shows how many coke are present and how many are needed.\nThe same furnace makes the tier alloys later on. See the Steelmaking chapter."
     }
   ]
 }
