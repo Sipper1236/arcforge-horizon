@@ -8,7 +8,7 @@ The current code is an early prototype, not a complete port. Continue implementi
 
 ### Current slice — Arcforge Furnace player menu
 
-The Arcforge Furnace now declares a six-slot Horizon menu with a dedicated native screen. The screen shows multiblock formation, temperature, remaining fuel, recipe progress, minimum heat, and coke requirement. Metal and additive inputs are checked against the 12 upstream recipe definitions; coke accepts loose coke and coke blocks, and output slots are result-only. The pinned Horizon API compile passes remotely with `cargo check --locked`. GitHub run [43547943707](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43547943707) passed package and Linux client jobs, and both artifacts passed archive and internal checksum verification. No in-world screen test has been run yet. No Horizon API changes or Rust tests were made.
+The Arcforge Furnace now declares a six-slot Horizon menu with a dedicated native screen. A matching-client smoke confirmed the screen opens on an unformed port and shows its six machine slots, formation, temperature, fuel, recipe status, and player inventory. User interaction found that the first implementation only rejected inputs on the two output slots; the custom menu's `menu_slot_rules` hook now checks metal/additive recipes and coke for player clicks. The updated hook compiles remotely against the pinned API. Its matching-client build and in-world input-filter check are pending. No Horizon API changes or Rust tests were made.
 
 ### Earlier slice — Arcforge Furnace Wrench status
 

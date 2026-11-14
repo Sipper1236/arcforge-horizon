@@ -7,7 +7,7 @@ use horizon_client::{
         BlockEntityContainerEvent, BlockEntityEvent, BlockEntityTickEvent, BlockEntityTicksEvent,
         BlocksEvent, ContainerAcceptsEvent, Direction, Flow, Hooks, Host, ItemEnergyBuffer,
         ItemEnergyBufferEvent, ItemFluidTankEvent, ItemStack, ItemsEvent, LootDropsEvent,
-        NativeScreen, RandomSource, Tag, Text, serde_json,
+        MenuSlotRulesEvent, NativeScreen, RandomSource, Tag, Text, serde_json,
     },
 };
 use std::{
@@ -193,6 +193,15 @@ pub fn hooks() -> Box<dyn Hooks> {
 }
 
 struct Arcforge;
+
+#[derive(Default)]
+struct ArcforgeFurnaceMenuRules {
+    metal: Vec<horizon_client::mod_api::Ingredient>,
+    additives: Vec<horizon_client::mod_api::Ingredient>,
+}
+
+static ARCFORGE_FURNACE_MENU_RULES: LazyLock<Mutex<ArcforgeFurnaceMenuRules>> =
+    LazyLock::new(|| Mutex::new(ArcforgeFurnaceMenuRules::default()));
 
 type CellChargeKey = (String, [i32; 3]);
 #[derive(Default)]
@@ -465,6 +474,31 @@ impl Hooks for Arcforge {
             _ => false,
         };
         if valid { Flow::Continue } else { Flow::Cancel }
+    }
+
+    fn menu_slot_rules(&self, event: &mut MenuSlotRulesEvent<'_>) {
+        if event.menu != "arcforge:arcforge_furnace" || event.slot > 3 {
+            return;
+        }
+        let rules = ARCFORGE_FURNACE_MENU_RULES
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner());
+        let accepts = match event.slot {
+            0 => rules
+                .metal
+                .iter()
+                .any(|ingredient| ingredient.test(event.stack)),
+            1 | 2 => rules
+                .additives
+                .iter()
+                .any(|ingredient| ingredient.test(event.stack)),
+            3 => matches!(event.stack.item.as_ref(), COKE | COKE_BLOCK),
+            _ => false,
+        };
+        event.may_place &= accepts;
+        if !accepts {
+            event.max_stack = 1;
+        }
     }
 
     fn use_item_on(
@@ -1540,7 +1574,7 @@ impl Hooks for Arcforge {
 
     fn block_entity_container(
         &self,
-        _host: &dyn horizon_client::mod_api::Host,
+        host: &dyn horizon_client::mod_api::Host,
         event: &mut BlockEntityContainerEvent<'_>,
     ) -> Option<ModContainer> {
         if pressurized_cylinder::cylinder_capacity(event.block).is_some() {
@@ -1582,6 +1616,7 @@ impl Hooks for Arcforge {
                 menu: Some("minecraft:furnace".into()),
             })
         } else if event.block == FURNACE_PORT {
+            cache_arcforge_furnace_menu_rules(host);
             Some(ModContainer {
                 slots: 6,
                 faces: [
@@ -7248,6 +7283,32 @@ fn arcforge_furnace_ingredient_accepts(host: &dyn Host, stack: &ItemStack, key: 
         .filter_map(|value| value.get("ingredient"))
         .filter_map(|ingredient| host.recipe_ingredient(ingredient))
         .any(|ingredient| ingredient.test(stack))
+}
+
+fn cache_arcforge_furnace_menu_rules(host: &dyn Host) {
+    let mut rules = ArcforgeFurnaceMenuRules::default();
+    for recipe in host.recipes_of_type("arcforge:arcforge_smelting") {
+        let json = recipe.json.as_ref();
+        if let Some(ingredient) = json
+            .get("metal")
+            .and_then(|value| value.get("ingredient"))
+            .and_then(|value| host.recipe_ingredient(value))
+        {
+            rules.metal.push(ingredient);
+        }
+        for key in ["additive", "additive_2"] {
+            if let Some(ingredient) = json
+                .get(key)
+                .and_then(|value| value.get("ingredient"))
+                .and_then(|value| host.recipe_ingredient(value))
+            {
+                rules.additives.push(ingredient);
+            }
+        }
+    }
+    *ARCFORGE_FURNACE_MENU_RULES
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner()) = rules;
 }
 
 fn steelworks_recipe(host: &dyn Host, entity: &ModBlockEntity) -> Option<FurnaceRecipe> {
