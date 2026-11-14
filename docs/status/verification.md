@@ -4,7 +4,7 @@ This file records observed checks only. Re-run checks after Rust or content chan
 
 ## Single-processor Wrench status readouts — local verification (2026-11-14)
 
-Wrench use on the Arc Crusher, Induction Furnace, Metal Press, and Sifter now shows stored FE and current recipe progress. The displayed duration accounts for machine Speed Upgrades and, for the Sifter, mesh speed. `cargo fmt --check`, `git diff --check`, and remote locked `cargo check` pass; only the pre-existing unused `EnergyStore::transfer_to` warning remains. No tests were run. Commit `9e4e6b1` has not yet entered GitHub Actions; packaging, Linux client build, and in-world feedback verification are pending.
+Wrench use on the Arc Crusher, Induction Furnace, Metal Press, and Sifter now shows stored FE and current recipe progress. The displayed duration accounts for machine Speed Upgrades and, for the Sifter, mesh speed. `cargo fmt --check`, `git diff --check`, and remote locked `cargo check` pass; only the pre-existing unused `EnergyStore::transfer_to` warning remains. No tests were run. Commit `8608317` is building in GitHub run [43534354970](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43534354970); in-world feedback verification is pending.
 
 ## Crushing Array Wrench progress readout — build verification (2026-11-13)
 
