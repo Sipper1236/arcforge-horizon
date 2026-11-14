@@ -2097,6 +2097,8 @@ impl Hooks for Arcforge {
         let required_progress = data.get(3).copied().unwrap_or_default().max(0);
         let required_heat = data.get(6).copied().unwrap_or_default().max(0);
         let required_coke = data.get(7).copied().unwrap_or_default().max(0);
+        let available_coke = data.get(8).copied().unwrap_or_default().max(0);
+        let coke_needed = required_coke + i32::from(burn == 0);
         text!(&format!("Heat {temperature} C"), 8.0, 78.0, 0xFFE0E0E0);
         text!(&format!("Fuel {burn} t"), 92.0, 78.0, 0xFFE0E0E0);
         if required_progress > 0 {
@@ -2107,7 +2109,7 @@ impl Hooks for Arcforge {
                 0xFFE0E0E0,
             );
             text!(
-                &format!("Min {required_heat} C   Coke {required_coke}"),
+                &format!("Min {required_heat}C Coke {available_coke}/{coke_needed}"),
                 8.0,
                 98.0,
                 0xFFE0E0E0,
@@ -2529,7 +2531,7 @@ fn tick_arcforge_furnace(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlo
         );
     } else {
         host.set_block_property(pos, "lit", "false");
-        entity.data.resize(8, 0);
+        entity.data.resize(9, 0);
         entity.data[0] = get_i32(&entity.nbt, "BurnTime").max(0);
         entity.data[1] = get_i32(&entity.nbt, "BurnDuration").max(800);
         entity.data[2] = 0;
@@ -2544,6 +2546,7 @@ fn tick_arcforge_furnace(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlo
             entity.data[6] = 0;
             entity.data[7] = 0;
         }
+        entity.data[8] = arcforge_furnace_coke_count(entity).min(i32::MAX as u32) as i32;
     }
 }
 
@@ -7853,7 +7856,7 @@ fn tick_arcforge_furnace_process(host: &dyn Host, entity: &mut ModBlockEntity) {
     set_i32(&mut entity.nbt, "BurnTime", burn);
     set_i32(&mut entity.nbt, "CookTime", cook);
     set_i32(&mut entity.nbt, "TemperatureC", heat);
-    entity.data.resize(8, 0);
+    entity.data.resize(9, 0);
     entity.data[0] = burn;
     entity.data[1] = get_i32(&entity.nbt, "BurnDuration").max(800);
     entity.data[2] = cook;
@@ -7866,6 +7869,7 @@ fn tick_arcforge_furnace_process(host: &dyn Host, entity: &mut ModBlockEntity) {
         recipe.min_temperature_c.min(i32::MAX as u32) as i32
     });
     entity.data[7] = recipe.map_or(0, |recipe| recipe.coke.min(i32::MAX as u32) as i32);
+    entity.data[8] = arcforge_furnace_coke_count(entity).min(i32::MAX as u32) as i32;
 }
 
 fn process_arcforge_furnace_recipe(entity: &mut ModBlockEntity, recipe: &FurnaceRecipe) {
