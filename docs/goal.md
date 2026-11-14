@@ -8,11 +8,11 @@ The current code is an early prototype, not a complete port. Continue implementi
 
 ### Current slice — Fuel Burner source fuel profiles (2026-11-14)
 
-The Fuel Burner now accepts all 16 pinned Arcforge burner-fuel IDs in its 8,000 mB native input tank and applies source default HU/mB, fractional mB/t, and burn temperature. The Horizon API has no Arcforge fluid data-map hook, so the profiles are hardcoded in the mod and refinery config overrides remain fixed to source defaults. The existing Creosote bucket path remains; oxygen/flue gas, dynamic side controls, most survival fuel-production chains, and per-fuel runtime verification remain. Build verification is pending.
+The Fuel Burner accepts all 16 pinned Arcforge burner-fuel IDs in its 8,000 mB native input tank and applies source default HU/mB, fractional mB/t, and burn temperature. The Horizon API has no Arcforge fluid data-map hook, so profiles are hardcoded in the mod and refinery config overrides remain fixed to source defaults. Creosote remains the only bucket path; oxygen/flue gas, dynamic side controls, and most survival fuel-production chains remain unported. GitHub Actions run [43646950706](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43646950706) passed package and Linux client builds; see [verification.md](status/verification.md).
 
 ### Current slice — Fuel Burner fluid acceptance (2026-11-14)
 
-Commit `b6fedb2` makes the Fuel Burner accept only Creosote through its native tank, so water, lava, and unsupported fluids cannot occupy its only input while the burner cannot consume them. GitHub run [43639909488](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43639909488) passed the package and Linux-client jobs; archive hashes are recorded in [verification.md](status/verification.md). Runtime fluid interaction remains unverified after the disposable-client attempt hit a storage quota error and the retry exited before interaction. Other fuel chains, oxygen/flue gas, and side controls are still outside this slice.
+Commit `b6fedb2` first restricted the Fuel Burner to Creosote; commit `c50158c` supersedes that restriction with all 16 pinned Arcforge fuel IDs and their source default profiles. Bucket handling remains limited to Creosote, and most fuels still lack ported survival production chains.
 
 ### Current slice — Furnace coke requirement label (2026-11-14)
 
