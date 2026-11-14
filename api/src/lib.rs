@@ -919,6 +919,118 @@ impl Hooks for Arcforge {
         for id in thermal::ids() {
             register_content!(&mut event.blocks, id: id.into(), template: "minecraft:copper_block".into(), item: true);
         }
+        let mut set_custom_states =
+            |id: &str, properties: serde_json::Value, default_state: Vec<(String, String)>| {
+                if let Some(block) = event.blocks.iter_mut().find(|block| block.id == id) {
+                    block.state_properties = serde_json::from_value(properties)
+                        .expect("valid custom block state properties");
+                    block.default_state = default_state.into_iter().collect();
+                }
+            };
+        for id in [
+            WROUGHT_ENERGY_CONDUIT,
+            TEMPERED_ENERGY_CONDUIT,
+            HARDENED_ENERGY_CONDUIT,
+            ARCFORGED_ENERGY_CONDUIT,
+            item_conduit::WROUGHT,
+            item_conduit::TEMPERED,
+            item_conduit::HARDENED,
+            item_conduit::ARCFORGED,
+            fluid_conduit::WROUGHT,
+            fluid_conduit::TEMPERED,
+            fluid_conduit::HARDENED,
+            fluid_conduit::ARCFORGED,
+            fluid_conduit::WROUGHT_PRESSURIZED,
+            fluid_conduit::TEMPERED_PRESSURIZED,
+            fluid_conduit::HARDENED_PRESSURIZED,
+            fluid_conduit::ARCFORGED_PRESSURIZED,
+            thermal::WROUGHT,
+            thermal::TEMPERED,
+            thermal::HARDENED,
+            thermal::ARCFORGED,
+        ] {
+            let mut properties = serde_json::json!({
+                "down": { "type": "enum", "values": ["none", "pipe", "input", "output"] },
+                "up": { "type": "enum", "values": ["none", "pipe", "input", "output"] },
+                "north": { "type": "enum", "values": ["none", "pipe", "input", "output"] },
+                "south": { "type": "enum", "values": ["none", "pipe", "input", "output"] },
+                "west": { "type": "enum", "values": ["none", "pipe", "input", "output"] },
+                "east": { "type": "enum", "values": ["none", "pipe", "input", "output"] }
+            });
+            let active = energy_conduit_spec(id).is_some()
+                || matches!(
+                    id,
+                    fluid_conduit::WROUGHT_PRESSURIZED
+                        | fluid_conduit::TEMPERED_PRESSURIZED
+                        | fluid_conduit::HARDENED_PRESSURIZED
+                        | fluid_conduit::ARCFORGED_PRESSURIZED
+                )
+                || matches!(
+                    id,
+                    thermal::WROUGHT | thermal::TEMPERED | thermal::HARDENED | thermal::ARCFORGED
+                );
+            let mut defaults = ["down", "up", "north", "south", "west", "east"]
+                .map(|face| (face.to_owned(), "none".to_owned()))
+                .to_vec();
+            if active {
+                properties["active"] = serde_json::json!({ "type": "boolean" });
+                defaults.push(("active".to_owned(), "false".to_owned()));
+            }
+            set_custom_states(id, properties, defaults);
+        }
+
+        let solar_ports = serde_json::json!({
+            "port_down": { "type": "boolean" },
+            "port_up": { "type": "boolean" },
+            "port_north": { "type": "boolean" },
+            "port_south": { "type": "boolean" },
+            "port_west": { "type": "boolean" },
+            "port_east": { "type": "boolean" }
+        });
+        let mut controller_properties = solar_ports.clone();
+        controller_properties["base"] = serde_json::json!({ "type": "boolean" });
+        controller_properties["formed"] = serde_json::json!({ "type": "boolean" });
+        set_custom_states(
+            SOLAR_ARRAY_CONTROLLER,
+            controller_properties,
+            ["down", "up", "north", "south", "west", "east"]
+                .map(|face| (format!("port_{face}"), "false".to_owned()))
+                .into_iter()
+                .chain([
+                    ("base".to_owned(), "false".to_owned()),
+                    ("formed".to_owned(), "false".to_owned()),
+                ])
+                .collect(),
+        );
+        let mut casing_properties = solar_ports.clone();
+        casing_properties["formed"] = serde_json::json!({ "type": "boolean" });
+        casing_properties["part"] = serde_json::json!({
+            "type": "enum",
+            "values": ["none", "other", "base", "upper_ew", "upper_ns"]
+        });
+        set_custom_states(
+            SOLAR_ARRAY_CASING,
+            casing_properties,
+            ["down", "up", "north", "south", "west", "east"]
+                .map(|face| (format!("port_{face}"), "false".to_owned()))
+                .into_iter()
+                .chain([
+                    ("formed".to_owned(), "false".to_owned()),
+                    ("part".to_owned(), "none".to_owned()),
+                ])
+                .collect(),
+        );
+        let mut collector_properties = solar_ports;
+        collector_properties["formed"] = serde_json::json!({ "type": "boolean" });
+        set_custom_states(
+            SOLAR_COLLECTOR,
+            collector_properties,
+            ["down", "up", "north", "south", "west", "east"]
+                .map(|face| (format!("port_{face}"), "false".to_owned()))
+                .into_iter()
+                .chain([("formed".to_owned(), "false".to_owned())])
+                .collect(),
+        );
         for id in [
             WROUGHT_ENERGY_CELL,
             TEMPERED_ENERGY_CELL,
