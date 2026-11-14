@@ -8,7 +8,7 @@ The current code is an early prototype, not a complete port. Continue implementi
 
 ### Current slice — Arcforge Furnace Wrench status
 
-Using the Wrench on the Arcforge Furnace port now reports formed/unformed state, temperature, remaining coke burn time, and—when the metal and additive inputs form a valid recipe—progress, minimum temperature, and coke requirement. The pinned-Horizon remote locked Rust check and GitHub package/content job passed with only the existing unused `EnergyStore::transfer_to` warning. The matching Linux client job and in-world behavior check remain pending. No tests were run.
+Using the Wrench on the Arcforge Furnace port now reports formed/unformed state, temperature, remaining coke burn time, and—when the metal and additive inputs form a valid recipe—progress, minimum temperature, and coke requirement. On an unformed structure, Wrench use rotates the port clockwise and immediately retries formation, matching Arcforge. The remote Rust check passed with only the existing unused `EnergyStore::transfer_to` warning. Commit `5920fdd` passed both GitHub jobs in run [43542601271](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43542601271); the playable client archive and internal checksums are verified in [verification.md](status/verification.md). The new orientation follow-up is local and awaits CI. Both behaviors still need in-world checking. No tests were run.
 
 ## Current milestone — shared Heat, Energy, and Speed Upgrades, 2026-11-13
 

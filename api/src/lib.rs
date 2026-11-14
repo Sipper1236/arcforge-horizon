@@ -4464,29 +4464,46 @@ fn show_processor_status(host: &mut dyn Host, pos: [i32; 3]) {
 }
 
 fn show_arcforge_furnace_status(host: &mut dyn Host, pos: [i32; 3]) {
-    let Some(entity) = host.mod_block_entity(pos) else {
+    let Some(mut entity) = host.mod_block_entity(pos) else {
         return;
     };
     if entity.id != FURNACE_PORT {
         return;
     }
-    let formed = get_i32(&entity.nbt, "FurnaceFormed") != 0;
+    let mut formed = arcforge_furnace_structure_valid(host, pos);
+    if !formed {
+        if let Some(facing) = host
+            .block_property(pos, "facing")
+            .and_then(|facing| next_machine_facing(&facing))
+        {
+            host.set_block_property(pos, "facing", facing);
+            formed = arcforge_furnace_structure_valid(host, pos);
+            host.change_mod_block_entity(pos, &mut |current| {
+                if current.id == FURNACE_PORT {
+                    set_i32(&mut current.nbt, "FurnaceFormed", i32::from(formed));
+                    set_i32(&mut current.nbt, "FurnaceStructureCheck", 20);
+                }
+            });
+            host.block_entity_sync(pos);
+            entity = host.mod_block_entity(pos).unwrap_or(entity);
+        }
+    }
     let temperature = get_i32(&entity.nbt, "TemperatureC").max(20);
     let burn = get_i32(&entity.nbt, "BurnTime").max(0);
     let burn_duration = get_i32(&entity.nbt, "BurnDuration").max(800);
     let cook = get_i32(&entity.nbt, "CookTime").max(0) as u32;
     let state = if !formed {
-        "unformed".to_owned()
+        "incomplete".to_owned()
     } else if let Some(recipe) = arcforge_furnace_recipe(host, &entity) {
         format!(
-            "{}/{}t, needs {}°C, {} coke",
+            "formed, {}/{}t, needs {}°C, {} coke",
             cook.min(recipe.ticks),
             recipe.ticks,
             recipe.min_temperature_c,
             recipe.coke
         )
     } else {
-        "idle (check metal/additives/output)".to_owned()
+        "formed, idle (check metal/additives/output)".to_owned()
     };
     let fuel = if burn == 0 {
         "fuel spent".to_owned()
