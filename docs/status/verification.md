@@ -4,7 +4,7 @@ This file records observed checks only. Re-run checks after Rust or content chan
 
 ## Arcforge Furnace Wrench status — remote compile checkpoint (2026-11-13)
 
-Wrench use on the Arcforge Furnace port now reports formed/unformed state, temperature, remaining coke burn time, and—when metal and additive inputs form a valid recipe—progress, minimum temperature, and coke requirement. `cargo fmt` and the hybrid-remote-build locked `cargo check` passed against the pinned Horizon API; only the existing unused `EnergyStore::transfer_to` warning remains. No tests were run. GitHub packaging/client build and in-world verification are pending.
+Wrench use on the Arcforge Furnace port now reports formed/unformed state, temperature, remaining coke burn time, and—when metal and additive inputs form a valid recipe—progress, minimum temperature, and coke requirement. `cargo fmt` and the hybrid-remote-build locked `cargo check` passed against the pinned Horizon API; only the existing unused `EnergyStore::transfer_to` warning remains. GitHub run [43542601271](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43542601271) has passed its package/content job; the matching Linux client job is still building. No tests were run; in-world verification remains pending.
 
 ## Conduit and Solar block-state schemas — playable client verification (2026-11-14)
 
