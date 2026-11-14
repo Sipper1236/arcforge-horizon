@@ -6,9 +6,9 @@ Port the complete survival gameplay scope of the pinned Arcforge release to Hori
 
 The current code is an early prototype, not a complete port. Continue implementing real gameplay from the scope in the root [README](../README.md), preserve Arcforge's recognizable mechanics and progression, and update the as-built and remaining-work documents whenever implementation changes.
 
-### In progress — machine menu slot-count audit (2026-11-14)
+### Current slice — machine menu slot-count audit (2026-11-14)
 
-Commit `4a50f19` fixes eight block-container menu registrations whose vanilla menu slot count did not match the machine inventory size. The pinned Horizon source confirms that it drops a mismatched menu, which removes that machine's usable visible container UI. Exact-size menus and NativeScreen slot layouts now cover the gas cylinders, Grain Dryer, Steelworks prototype, Sifter, Firebox, Firebox Array controller, Geothermal Plant, and Fuel Burner. GitHub run [43630972236](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43630972236) is building this commit; client and runtime verification remain pending.
+Commit `4a50f19` fixes eight block-container menu registrations whose vanilla menu slot count did not match the machine inventory size. The pinned Horizon source confirms that it drops a mismatched menu, which removes that machine's usable visible container UI. Exact-size menus and NativeScreen slot layouts now cover the gas cylinders, Grain Dryer, Steelworks prototype, Sifter, Firebox, Firebox Array controller, Geothermal Plant, and Fuel Burner. Both GitHub jobs passed in run [43630972236](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43630972236); the 41,331,054-byte playable ZIP's outer hash and four internal hashes are recorded in [verification.md](status/verification.md). Live slot visibility and machine behavior still need in-game verification.
 
 ### Current slice — Fiberizer menu/screen and Furnace coke startup (2026-11-14)
 
