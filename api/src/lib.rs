@@ -36,6 +36,7 @@ mod energy;
 mod energy_conduit;
 mod fluid;
 mod fluid_conduit;
+mod fuel_burner;
 mod heat;
 mod heat_cell;
 mod item_conduit;
@@ -155,9 +156,6 @@ const ARCFORGED_FLUID_TANK_CAPACITY: u32 = 1_024_000;
 const FUEL_BURNER_HEAT_CAPACITY: u64 = 40_000;
 const FUEL_BURNER_MAX_TEMPERATURE: u32 = 1_400;
 const FUEL_BURNER_TANK_CAPACITY: u32 = 8_000;
-const FUEL_BURNER_CREOSOTE_HU_PER_MB: u32 = 120;
-const FUEL_BURNER_CREOSOTE_MILLI_MB_PER_TICK: u32 = 500;
-const FUEL_BURNER_CREOSOTE_TEMPERATURE: u32 = 850;
 const CREOSOTE_BUCKET: &str = "arcforge:creosote_bucket";
 const LATEX_BUCKET: &str = "arcforge:latex_bucket";
 const WROUGHT_CANISTER: &str = "arcforge:wrought_canister";
@@ -2145,7 +2143,7 @@ impl Hooks for Arcforge {
             Flow::Cancel
         } else if event.block == GEOTHERMAL_PLANT && event.fluid != "minecraft:lava" {
             Flow::Cancel
-        } else if event.block == FUEL_BURNER && event.fluid != "arcforge:creosote" {
+        } else if event.block == FUEL_BURNER && fuel_burner::fuel(event.fluid).is_none() {
             Flow::Cancel
         } else if matches!(
             event.block,
@@ -5337,38 +5335,52 @@ fn tick_fuel_burner(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnt
     let speed_upgrades =
         get_i32(&entity.nbt, "SpeedUpgrades").clamp(0, SPEED_MAX_UPGRADES as i32) as u32;
     let speed = speed_upgrade_multiplier(speed_upgrades);
-    let burn_milli = (FUEL_BURNER_CREOSOTE_MILLI_MB_PER_TICK as f64 * speed).round() as u32;
+    let fuel_id = fluid::name(&entity.nbt, 0);
+    let fuel = fuel_id
+        .as_deref()
+        .and_then(fuel_burner::fuel);
+    let burn_milli = fuel
+        .map(|fuel| (fuel.burn_millimb_per_tick as f64 * speed).round() as u32)
+        .unwrap_or(0);
     let mut fuel_taken_milli = get_i32(&entity.nbt, "FuelTakenMilli").clamp(0, 16_000) as u32;
+    let burn_temperature = fuel
+        .map(|fuel| fuel.burn_temperature_c.min(FUEL_BURNER_MAX_TEMPERATURE))
+        .unwrap_or(FUEL_BURNER_MAX_TEMPERATURE);
     let at_fuel_temperature = heat_at_temperature(
         FUEL_BURNER_HEAT_CAPACITY,
         FUEL_BURNER_MAX_TEMPERATURE,
-        FUEL_BURNER_CREOSOTE_TEMPERATURE,
+        burn_temperature,
     );
-    let has_creosote = fluid::name(&entity.nbt, 0).as_deref() == Some("arcforge:creosote");
     let mut heat_produced = 0;
-    if (has_creosote || fuel_taken_milli > 0)
+    if let Some(fuel) = fuel
         && heat.stored_hu() < at_fuel_temperature
-        && fuel_taken_milli < burn_milli
     {
-        let need_milli = burn_milli - fuel_taken_milli;
-        let need_mb = need_milli.div_ceil(1000);
-        let taken = fluid::extract(&mut entity.nbt, 0, "arcforge:creosote", need_mb);
-        fuel_taken_milli = fuel_taken_milli.saturating_add(taken.saturating_mul(1000));
-    }
-    if heat.stored_hu() < at_fuel_temperature && fuel_taken_milli >= burn_milli {
-        let burned_milli = burn_milli;
-        fuel_taken_milli -= burned_milli;
-        let base_generated =
-            (u64::from(burned_milli) * u64::from(FUEL_BURNER_CREOSOTE_HU_PER_MB) + 500) / 1000;
-        let heat_upgrades =
-            get_i32(&entity.nbt, "HeatUpgrades").clamp(0, HEAT_MAX_UPGRADES as i32) as u32;
-        let generated =
-            (base_generated as f64 * heat_upgrade_multiplier(heat_upgrades)).round() as u64;
-        let room = at_fuel_temperature.saturating_sub(heat.stored_hu());
-        heat_produced = heat.add_hu(generated.min(room));
+        if fuel_taken_milli < burn_milli {
+            let need_milli = burn_milli - fuel_taken_milli;
+            let need_mb = need_milli.div_ceil(1000);
+            let taken = fluid::extract(
+                &mut entity.nbt,
+                0,
+                fuel_id.as_deref().unwrap_or_default(),
+                need_mb,
+            );
+            fuel_taken_milli = fuel_taken_milli.saturating_add(taken.saturating_mul(1000));
+        }
+        if burn_milli > 0 && fuel_taken_milli >= burn_milli {
+            let burned_milli = burn_milli;
+            fuel_taken_milli -= burned_milli;
+            let base_generated =
+                (u64::from(burned_milli) * u64::from(fuel.heat_hu_per_mb) + 500) / 1000;
+            let heat_upgrades =
+                get_i32(&entity.nbt, "HeatUpgrades").clamp(0, HEAT_MAX_UPGRADES as i32) as u32;
+            let generated =
+                (base_generated as f64 * heat_upgrade_multiplier(heat_upgrades)).round() as u64;
+            let room = at_fuel_temperature.saturating_sub(heat.stored_hu());
+            heat_produced = heat.add_hu(generated.min(room));
+        }
     }
     heat.set_source_temperature(if heat_produced > 0 {
-        FUEL_BURNER_CREOSOTE_TEMPERATURE
+        burn_temperature
     } else {
         20
     });
