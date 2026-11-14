@@ -6,6 +6,10 @@ Port the complete survival gameplay scope of the pinned Arcforge release to Hori
 
 The current code is an early prototype, not a complete port. Continue implementing real gameplay from the scope in the root [README](../README.md), preserve Arcforge's recognizable mechanics and progression, and update the as-built and remaining-work documents whenever implementation changes.
 
+### Current slice — Fuel Burner fluid acceptance (2026-11-14)
+
+Commit `b6fedb2` makes the Fuel Burner accept only Creosote through its native tank, so water, lava, and unsupported fluids cannot occupy its only input while the burner cannot consume them. GitHub run [43639909488](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43639909488) passed the package and Linux-client jobs; archive hashes are recorded in [verification.md](status/verification.md). Runtime fluid interaction remains unverified after the disposable-client attempt hit a storage quota error and the retry exited before interaction. Other fuel chains, oxygen/flue gas, and side controls are still outside this slice.
+
 ### Current slice — Furnace coke requirement label (2026-11-14)
 
 Commit `a6753b7` clarifies the Furnace readout to show `Coke 1 (need 2)` when one of the two coke required for a cold steel batch is present. One coke is consumed to start the fire; one is reserved as the recipe input. Both jobs in GitHub run [43636752782](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43636752782) passed. The 41,331,227-byte playable Linux ZIP, outer hash, and internal hashes are recorded in [verification.md](status/verification.md). The latest matching client was visually checked in a separate disposable world: one coke showed `Coke 1 (need 2)`; after adding the second, it showed `Coke 1 (need 1)` while heating, then produced Steel Ingot and Slag. The user's current game is not connected on its control socket, so its current state and installed artifact are unknown. Full Furnace recipe coverage, output backpressure, and save/reload remain unverified.
