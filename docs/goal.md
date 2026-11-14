@@ -6,6 +6,10 @@ Port the complete survival gameplay scope of the pinned Arcforge release to Hori
 
 The current code is an early prototype, not a complete port. Continue implementing real gameplay from the scope in the root [README](../README.md), preserve Arcforge's recognizable mechanics and progression, and update the as-built and remaining-work documents whenever implementation changes.
 
+### Current slice — Arcforge Furnace Wrench status
+
+Using the Wrench on the Arcforge Furnace port now reports formed/unformed state, temperature, remaining coke burn time, and—when the metal and additive inputs form a valid recipe—progress, minimum temperature, and coke requirement. The pinned-Horizon remote locked Rust check passed with only the existing unused `EnergyStore::transfer_to` warning. No tests were run; GitHub packaging and in-world behavior checks remain pending.
+
 ## Current milestone — shared Heat, Energy, and Speed Upgrades, 2026-11-13
 
 Commit `7abff4a` adds the source Heat Upgrade recipe and installs it on Firebox, Geothermal Plant, Fuel Burner, Thermoelectric Plant, Fiberizer, Vulcanizer, and Grain Dryer through the existing item-use hook. Up to eight cards are saved per machine. Heat output machines gain 12.5% output per card; heat-consuming processors pay the source `0.8^n` HU cost; the Thermoelectric Plant gets the source efficiency increase capped at 100% base efficiency before its separate Thermoelectric upgrades. Local Rust compilation and formatting pass. Run [43518862820](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43518862820) passed both package and Linux client jobs. Its 41,294,198-byte playable ZIP passed archive integrity and all internal SHA256SUMS; outer SHA-256: `7af2dda8a34bce476b3172093faefbff4e7e7b34918c9b0f00a8470e42a610cc`. Heat Upgrade behavior remains unverified in-world. No test suite was run.

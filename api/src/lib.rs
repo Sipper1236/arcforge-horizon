@@ -623,6 +623,13 @@ impl Hooks for Arcforge {
             show_crushing_array_status(host, event.pos);
             return Flow::Cancel;
         }
+        if host
+            .mod_block_entity(event.pos)
+            .is_some_and(|entity| entity.id == FURNACE_PORT)
+        {
+            show_arcforge_furnace_status(host, event.pos);
+            return Flow::Cancel;
+        }
         if host.mod_block_entity(event.pos).is_some_and(|entity| {
             matches!(
                 entity.id.as_ref(),
@@ -4453,6 +4460,46 @@ fn show_processor_status(host: &mut dyn Host, pos: [i32; 3]) {
     };
     if let Some(player) = host.acting_player() {
         host.action_bar(player.uuid, Text::literal(line));
+    }
+}
+
+fn show_arcforge_furnace_status(host: &mut dyn Host, pos: [i32; 3]) {
+    let Some(entity) = host.mod_block_entity(pos) else {
+        return;
+    };
+    if entity.id != FURNACE_PORT {
+        return;
+    }
+    let formed = get_i32(&entity.nbt, "FurnaceFormed") != 0;
+    let temperature = get_i32(&entity.nbt, "TemperatureC").max(20);
+    let burn = get_i32(&entity.nbt, "BurnTime").max(0);
+    let burn_duration = get_i32(&entity.nbt, "BurnDuration").max(800);
+    let cook = get_i32(&entity.nbt, "CookTime").max(0) as u32;
+    let state = if !formed {
+        "unformed".to_owned()
+    } else if let Some(recipe) = arcforge_furnace_recipe(host, &entity) {
+        format!(
+            "{}/{}t, needs {}°C, {} coke",
+            cook.min(recipe.ticks),
+            recipe.ticks,
+            recipe.min_temperature_c,
+            recipe.coke
+        )
+    } else {
+        "idle (check metal/additives/output)".to_owned()
+    };
+    let fuel = if burn == 0 {
+        "fuel spent".to_owned()
+    } else {
+        format!("fuel {burn}/{burn_duration}t")
+    };
+    if let Some(player) = host.acting_player() {
+        host.action_bar(
+            player.uuid,
+            Text::literal(format!(
+                "Arcforge Furnace: {temperature}°C | {fuel} | {state}"
+            )),
+        );
     }
 }
 

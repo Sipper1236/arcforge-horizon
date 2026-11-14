@@ -2,6 +2,10 @@
 
 This file records observed checks only. Re-run checks after Rust or content changes; do not infer current results from an earlier build. For the completion criteria and current resume state, see [goal.md](../goal.md) and [handoff.md](../handoff.md).
 
+## Arcforge Furnace Wrench status — remote compile checkpoint (2026-11-13)
+
+Wrench use on the Arcforge Furnace port now reports formed/unformed state, temperature, remaining coke burn time, and—when metal and additive inputs form a valid recipe—progress, minimum temperature, and coke requirement. `cargo fmt` and the hybrid-remote-build locked `cargo check` passed against the pinned Horizon API; only the existing unused `EnergyStore::transfer_to` warning remains. No tests were run. GitHub packaging/client build and in-world verification are pending.
+
 ## Conduit and Solar block-state schemas — package verification (2026-11-14)
 
 Commit `158d858` declares the side properties used by all four tiers of Energy, Thermal, Item, Fluid, and Pressurized Conduits, including `active` where their models select it. It also declares the Solar Array controller/casing/collector `formed`, `part`, `base`, and port properties with matching defaults. Remote `cargo fmt` and locked `cargo check` passed; only the existing unused `EnergyStore::transfer_to` warning remains. GitHub run [43540533024](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43540533024) passed the package, native check, and content build/check jobs. Its Linux client job is still building. No tests were run; corrected in-world conduit and Solar renders still need visual confirmation.
