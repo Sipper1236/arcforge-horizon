@@ -12,6 +12,36 @@ pub struct Fuel {
     pub burn_temperature_c: u32,
 }
 
+const LIQUID_FUEL_BUCKETS: &[(&str, &str)] = &[
+    ("arcforge:creosote", "arcforge:creosote_bucket"),
+    ("arcforge:naphtha", "arcforge:naphtha_bucket"),
+    ("arcforge:light_oil", "arcforge:light_oil_bucket"),
+    ("arcforge:heavy_oil", "arcforge:heavy_oil_bucket"),
+    ("arcforge:ethanol", "arcforge:ethanol_bucket"),
+    ("arcforge:biodiesel", "arcforge:biodiesel_bucket"),
+    ("arcforge:kerosene", "arcforge:kerosene_bucket"),
+    ("arcforge:diesel", "arcforge:diesel_bucket"),
+    ("arcforge:gasoline", "arcforge:gasoline_bucket"),
+    ("arcforge:sour_kerosene", "arcforge:sour_kerosene_bucket"),
+    ("arcforge:sour_diesel", "arcforge:sour_diesel_bucket"),
+];
+
+pub fn liquid_fuel_buckets() -> &'static [(&'static str, &'static str)] {
+    LIQUID_FUEL_BUCKETS
+}
+
+pub fn fluid_in_bucket(bucket: &str) -> Option<&'static str> {
+    LIQUID_FUEL_BUCKETS
+        .iter()
+        .find_map(|(fluid, item)| (*item == bucket).then_some(*fluid))
+}
+
+pub fn bucket_for_fluid(fluid: &str) -> Option<&'static str> {
+    LIQUID_FUEL_BUCKETS
+        .iter()
+        .find_map(|(name, item)| (*name == fluid).then_some(*item))
+}
+
 pub fn fuel(fluid: &str) -> Option<Fuel> {
     let profile = match fluid {
         "arcforge:creosote" => (120, 500, 850),

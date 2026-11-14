@@ -412,10 +412,10 @@ impl Hooks for Arcforge {
         }
         if event.entity.id == FUEL_BURNER {
             return if event.slot == 0
-                && event.stack.item.as_ref() == CREOSOTE_BUCKET
-                && item_fluid(event.stack)
-                    .is_some_and(|(fluid, amount)| fluid == "arcforge:creosote" && amount >= 1000)
-            {
+                && fuel_burner::fluid_in_bucket(event.stack.item.as_ref()).is_some_and(|expected| {
+                    item_fluid(event.stack)
+                        .is_some_and(|(fluid, amount)| fluid == expected && amount == 1000)
+                }) {
                 Flow::Continue
             } else {
                 Flow::Cancel
@@ -580,7 +580,7 @@ impl Hooks for Arcforge {
                 return use_resin_tap_bucket(host, event.pos, event.stack, player);
             }
         }
-        if event.stack.item.as_ref() == CREOSOTE_BUCKET
+        if fuel_burner::fluid_in_bucket(event.stack.item.as_ref()).is_some()
             && host
                 .mod_block_entity(event.pos)
                 .is_some_and(|entity| entity.id == FUEL_BURNER)
@@ -1213,6 +1213,11 @@ impl Hooks for Arcforge {
         register_content!(&mut event.items, id: "arcforge:receiver_tube".into(), template: "minecraft:glass_pane".into());
         register_content!(&mut event.items, id: "arcforge:trough_mirror".into(), template: "minecraft:iron_ingot".into());
         register_content!(&mut event.items, id: CREOSOTE_BUCKET.into(), template: "minecraft:bucket".into(), max_stack_size: Some(1));
+        for (_, bucket) in fuel_burner::liquid_fuel_buckets() {
+            if *bucket != CREOSOTE_BUCKET {
+                register_content!(&mut event.items, id: (*bucket).into(), template: "minecraft:bucket".into(), max_stack_size: Some(1));
+            }
+        }
         register_content!(&mut event.items, id: LATEX_BUCKET.into(), template: "minecraft:bucket".into(), max_stack_size: Some(1));
         for id in [
             WROUGHT_CANISTER,
@@ -1425,7 +1430,7 @@ impl Hooks for Arcforge {
     }
 
     fn item_fluid_tank(&self, _host: &dyn Host, event: &mut ItemFluidTankEvent<'_>) -> Option<i32> {
-        if matches!(event.item, CREOSOTE_BUCKET | LATEX_BUCKET) {
+        if event.item == LATEX_BUCKET || fuel_burner::fluid_in_bucket(event.item).is_some() {
             Some(1000)
         } else {
             canister_spec(event.item)
@@ -4069,7 +4074,7 @@ fn fluid_bucket_contents(item: &str) -> Option<&'static str> {
         "minecraft:lava_bucket" => Some("minecraft:lava"),
         CREOSOTE_BUCKET => Some("arcforge:creosote"),
         LATEX_BUCKET => Some("arcforge:latex"),
-        _ => None,
+        _ => fuel_burner::fluid_in_bucket(item),
     }
 }
 
@@ -4089,7 +4094,7 @@ fn bucket_for_fluid(fluid: &str) -> Option<&'static str> {
         "minecraft:lava" => Some("minecraft:lava_bucket"),
         "arcforge:creosote" => Some(CREOSOTE_BUCKET),
         "arcforge:latex" => Some(LATEX_BUCKET),
-        _ => None,
+        _ => fuel_burner::bucket_for_fluid(fluid),
     }
 }
 
@@ -4476,7 +4481,9 @@ fn use_fluid_tank_bucket(
         return Flow::Continue;
     };
 
-    if matches!(held.item.as_ref(), CREOSOTE_BUCKET | LATEX_BUCKET) {
+    if held.item.as_ref() == LATEX_BUCKET
+        || fuel_burner::fluid_in_bucket(held.item.as_ref()).is_some()
+    {
         return use_arcforge_fluid_container(host, pos, face, held, selected_slot);
     }
 
@@ -4503,12 +4510,7 @@ fn use_fluid_tank_bucket(
                 } else if bucket == LATEX_BUCKET {
                     latex_bucket(amount as u32)
                 } else {
-                    ItemStack {
-                        item: Arc::from(bucket),
-                        count: 1,
-                        damage: 0,
-                        extra: None,
-                    }
+                    fluid_bucket(bucket, &fluid, amount as u32)
                 },
             )
             .is_some()
@@ -4523,7 +4525,8 @@ fn use_fluid_tank_bucket(
     let Some(fluid) = fluid_bucket_contents(&held.item) else {
         return Flow::Continue;
     };
-    if matches!(held.item.as_ref(), CREOSOTE_BUCKET | LATEX_BUCKET)
+    if (held.item.as_ref() == LATEX_BUCKET
+        || fuel_burner::fluid_in_bucket(held.item.as_ref()).is_some())
         && item_fluid(held).is_none_or(|(stored, amount)| stored != fluid || amount < 1000)
     {
         return Flow::Continue;
@@ -4629,13 +4632,15 @@ fn use_arcforge_fluid_container(
     held: &ItemStack,
     selected_slot: i32,
 ) -> Flow {
-    let (capacity, rate, expected) = match held.item.as_ref() {
-        CREOSOTE_BUCKET => (1000, 1000, Some("arcforge:creosote")),
-        LATEX_BUCKET => (1000, 1000, Some("arcforge:latex")),
-        item => match canister_spec(item) {
+    let (capacity, rate, expected) = if held.item.as_ref() == LATEX_BUCKET {
+        (1000, 1000, Some("arcforge:latex"))
+    } else if let Some(fluid) = fuel_burner::fluid_in_bucket(held.item.as_ref()) {
+        (1000, 1000, Some(fluid))
+    } else {
+        match canister_spec(held.item.as_ref()) {
             Some((capacity, rate)) => (capacity, rate, None),
             None => return Flow::Continue,
-        },
+        }
     };
     let contents = item_fluid(held);
     if contents
@@ -4968,7 +4973,11 @@ fn creosote_bucket(amount: u32) -> ItemStack {
 }
 
 fn use_fuel_burner_bucket(host: &mut dyn Host, pos: [i32; 3], held: &ItemStack) -> Flow {
-    let Some(player) = host.acting_player().map(|player| player.uuid) else {
+    let Some(player) = host.acting_player() else {
+        return Flow::Continue;
+    };
+    let selected_slot = player.selected_slot as i32;
+    let Some(expected_fluid) = fuel_burner::fluid_in_bucket(held.item.as_ref()) else {
         return Flow::Continue;
     };
     let Some((fluid_name, amount)) = item_fluid(held) else {
@@ -4978,33 +4987,17 @@ fn use_fuel_burner_bucket(host: &mut dyn Host, pos: [i32; 3], held: &ItemStack) 
         return Flow::Continue;
     };
     if burner.id != FUEL_BURNER
-        || fluid_name != "arcforge:creosote"
-        || amount < 1000
+        || fluid_name != expected_fluid
+        || fuel_burner::fuel(expected_fluid).is_none()
+        || amount != 1000
         || !fluid::can_insert(
             &burner.nbt,
             0,
-            "arcforge:creosote",
+            expected_fluid,
             1000,
             FUEL_BURNER_TANK_CAPACITY,
         )
-        || host.take_items(CREOSOTE_BUCKET, 1) == 0
     {
-        return Flow::Continue;
-    }
-    let mut inserted = 0;
-    let changed = host.change_mod_block_entity(pos, &mut |entity| {
-        if entity.id == FUEL_BURNER {
-            inserted = fluid::insert(
-                &mut entity.nbt,
-                0,
-                "arcforge:creosote",
-                1000,
-                FUEL_BURNER_TANK_CAPACITY,
-            );
-        }
-    });
-    if !changed || inserted != 1000 {
-        host.give_stack(player, held.clone());
         return Flow::Continue;
     }
     let empty = ItemStack {
@@ -5013,19 +5006,34 @@ fn use_fuel_burner_bucket(host: &mut dyn Host, pos: [i32; 3], held: &ItemStack) 
         damage: 0,
         extra: None,
     };
-    if host.give_stack(player, empty).is_some() {
-        host.change_mod_block_entity(pos, &mut |entity| {
-            if entity.id == FUEL_BURNER {
-                fluid::extract(&mut entity.nbt, 0, "arcforge:creosote", inserted);
-            }
-        });
-        host.give_stack(player, held.clone());
-        Flow::Continue
-    } else {
-        Flow::Cancel
+    if !replace_carried_stack(host, selected_slot, held, empty.clone()) {
+        return Flow::Continue;
     }
+    let mut inserted = 0;
+    let changed = host.change_mod_block_entity(pos, &mut |entity| {
+        if entity.id == FUEL_BURNER {
+            inserted = fluid::insert(
+                &mut entity.nbt,
+                0,
+                expected_fluid,
+                1000,
+                FUEL_BURNER_TANK_CAPACITY,
+            );
+        }
+    });
+    if !changed || inserted != 1000 {
+        if inserted > 0 {
+            host.change_mod_block_entity(pos, &mut |entity| {
+                if entity.id == FUEL_BURNER {
+                    fluid::extract(&mut entity.nbt, 0, expected_fluid, inserted);
+                }
+            });
+        }
+        replace_carried_stack(host, selected_slot, &empty, held.clone());
+        return Flow::Continue;
+    }
+    Flow::Cancel
 }
-
 fn latex_bucket(amount: u32) -> ItemStack {
     fluid_bucket(LATEX_BUCKET, "arcforge:latex", amount)
 }
@@ -5136,7 +5144,7 @@ fn use_resin_tap_bucket(
 
 fn bucket_output_fits(slot: Option<&ItemStack>, result: &ItemStack) -> bool {
     slot.is_none_or(|existing| {
-        let max_stack = if result.item.as_ref() == CREOSOTE_BUCKET {
+        let max_stack = if fluid_bucket_contents(&result.item).is_some() {
             1
         } else {
             16
@@ -5414,16 +5422,10 @@ fn tick_fuel_burner_buckets(entity: &mut ModBlockEntity) {
     let Some((fluid_name, amount)) = item_fluid(bucket) else {
         return;
     };
-    if bucket.item.as_ref() != CREOSOTE_BUCKET
-        || fluid_name != "arcforge:creosote"
-        || amount < 1000
-        || !fluid::can_insert(
-            &entity.nbt,
-            0,
-            "arcforge:creosote",
-            1000,
-            FUEL_BURNER_TANK_CAPACITY,
-        )
+    if fuel_burner::fluid_in_bucket(bucket.item.as_ref()) != Some(fluid_name.as_str())
+        || fuel_burner::fuel(&fluid_name).is_none()
+        || amount != 1000
+        || !fluid::can_insert(&entity.nbt, 0, &fluid_name, 1000, FUEL_BURNER_TANK_CAPACITY)
         || !can_add(entity.items[1].as_ref(), "minecraft:bucket", 1)
     {
         return;
@@ -5432,7 +5434,7 @@ fn tick_fuel_burner_buckets(entity: &mut ModBlockEntity) {
         && fluid::insert(
             &mut entity.nbt,
             0,
-            "arcforge:creosote",
+            &fluid_name,
             1000,
             FUEL_BURNER_TANK_CAPACITY,
         ) == 1000
@@ -5440,7 +5442,6 @@ fn tick_fuel_burner_buckets(entity: &mut ModBlockEntity) {
         add_items(&mut entity.items[1], "minecraft:bucket", 1);
     }
 }
-
 fn heat_at_temperature(capacity: u64, max_temperature: u32, temperature: u32) -> u64 {
     if max_temperature <= 20 {
         return capacity;
