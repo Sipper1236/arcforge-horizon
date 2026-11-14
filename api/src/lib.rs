@@ -1769,7 +1769,7 @@ impl Hooks for Arcforge {
                 faces: [vec![1], vec![0], vec![0], vec![0], vec![0], vec![0]],
                 inputs: vec![0],
                 outputs: vec![1],
-                menu: Some("minecraft:generic_3x3".into()),
+                menu: Some("arcforge:fiberizer".into()),
             })
         } else if event.block == RESIN_TAP {
             Some(ModContainer {
@@ -1790,6 +1790,15 @@ impl Hooks for Arcforge {
         event: &mut horizon_client::mod_api::ScreenEvent<'_>,
     ) -> Option<NativeScreen> {
         match event.block {
+            FIBERIZER => Some(NativeScreen {
+                width: 176.0,
+                height: 216.0,
+                slots: vec![Some([38.0, 30.0]), Some([122.0, 30.0])],
+                inventory_y: 130.0,
+                inventory_x: 8.0,
+                own_labels: true,
+                own_background: false,
+            }),
             INFUSER => Some(NativeScreen {
                 width: 176.0,
                 height: 228.0,
@@ -1839,6 +1848,56 @@ impl Hooks for Arcforge {
         host: &dyn Host,
         event: &mut horizon_client::mod_api::ScreenDrawEvent<'_>,
     ) {
+        if event.block == FIBERIZER {
+            let [ox, oy] = event.origin;
+            let data = event.data;
+            let batch = &mut *event.batch;
+            macro_rules! fiberizer_text {
+                ($label:expr, $x:expr, $y:expr, $color:expr $(,)?) => {
+                    host.text(batch, $label, [ox + $x, oy + $y], $color, true)
+                };
+            }
+            macro_rules! fiberizer_fill {
+                ($rect:expr, $color:expr) => {
+                    host.fill(
+                        batch,
+                        [ox + ($rect)[0], oy + ($rect)[1], ($rect)[2], ($rect)[3]],
+                        $color,
+                    )
+                };
+            }
+
+            fiberizer_text!("Fiberizer", 8.0, 6.0, 0xFFFFFFFF);
+            fiberizer_text!("Input", 38.0, 17.0, 0xFFBBBBBB);
+            fiberizer_text!("Output", 122.0, 17.0, 0xFFBBBBBB);
+            let energy = data.first().copied().unwrap_or_default().max(0);
+            let heat = data.get(1).copied().unwrap_or_default().max(0);
+            let progress = data.get(2).copied().unwrap_or_default().max(0);
+            let duration = data.get(3).copied().unwrap_or_default().max(0);
+            let temperature = data.get(4).copied().unwrap_or_default().max(0);
+            let minimum = data.get(5).copied().unwrap_or_default().max(0);
+            fiberizer_text!(&format!("FE {energy}/20000"), 8.0, 51.0, 0xFFE0E0E0);
+            fiberizer_text!(&format!("Heat {heat}/10000 HU"), 8.0, 63.0, 0xFFE0E0E0);
+            fiberizer_text!(
+                &format!("Temperature {temperature}°C / {minimum}°C"),
+                8.0,
+                75.0,
+                0xFFE0E0E0,
+            );
+            if duration > 0 {
+                fiberizer_text!(
+                    &format!("Progress {progress}/{duration} t"),
+                    8.0,
+                    90.0,
+                    0xFFE0E0E0,
+                );
+                fiberizer_fill!([8.0, 104.0, 160.0, 6.0], 0xFF383838);
+                let fraction = (progress as f32 / duration as f32).clamp(0.0, 1.0);
+                fiberizer_fill!([8.0, 104.0, 160.0 * fraction, 6.0], 0xFF62B64F);
+            }
+            fiberizer_text!("Inventory", 8.0, 120.0, 0xFFFFFFFF);
+            return;
+        }
         if event.block == INFUSER {
             let [ox, oy] = event.origin;
             let data = event.data;
@@ -6316,6 +6375,22 @@ fn fiberizer_recipe(host: &dyn Host, input: &ItemStack) -> Option<FiberizingReci
         })
 }
 
+fn sync_fiberizer_screen_data(
+    entity: &mut ModBlockEntity,
+    progress_ticks: Option<u32>,
+    min_temperature_c: u32,
+) {
+    entity.data.resize(6, 0);
+    entity.data[0] = get_i32(&entity.nbt, "energy").max(0);
+    entity.data[1] = get_i32(&entity.nbt, "HeatHU").max(0);
+    entity.data[2] = progress_ticks
+        .map(|ticks| get_i32(&entity.nbt, "CookTime").max(0).min(ticks as i32))
+        .unwrap_or_default();
+    entity.data[3] = progress_ticks.unwrap_or_default().min(i32::MAX as u32) as i32;
+    entity.data[4] = get_i32(&entity.nbt, "TemperatureC").max(0);
+    entity.data[5] = min_temperature_c.min(i32::MAX as u32) as i32;
+}
+
 fn tick_fiberizer(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity) {
     if entity.items.len() != 2 {
         return;
@@ -6323,21 +6398,15 @@ fn tick_fiberizer(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntit
     let Some(input) = entity.items[0].as_ref() else {
         set_i32(&mut entity.nbt, "CookTime", 0);
         host.set_block_property(pos, "lit", "false");
+        sync_fiberizer_screen_data(entity, None, 0);
         return;
     };
     let Some(recipe) = fiberizer_recipe(host, input) else {
         set_i32(&mut entity.nbt, "CookTime", 0);
         host.set_block_property(pos, "lit", "false");
+        sync_fiberizer_screen_data(entity, None, 0);
         return;
     };
-    if !can_add(
-        entity.items[1].as_ref(),
-        &recipe.output.item,
-        recipe.output.count,
-    ) {
-        host.set_block_property(pos, "lit", "false");
-        return;
-    }
     let mut heat = heat::HeatStore::new(10_000, 1100, get_i32(&entity.nbt, "HeatHU").max(0) as u64);
     let mut energy = energy::EnergyStore::new(20_000, get_i32(&entity.nbt, "energy").max(0) as u64);
     let speed_upgrades =
@@ -6350,6 +6419,15 @@ fn tick_fiberizer(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntit
     let energy_upgrades =
         get_i32(&entity.nbt, "EnergyUpgrades").clamp(0, ENERGY_MAX_UPGRADES as i32) as u32;
     let energy_cost = scaled_upgrade_cost(u64::from(recipe.fe_per_tick), speed, energy_upgrades);
+    sync_fiberizer_screen_data(entity, Some(ticks), recipe.min_temperature_c);
+    if !can_add(
+        entity.items[1].as_ref(),
+        &recipe.output.item,
+        recipe.output.count,
+    ) {
+        host.set_block_property(pos, "lit", "false");
+        return;
+    }
     if heat.temperature_c() < recipe.min_temperature_c
         || heat.stored_hu() < heat_cost
         || energy.stored_fe() < energy_cost
@@ -6382,12 +6460,7 @@ fn tick_fiberizer(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntit
         "energy",
         energy.stored_fe().min(i32::MAX as u64) as i32,
     );
-    entity.data.resize(5, 0);
-    entity.data[0] = energy.stored_fe().min(i32::MAX as u64) as i32;
-    entity.data[1] = heat.stored_hu().min(i32::MAX as u64) as i32;
-    entity.data[2] = get_i32(&entity.nbt, "CookTime").max(0);
-    entity.data[3] = ticks as i32;
-    entity.data[4] = heat.temperature_c() as i32;
+    sync_fiberizer_screen_data(entity, Some(ticks), recipe.min_temperature_c);
     host.set_block_property(pos, "lit", "true");
 }
 
