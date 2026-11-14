@@ -2145,10 +2145,11 @@ impl Hooks for Arcforge {
             Flow::Cancel
         } else if event.block == GEOTHERMAL_PLANT && event.fluid != "minecraft:lava" {
             Flow::Cancel
+        } else if event.block == FUEL_BURNER && event.fluid != "arcforge:creosote" {
+            Flow::Cancel
         } else if matches!(
             event.block,
             CARBONIZER
-                | FUEL_BURNER
                 | WROUGHT_FLUID_TANK
                 | TEMPERED_FLUID_TANK
                 | HARDENED_FLUID_TANK
