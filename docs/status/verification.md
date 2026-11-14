@@ -2,9 +2,9 @@
 
 This file records observed checks only. Re-run checks after Rust or content changes; do not infer current results from an earlier build. For the completion criteria and current resume state, see [goal.md](../goal.md) and [handoff.md](../handoff.md).
 
-## Crushing Array Wrench progress readout — local verification (2026-11-13)
+## Crushing Array Wrench progress readout — build verification (2026-11-13)
 
-Using the Wrench on the Array's center casing now reports stored FE and the progress of each of its three lanes in the action bar. Idle lanes are identified explicitly. `cargo fmt --check`, `git diff --check`, and the remote locked `cargo check` pass; only the pre-existing unused `EnergyStore::transfer_to` warning remains. No tests were run. GitHub Actions packaging and Linux client build are pending for this local change; in-world display verification is also pending.
+Using the Wrench on the Array's center casing now reports stored FE and the progress of each of its three lanes in the action bar. Idle lanes are identified explicitly. `cargo fmt --check`, `git diff --check`, and the remote locked `cargo check` pass; only the pre-existing unused `EnergyStore::transfer_to` warning remains. No tests were run. Commit `bd4be83` is building in GitHub run [43532339226](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43532339226); in-world display verification is pending.
 
 ## Crushing Array default ports — package verification (2026-11-13)
 
