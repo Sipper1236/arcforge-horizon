@@ -1,5 +1,9 @@
 # Verification record
 
+## Machine menu slot-count audit — source diagnosis (2026-11-14)
+
+Horizon Nightly `fdc87aec` filters each native container's menu unless that menu's declared slot count exactly equals the mod container's slot count. Commit `4a50f19` gives exact-size custom menus and NativeScreen layouts to eight affected block categories: gas cylinders, Grain Dryer, Steelworks prototype, Sifter, Firebox, Firebox Array controller, Geothermal Plant, and Fuel Burner. GitHub run [43630972236](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43630972236) is in progress. Its matching-client and runtime evidence are pending.
+
 ## Fiberizer two-slot screen and live Furnace coke diagnosis (2026-11-14)
 
 Commit `6a02895` replaces the Fiberizer's mismatched nine-slot generic menu with a two-slot custom menu and adds a native screen showing FE, HU, temperature, required temperature, and recipe progress. Both jobs in GitHub run [43629143095](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43629143095) passed, including formatting, native crate check, Horizon content build/check, Linux client build, and bundle assembly. The 41,329,689-byte playable ZIP passed archive integrity; outer SHA-256 `136a742cf99a4a0260b07d8f45cfc8e38c96d9ef5d935f56e61e24736ad979a4`. Internal SHA-256 values match the bundled manifest: `horizon-client` `fb8de4235c8ca3fe94899d8e85a611e4dd1562e660dd09bd832adf56e4cb33ef`, `native-mods.json` `e2ffbf271e10061c8ab8eb249d91a5a12da584be3023ba7acc71a5dc2183af25`, `arcforge.hmod` `6cdcee7741ea7c825354020167962ee6d6021737b1d8f1b2ea422bbe92b4d018`, and `arcforge.hnmod` `63284484319e46fa5b8894cef86523bc3228a26fd9a7a79ad845be2e92fa9df8`. No runtime screen verification is claimed.
