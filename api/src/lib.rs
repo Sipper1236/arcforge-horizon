@@ -623,6 +623,15 @@ impl Hooks for Arcforge {
             show_crushing_array_status(host, event.pos);
             return Flow::Cancel;
         }
+        if host.mod_block_entity(event.pos).is_some_and(|entity| {
+            matches!(
+                entity.id.as_ref(),
+                ARC_CRUSHER | INDUCTION_FURNACE | METAL_PRESS | SIFTER
+            )
+        }) {
+            show_processor_status(host, event.pos);
+            return Flow::Cancel;
+        }
         if let Some((controller_pos, tower)) = solar::controller_for_part(host, event.pos) {
             let Some(side) = energy_conduit_side(event.face) else {
                 return Flow::Continue;
@@ -4260,6 +4269,78 @@ fn show_crushing_array_status(host: &mut dyn Host, pos: [i32; 3]) {
             player.uuid,
             Text::literal(format!("Crushing Array: {energy}/100000 FE | {lanes}")),
         );
+    }
+}
+
+fn show_processor_status(host: &mut dyn Host, pos: [i32; 3]) {
+    let line = {
+        let Some(entity) = host.mod_block_entity(pos) else {
+            return;
+        };
+        let speed_upgrades =
+            get_i32(&entity.nbt, "SpeedUpgrades").clamp(0, SPEED_MAX_UPGRADES as i32) as u32;
+        let base_ticks = match entity.id.as_ref() {
+            ARC_CRUSHER => entity
+                .items
+                .first()
+                .and_then(Option::as_ref)
+                .and_then(|input| crushing_recipe(host, input))
+                .map(|recipe| recipe.ticks),
+            INDUCTION_FURNACE => entity
+                .items
+                .first()
+                .and_then(Option::as_ref)
+                .and_then(|input| {
+                    induction_recipe(host, input)
+                        .map(|recipe| recipe.ticks)
+                        .or_else(|| smelting_recipe(input.item.as_ref()).map(|_| 100))
+                }),
+            METAL_PRESS => {
+                let die = entity.items.get(1).and_then(Option::as_ref);
+                let input = entity.items.first().and_then(Option::as_ref);
+                die.zip(input)
+                    .and_then(|(die, input)| press_recipe(host, die.item.as_ref(), input))
+                    .map(|recipe| recipe.ticks)
+            }
+            SIFTER => {
+                let recipe = entity
+                    .items
+                    .first()
+                    .and_then(Option::as_ref)
+                    .and_then(|input| sifter_recipe(host, input));
+                recipe.map(|recipe| {
+                    let mesh_speed = entity
+                        .items
+                        .get(1)
+                        .and_then(Option::as_ref)
+                        .and_then(|mesh| sifter_mesh_tier(mesh.item.as_ref()))
+                        .map_or(1.0, |mesh| f64::from(mesh.speed_multiplier));
+                    let mesh_ticks = (f64::from(recipe.ticks) / mesh_speed).round().max(1.0) as u32;
+                    mesh_ticks
+                })
+            }
+            _ => return,
+        };
+        let name = match entity.id.as_ref() {
+            ARC_CRUSHER => "Arc Crusher",
+            INDUCTION_FURNACE => "Induction Furnace",
+            METAL_PRESS => "Metal Press",
+            SIFTER => "Sifter",
+            _ => return,
+        };
+        let capacity = 20_000;
+        let energy = (get_i32(&entity.nbt, "energy").max(0) as u64).min(capacity);
+        let cook = get_i32(&entity.nbt, "CookTime").max(0) as u32;
+        let state = base_ticks
+            .map(|ticks| speed_upgrade_time(ticks, speed_upgrades))
+            .map_or_else(
+                || "idle".to_owned(),
+                |total| format!("{}/{}t", cook.min(total), total),
+            );
+        format!("{name}: {energy}/{capacity} FE | {state}")
+    };
+    if let Some(player) = host.acting_player() {
+        host.action_bar(player.uuid, Text::literal(line));
     }
 }
 
