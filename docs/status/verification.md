@@ -2,7 +2,7 @@
 
 ## Arc Crusher screen source change — pending build and runtime verification (2026-11-14)
 
-The current worktree adds a dedicated Arc Crusher native screen with input/output/bonus slots, FE/capacity, progress, and inventory labels. The processing tick now synchronizes those screen values while idle, blocked on outputs, waiting for energy, or processing. `api/src/lib.rs` and related status/planning docs are modified but not yet committed or built. No Rust tests were added or run. This change has no GitHub Actions or in-world verification yet.
+Commit `6078ace` adds a dedicated Arc Crusher native screen with input/output/bonus slots, FE/capacity, progress, and inventory labels. The first GitHub run [43615910858](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43615910858) failed in `cargo check`: the progress-bar macro invocation had an extra trailing comma. The source fix is in the current worktree; the corrected build and in-world behavior are pending. No Rust tests were added or run.
 
 ## Arcforge Furnace player input validation — playable client verified (2026-11-14)
 

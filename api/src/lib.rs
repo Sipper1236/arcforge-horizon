@@ -1873,7 +1873,7 @@ impl Hooks for Arcforge {
             } else {
                 0.0
             };
-            crusher_fill!([8.0, 88.0, 160.0 * progress_fraction, 8.0], 0xFF62B64F,);
+            crusher_fill!([8.0, 88.0, 160.0 * progress_fraction, 8.0], 0xFF62B64F);
             crusher_text!("Inventory", 8.0, 100.0, 0xFFFFFFFF);
             return;
         }
