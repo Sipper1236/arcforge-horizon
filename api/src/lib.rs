@@ -1729,7 +1729,7 @@ impl Hooks for Arcforge {
                 ],
                 inputs: vec![0, 2, 4],
                 outputs: vec![1, 3],
-                menu: Some("minecraft:generic_3x3".into()),
+                menu: Some("minecraft:hopper".into()),
             })
         } else if event.block == FIREBOX {
             Some(ModContainer {
