@@ -1590,7 +1590,7 @@ impl Hooks for Arcforge {
                 ],
                 inputs: vec![0, 1],
                 outputs: vec![0, 1],
-                menu: Some("minecraft:hopper".into()),
+                menu: Some("arcforge:cylinder_2_slot".into()),
             })
         } else if event.block == VULCANIZER {
             Some(ModContainer {
@@ -1613,7 +1613,7 @@ impl Hooks for Arcforge {
                 faces: [vec![1], vec![0], vec![], vec![], vec![], vec![]],
                 inputs: vec![0],
                 outputs: vec![1],
-                menu: Some("minecraft:furnace".into()),
+                menu: Some("arcforge:machine_2_slot".into()),
             })
         } else if event.block == FURNACE_PORT {
             cache_arcforge_furnace_menu_rules(host);
@@ -1644,7 +1644,7 @@ impl Hooks for Arcforge {
                 ],
                 inputs: vec![0, 1, 2, 3, 4],
                 outputs: vec![5, 6],
-                menu: Some("minecraft:generic_3x3".into()),
+                menu: Some("arcforge:machine_7_slot".into()),
             })
         } else if event.block == COMBUSTION {
             Some(ModContainer {
@@ -1714,7 +1714,7 @@ impl Hooks for Arcforge {
                 ],
                 inputs: vec![0, 1],
                 outputs: vec![2, 3, 4, 5, 6, 7],
-                menu: Some("minecraft:generic_3x3".into()),
+                menu: Some("arcforge:machine_8_slot".into()),
             })
         } else if event.block == INFUSER {
             Some(ModContainer {
@@ -1737,7 +1737,7 @@ impl Hooks for Arcforge {
                 faces: [vec![1], vec![0], vec![0], vec![0], vec![0], vec![0]],
                 inputs: vec![0],
                 outputs: vec![1],
-                menu: Some("minecraft:generic_3x3".into()),
+                menu: Some("arcforge:machine_2_slot".into()),
             })
         } else if event.block == FIREBOX_ARRAY_CONTROLLER {
             Some(ModContainer {
@@ -1745,7 +1745,7 @@ impl Hooks for Arcforge {
                 faces: [vec![0], vec![0], vec![0], vec![0], vec![0], vec![0]],
                 inputs: vec![0],
                 outputs: vec![],
-                menu: Some("minecraft:furnace".into()),
+                menu: Some("arcforge:machine_1_slot".into()),
             })
         } else if event.block == GEOTHERMAL_PLANT {
             Some(ModContainer {
@@ -1753,7 +1753,7 @@ impl Hooks for Arcforge {
                 faces: [vec![1], vec![0], vec![0], vec![0], vec![0], vec![0]],
                 inputs: vec![0],
                 outputs: vec![1],
-                menu: Some("minecraft:furnace".into()),
+                menu: Some("arcforge:machine_2_slot".into()),
             })
         } else if event.block == FUEL_BURNER {
             Some(ModContainer {
@@ -1761,7 +1761,7 @@ impl Hooks for Arcforge {
                 faces: [vec![0], vec![0], vec![0], vec![0], vec![0], vec![1]],
                 inputs: vec![0],
                 outputs: vec![1],
-                menu: Some("minecraft:furnace".into()),
+                menu: Some("arcforge:machine_2_slot".into()),
             })
         } else if event.block == FIBERIZER {
             Some(ModContainer {
@@ -1790,6 +1790,67 @@ impl Hooks for Arcforge {
         event: &mut horizon_client::mod_api::ScreenEvent<'_>,
     ) -> Option<NativeScreen> {
         match event.block {
+            MACHINE => Some(NativeScreen {
+                width: 176.0,
+                height: 194.0,
+                slots: vec![
+                    Some([20.0, 30.0]),
+                    Some([44.0, 30.0]),
+                    Some([68.0, 30.0]),
+                    Some([20.0, 54.0]),
+                    Some([44.0, 54.0]),
+                    Some([116.0, 30.0]),
+                    Some([116.0, 54.0]),
+                ],
+                inventory_y: 108.0,
+                inventory_x: 8.0,
+                own_labels: false,
+                own_background: false,
+            }),
+            SIFTER => Some(NativeScreen {
+                width: 176.0,
+                height: 202.0,
+                slots: vec![
+                    Some([24.0, 30.0]),
+                    Some([24.0, 54.0]),
+                    Some([100.0, 30.0]),
+                    Some([124.0, 30.0]),
+                    Some([100.0, 54.0]),
+                    Some([124.0, 54.0]),
+                    Some([100.0, 78.0]),
+                    Some([124.0, 78.0]),
+                ],
+                inventory_y: 116.0,
+                inventory_x: 8.0,
+                own_labels: false,
+                own_background: false,
+            }),
+            FIREBOX_ARRAY_CONTROLLER => Some(NativeScreen {
+                width: 176.0,
+                height: 184.0,
+                slots: vec![Some([80.0, 30.0])],
+                inventory_y: 98.0,
+                inventory_x: 8.0,
+                own_labels: false,
+                own_background: false,
+            }),
+            block
+                if pressurized_cylinder::cylinder_capacity(block).is_some()
+                    || matches!(
+                        block,
+                        GRAIN_DRYER | FIREBOX | GEOTHERMAL_PLANT | FUEL_BURNER
+                    ) =>
+            {
+                Some(NativeScreen {
+                    width: 176.0,
+                    height: 194.0,
+                    slots: vec![Some([38.0, 30.0]), Some([122.0, 30.0])],
+                    inventory_y: 108.0,
+                    inventory_x: 8.0,
+                    own_labels: false,
+                    own_background: false,
+                })
+            }
             FIBERIZER => Some(NativeScreen {
                 width: 176.0,
                 height: 216.0,
