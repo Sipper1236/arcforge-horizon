@@ -7,7 +7,7 @@ use horizon_client::{
         BlockEntityContainerEvent, BlockEntityEvent, BlockEntityTickEvent, BlockEntityTicksEvent,
         BlocksEvent, ContainerAcceptsEvent, Direction, Flow, Hooks, Host, ItemEnergyBuffer,
         ItemEnergyBufferEvent, ItemFluidTankEvent, ItemStack, ItemsEvent, LootDropsEvent,
-        RandomSource, Tag, Text, serde_json,
+        NativeScreen, RandomSource, Tag, Text, serde_json,
     },
 };
 use std::{
@@ -361,6 +361,18 @@ impl Hooks for Arcforge {
             && host.block_property(event.pos, "part").as_deref() != Some("center")
         {
             return Flow::Cancel;
+        }
+        if event.entity.id == FURNACE_PORT {
+            let valid = match event.slot {
+                0 => arcforge_furnace_ingredient_accepts(host, event.stack, "metal"),
+                1 | 2 => {
+                    arcforge_furnace_ingredient_accepts(host, event.stack, "additive")
+                        || arcforge_furnace_ingredient_accepts(host, event.stack, "additive_2")
+                }
+                3 => matches!(event.stack.item.as_ref(), COKE | COKE_BLOCK),
+                _ => false,
+            };
+            return if valid { Flow::Continue } else { Flow::Cancel };
         }
         if event.entity.id == COMBUSTION {
             return if event.slot == 0 && combustion_fuel_ticks(event.stack.item.as_ref()).is_some()
@@ -1582,7 +1594,7 @@ impl Hooks for Arcforge {
                 ],
                 inputs: vec![0, 1, 2, 3],
                 outputs: vec![4, 5],
-                menu: Some("minecraft:generic_3x3".into()),
+                menu: Some("arcforge:arcforge_furnace".into()),
             })
         } else if event.block == MACHINE {
             Some(ModContainer {
@@ -1735,6 +1747,109 @@ impl Hooks for Arcforge {
         } else {
             None
         }
+    }
+
+    fn screen(
+        &self,
+        _host: &dyn Host,
+        event: &mut horizon_client::mod_api::ScreenEvent<'_>,
+    ) -> Option<NativeScreen> {
+        if event.block != FURNACE_PORT {
+            return None;
+        }
+        Some(NativeScreen {
+            width: 176.0,
+            height: 202.0,
+            slots: vec![
+                Some([20.0, 30.0]),
+                Some([44.0, 30.0]),
+                Some([68.0, 30.0]),
+                Some([44.0, 54.0]),
+                Some([128.0, 30.0]),
+                Some([128.0, 54.0]),
+            ],
+            inventory_y: 118.0,
+            inventory_x: 8.0,
+            own_labels: true,
+            own_background: false,
+        })
+    }
+
+    fn screen_draw(
+        &self,
+        host: &dyn Host,
+        event: &mut horizon_client::mod_api::ScreenDrawEvent<'_>,
+    ) {
+        if event.block != FURNACE_PORT {
+            return;
+        }
+        let [ox, oy] = event.origin;
+        let data = event.data;
+        let batch = &mut *event.batch;
+        macro_rules! text {
+            ($label:expr, $x:expr, $y:expr, $color:expr $(,)?) => {
+                host.text(batch, $label, [ox + $x, oy + $y], $color, true)
+            };
+        }
+        macro_rules! fill {
+            ($rect:expr, $color:expr) => {
+                host.fill(
+                    batch,
+                    [ox + ($rect)[0], oy + ($rect)[1], ($rect)[2], ($rect)[3]],
+                    $color,
+                )
+            };
+        }
+
+        text!("Arcforge Furnace", 8.0, 6.0, 0xFFFFFFFF);
+        let formed = data.get(5).copied().unwrap_or_default() != 0;
+        text!(
+            if formed { "Formed" } else { "Incomplete" },
+            8.0,
+            18.0,
+            if formed { 0xFF80D080 } else { 0xFFFF7777 },
+        );
+
+        let temperature = data.get(4).copied().unwrap_or_default().max(20);
+        let burn = data.first().copied().unwrap_or_default().max(0);
+        let burn_duration = data.get(1).copied().unwrap_or_default().max(1);
+        let progress = data.get(2).copied().unwrap_or_default().max(0);
+        let required_progress = data.get(3).copied().unwrap_or_default().max(0);
+        let required_heat = data.get(6).copied().unwrap_or_default().max(0);
+        let required_coke = data.get(7).copied().unwrap_or_default().max(0);
+        text!(&format!("Heat {temperature} C"), 8.0, 78.0, 0xFFE0E0E0);
+        text!(&format!("Fuel {burn} t"), 92.0, 78.0, 0xFFE0E0E0);
+        if required_progress > 0 {
+            text!(
+                &format!("Progress {progress}/{required_progress}"),
+                8.0,
+                88.0,
+                0xFFE0E0E0,
+            );
+            text!(
+                &format!("Min {required_heat} C   Coke {required_coke}"),
+                8.0,
+                98.0,
+                0xFFE0E0E0,
+            );
+        } else {
+            text!("No matching recipe", 8.0, 88.0, 0xFFAAAAAA);
+        }
+
+        fill!([92.0, 37.0, 24.0, 8.0], 0xFF383838);
+        let progress_fraction = if required_progress > 0 {
+            (progress as f32 / required_progress as f32).clamp(0.0, 1.0)
+        } else {
+            0.0
+        };
+        fill!([92.0, 37.0, 24.0 * progress_fraction, 8.0], 0xFF62B64F);
+        fill!([92.0, 53.0, 8.0, 24.0], 0xFF383838);
+        let burn_fraction = (burn as f32 / burn_duration as f32).clamp(0.0, 1.0);
+        fill!(
+            [94.0, 75.0 - 20.0 * burn_fraction, 4.0, 20.0 * burn_fraction],
+            0xFFFF9B35
+        );
+        text!("Inventory", 8.0, 108.0, 0xFFFFFFFF);
     }
 
     fn block_entity_accepts_fluid(
@@ -2134,6 +2249,21 @@ fn tick_arcforge_furnace(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlo
         );
     } else {
         host.set_block_property(pos, "lit", "false");
+        entity.data.resize(8, 0);
+        entity.data[0] = get_i32(&entity.nbt, "BurnTime").max(0);
+        entity.data[1] = get_i32(&entity.nbt, "BurnDuration").max(800);
+        entity.data[2] = 0;
+        entity.data[4] = get_i32(&entity.nbt, "TemperatureC").max(20);
+        entity.data[5] = 0;
+        if let Some(recipe) = arcforge_furnace_recipe(host, entity) {
+            entity.data[3] = recipe.ticks.min(i32::MAX as u32) as i32;
+            entity.data[6] = recipe.min_temperature_c.min(i32::MAX as u32) as i32;
+            entity.data[7] = recipe.coke.min(i32::MAX as u32) as i32;
+        } else {
+            entity.data[3] = 0;
+            entity.data[6] = 0;
+            entity.data[7] = 0;
+        }
     }
 }
 
@@ -7111,6 +7241,15 @@ fn furnace_ingredient(
     ))
 }
 
+fn arcforge_furnace_ingredient_accepts(host: &dyn Host, stack: &ItemStack, key: &str) -> bool {
+    host.recipes_of_type("arcforge:arcforge_smelting")
+        .iter()
+        .filter_map(|recipe| recipe.json.get(key))
+        .filter_map(|value| value.get("ingredient"))
+        .filter_map(|ingredient| host.recipe_ingredient(ingredient))
+        .any(|ingredient| ingredient.test(stack))
+}
+
 fn steelworks_recipe(host: &dyn Host, entity: &ModBlockEntity) -> Option<FurnaceRecipe> {
     find_furnace_recipe(host, entity, 3, true)
 }
@@ -7364,11 +7503,19 @@ fn tick_arcforge_furnace_process(host: &dyn Host, entity: &mut ModBlockEntity) {
     set_i32(&mut entity.nbt, "BurnTime", burn);
     set_i32(&mut entity.nbt, "CookTime", cook);
     set_i32(&mut entity.nbt, "TemperatureC", heat);
-    entity.data.resize(4, 0);
+    entity.data.resize(8, 0);
     entity.data[0] = burn;
     entity.data[1] = get_i32(&entity.nbt, "BurnDuration").max(800);
     entity.data[2] = cook;
-    entity.data[3] = recipe.map_or(0, |recipe| recipe.ticks.min(i32::MAX as u32) as i32);
+    entity.data[3] = recipe
+        .as_ref()
+        .map_or(0, |recipe| recipe.ticks.min(i32::MAX as u32) as i32);
+    entity.data[4] = heat;
+    entity.data[5] = i32::from(get_i32(&entity.nbt, "FurnaceFormed") != 0);
+    entity.data[6] = recipe.as_ref().map_or(0, |recipe| {
+        recipe.min_temperature_c.min(i32::MAX as u32) as i32
+    });
+    entity.data[7] = recipe.map_or(0, |recipe| recipe.coke.min(i32::MAX as u32) as i32);
 }
 
 fn process_arcforge_furnace_recipe(entity: &mut ModBlockEntity, recipe: &FurnaceRecipe) {

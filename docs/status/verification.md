@@ -423,3 +423,16 @@ No Horizon API or engine changes were made. No Rust tests were added or run.
 A mod-side `use_item_on` path now transfers FE between the four portable Battery tiers or Energy Cell items and the four Energy Cell blocks. Charged items insert, empty items extract; every move is bounded by the item and block capacities and transfer rates. The block entity's saved `energy` and the item's `horizon_energy` custom data are updated with rollback if the carried-stack exchange fails. The action bar reports both stored amounts and the moved FE. To preserve per-item component semantics without changing stack counts, this interaction requires a single item in the held stack. This adapts Arcforge's separate Energy Cell GUI input/output slots to a direct hand interaction within the pinned hooks.
 
 The change uses only existing Horizon hooks. It has not yet passed the next GitHub Actions build or a matching-client runtime/persistence check. No Rust tests were added or run.
+
+## Arcforge Furnace player menu (2026-11-13)
+
+The Arcforge Furnace now uses a declared six-slot menu matching its block entity container, with result-only output slots and eight synchronized state values. A native screen places metal, two additive, coke, output, and slag slots; it draws formation, temperature, remaining fuel, recipe progress, minimum temperature, and coke requirement. Input validation accepts ingredients found in the upstream Arcforge smelting recipes, loose or block coke in the fuel slot, and blocks insertion into results. No Horizon API changes were made.
+
+| Check | Observed result | What it establishes |
+|---|---|---|
+| `cargo fmt --manifest-path api/Cargo.toml` | Passed. | Rust formatting is clean. |
+| Remote `cargo check --locked --manifest-path api/Cargo.toml -j16` | Passed against the pinned Horizon API; only the pre-existing unused `EnergyStore::transfer_to` warning. The remote wrapper also printed its known non-fatal `bc: command not found` summary warning. | The custom menu, screen hooks, and input validation compile. |
+| GitHub content/package and Linux client jobs | Pending the next push. | The custom menu JSON and client bundle have not yet been built in CI. |
+| In-world screen/menu interaction | Not run. | Opening, slot layout, clicking/shift-clicking, recipe filtering, and live values still need player verification. |
+
+No Rust tests were added or run.

@@ -7,7 +7,7 @@ The opening Arcforge progression uses starter FE generation, the Carbonizer, cre
 ## Build order
 
 1. Make the opening recipes and machine access match Arcforge's Getting Started chapter.
-2. Complete the Arcforge Furnace's multiblock form, coke fuel/reagent accounting, temperature gates, additives, slag, inventory behavior, and screen.
+2. Complete the Arcforge Furnace's multiblock form, coke fuel/reagent accounting, temperature gates, additives, slag, and inventory behavior. A dedicated six-slot screen is implemented and awaits in-world verification.
 3. Complete the four material tiers and their alloy recipes before recipes that consume them.
 4. Establish mod-side bounded FE and HU stores with save-safe transfer and explicit units.
 5. Extend the Firebox/Thermoelectric path with source side modes and upgrades. FE and HU conduits now pool across bidirectionally connected components, use the lowest member tier's rate, and bridge one-way links between pools; compare transfer ordering, direction, and saved state against Arcforge in-world. The Geothermal Plant's base lava and contact-heat behavior is implemented. The Firebox Array now has its controller/casing/glass structure and scaled solid-fuel heat loop; add its fuel/flue/oxygen ports and controls. Solar Thermal Array has core tower formation, sun-driven heat and Wrench-configurable direct heat ports. Solar port overlays are visible in blockstates, while player-facing status remains outstanding.

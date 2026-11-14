@@ -6,7 +6,11 @@ Port the complete survival gameplay scope of the pinned Arcforge release to Hori
 
 The current code is an early prototype, not a complete port. Continue implementing real gameplay from the scope in the root [README](../README.md), preserve Arcforge's recognizable mechanics and progression, and update the as-built and remaining-work documents whenever implementation changes.
 
-### Current slice — Arcforge Furnace Wrench status
+### Current slice — Arcforge Furnace player menu
+
+The Arcforge Furnace now declares a six-slot Horizon menu with a dedicated native screen. The screen shows multiblock formation, temperature, remaining fuel, recipe progress, minimum heat, and coke requirement. Metal and additive inputs are checked against the 12 upstream recipe definitions; coke accepts loose coke and coke blocks, and output slots are result-only. The pinned Horizon API compile passes remotely with `cargo check --locked`; no in-world screen test has been run yet. GitHub packaging and the matching Linux client build are pending the next push. No Horizon API changes or Rust tests were made.
+
+### Earlier slice — Arcforge Furnace Wrench status
 
 Using the Wrench on the Arcforge Furnace port now reports formed/unformed state, temperature, remaining coke burn time, and—when the metal and additive inputs form a valid recipe—progress, minimum temperature, and coke requirement. On an unformed structure, Wrench use rotates the port clockwise and immediately retries formation, matching Arcforge. Commit `5920fdd` passed both GitHub jobs in run [43542601271](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43542601271); its playable client archive and internal checksums are verified in [verification.md](status/verification.md). Commit `f15a514` also passed both jobs in run [43544310146](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43544310146); its playable Linux ZIP and internal checksums are verified there. In-world Wrench status and rotation behavior still need checking. No tests were run.
 
