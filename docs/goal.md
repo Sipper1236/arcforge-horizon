@@ -6,9 +6,9 @@ Port the complete survival gameplay scope of the pinned Arcforge release to Hori
 
 The current code is an early prototype, not a complete port. Continue implementing real gameplay from the scope in the root [README](../README.md), preserve Arcforge's recognizable mechanics and progression, and update the as-built and remaining-work documents whenever implementation changes.
 
-### Current slice — Arc Crusher screen; Furnace input filtering needs diagnosis
+### Current slice — machine screen and Furnace input verification (2026-11-14)
 
-The Arc Crusher screen and live energy/progress data are in the working tree, but have not yet been built or checked in-game. The prior Furnace hook build is verified in GitHub run [43610417779](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43610417779). In the matching client, the user reports stone is rejected only by the two right-hand Furnace output slots and is accepted by the four input slots; an attempted item also “won't go in,” but its identity and target slot are not yet clear. This contradicts the intended recipe-aware rules for all four inputs, so do not treat the player-click filter as verified or claim only one slot was checked. Obtain the exact item and slot, then diagnose the Horizon `menu_slot_rules` slot mapping against the six-slot screen. No Horizon API changes or Rust tests were made.
+Commit `516bf9f` fixes and completes the Arc Crusher's native screen. GitHub run [43616251460](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43616251460) passed package and Linux client builds. In the matching client, the screen displayed live energy and progress, and a coal recipe completed after 200 ticks, producing carbon dust while consuming 4,000 FE. The Furnace menu was also rechecked in that client: stone was refused at input slot 300; iron entered slot 300; gold entered additive slots 301/302; and coal coke entered fuel slot 303. The user's earlier report that stone entered the two left inputs was not reproduced. The port in the test world is unformed, so steelmaking itself was not run. The user's latest “it won't go in” report did not identify an item or slot; ask for those only if the refusal persists with an expected ingredient. No Horizon API changes or Rust tests were made.
 
 ### Earlier slice — Arcforge Furnace Wrench status
 

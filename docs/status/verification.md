@@ -1,8 +1,10 @@
 # Verification record
 
-## Arc Crusher screen source change — pending build and runtime verification (2026-11-14)
+## Arc Crusher screen and processing — matching client verified (2026-11-14)
 
-Commit `6078ace` adds a dedicated Arc Crusher native screen with input/output/bonus slots, FE/capacity, progress, and inventory labels. The first GitHub run [43615910858](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43615910858) failed in `cargo check`: the progress-bar macro invocation had an extra trailing comma. The source fix is in the current worktree; the corrected build and in-world behavior are pending. No Rust tests were added or run.
+Commit `6078ace` adds the native screen and commit `516bf9f` fixes its progress-bar macro. The initial run [43615910858](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43615910858) failed at compile time; the corrected commit passed both package and Linux client jobs in run [43616251460](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43616251460). The matching client was installed into the disposable `arcforge-battery-test` profile and opened the screen with three slots, live FE/capacity and recipe status. With 20,000 FE injected into the test block, coal advanced to 20/200 ticks and then completed: one `arcforge:carbon_dust` appeared, progress reset, and 4,000 FE had been consumed. This verifies one recipe's live status and output, not the full 83-recipe catalog or output-backpressure behavior. No Rust tests were added or run.
+
+The same matching client rechecked Furnace player-click slot filtering. Stone was refused at slot 300; iron was accepted at metal slot 300; gold was accepted at additive slots 301 and 302; and `arcforge:coal_coke` was accepted at fuel slot 303. The player reports that stone had previously been accepted in the two left inputs, but this was not reproduced with the matching client. A later “it won't go in” report did not specify the item or slot. Furnace processing remains unverified because the test port is unformed. The screen uses slots 300–303 for inputs and 304–305 for outputs.
 
 ## Arcforge Furnace player input validation — playable client verified (2026-11-14)
 
