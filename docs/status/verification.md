@@ -2,9 +2,9 @@
 
 This file records observed checks only. Re-run checks after Rust or content changes; do not infer current results from an earlier build. For the completion criteria and current resume state, see [goal.md](../goal.md) and [handoff.md](../handoff.md).
 
-## Single-processor Wrench status readouts — local verification (2026-11-14)
+## Single-processor Wrench status readouts — package verification (2026-11-14)
 
-Wrench use on the Arc Crusher, Induction Furnace, Metal Press, and Sifter now shows stored FE and current recipe progress. The displayed duration accounts for machine Speed Upgrades and, for the Sifter, mesh speed. `cargo fmt --check`, `git diff --check`, and remote locked `cargo check` pass; only the pre-existing unused `EnergyStore::transfer_to` warning remains. No tests were run. Commit `8608317` is building in GitHub run [43534354970](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43534354970); in-world feedback verification is pending.
+Wrench use on the Arc Crusher, Induction Furnace, Metal Press, and Sifter now shows stored FE and current recipe progress. The displayed duration accounts for machine Speed Upgrades and, for the Sifter, mesh speed. `cargo fmt --check`, `git diff --check`, remote locked `cargo check`, and the GitHub package job pass; only the pre-existing unused `EnergyStore::transfer_to` warning remains. No tests were run. The 2,144,302-byte package ZIP passed `unzip -t` and internal SHA256SUMS; `arcforge.hmod` is `a92250ac8a8da4c0d0312d18917133dbd4c8ca6621d29f8a9585c7857f5c76c8`, `arcforge.hnmod` is `177a4ad33884d53620a9b1722d0d61ef898af1eb69500729270c591368d7fc94`, and the outer ZIP is `b2e50e340951e70494e7e571a28dcd4cd4845eb54da6d8907c6a798964cca319`. Commit `8608317` passed the package job in run [43534354970](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43534354970); its matching Linux client build is still running, and in-world feedback verification is pending.
 
 ## Crushing Array Wrench progress readout — build verification (2026-11-13)
 
