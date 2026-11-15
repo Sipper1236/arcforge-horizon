@@ -1,9 +1,12 @@
 # Project handoff: Arcforge for Horizon
+## Current working checkpoint — Steam Turbine Array alpha (commit `1c56214`)
+Commit `1c56214` adds the Steam Turbine Array controller, structure scan, steam/energy behavior, controller assets/recipe/loot, and status readout. Rust formatting and build passed through `hybrid-remote-build`; the `.hmod` was built and checked with the pinned Horizon content tool; the `.hnmod` was packaged for Horizon `9f42064c11efe7ef3e5ed2baad7ddc2a3b36eea0`, Minecraft 26.3. The install bundle is on the remote drive at `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-hybrid-2026-11-15-steam-turbine/`. No GitHub build or in-game verification was run.
+
 
 **Snapshot date:** 2026-11-15
-## Current snapshot — boiler expansion commit `2f4fc63`
+## Current snapshot — Steam Turbine Array alpha commit `1c56214`
 
-Commit `2f4fc63` expands the initial Steam Boiler Array alpha. It recognizes 3×3–7×7 footprints and 3–16 height, matches Arcforge shell corner/edge rules, scales heat storage and per-tick heat limits, implements pressure modes and source-like venting, and adds Wrench facing/pressure controls. Each fluid tank remains fixed at 48,000 mB because the pinned Horizon fluid capability does not expose the target block-entity position during capacity declaration. The separate controller remains alpha scaffolding in place of Arcforge's casing master. The latest Rust build is a successful rx580 hybrid build; it does not create a Horizon client artifact. Do not start GitHub Actions until the user explicitly switches back.
+Commit `1c56214` adds the Steam Turbine Array alpha on top of the expanded Steam Boiler Array implementation.
 
 Project and builds are stored on the remote drive at `/mnt/hdd2tb/arcforge-horizon` and `/mnt/hdd2tb/arcforge-horizon-builds`; `/home/rayyan/Projects/arcforge-horizon*` are symlinks. GitHub Actions run [43738891125](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43738891125) passed at commit `9da8a49`, against Horizon Nightly 2026-11-13 revision `9f42064c11efe7ef3e5ed2baad7ddc2a3b36eea0`. Playable client path: `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-run-43738891125/arcforge-playable-linux-x86_64-9da8a499837a3345520123ee872aaeb8ea50ad91/arcforge-linux-x86_64.zip` (SHA-256 `5227d66610ec600184bb38d978516e3617a95eed4a3d27b6854fa800e3c38170`). Imported locally as `imported-2026-11-15-4f43d47`; isolated test instance `arcforge-area-tools-test` points to it and contains the matching content pack/manifest. No launch or in-world test was performed. Next: test the Hammer/Excavator behavior in that instance when able, then continue the source feature inventory in [goal.md](goal.md).
 
@@ -12,7 +15,7 @@ Read-only source checkouts are also on that drive: Arcforge at `/mnt/hdd2tb/arcf
 **Project:** `/mnt/hdd2tb/arcforge-horizon` on `rayyan@100.89.43.102`
 
 **Active goal:** see [goal.md](goal.md)  
-**Status:** Expanded Steam Boiler Rust source compiles on rx580 through `hybrid-remote-build`; the current working-tree version has not been packaged into a Horizon client or tested in-game. Latest complete client artifact is GitHub run 43743930371 under `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-run-43743930371/`, which predates the expanded boiler. Keep builds hybrid until the user says to switch to GitHub.
+**Status:** Steam Turbine Array source and package builds pass on rx580 via `hybrid-remote-build`; in-game formation, routing, and save/reload remain unverified.
 
 Commit `5920fdd` adds an Arcforge Furnace Wrench status line for formation, temperature, burn time, and active recipe requirements/progress. Both GitHub jobs passed in run [43542601271](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43542601271); its package and playable client ZIPs and internal checksums are verified. In-world status verification remains pending. Commit `f15a514` adds the upstream behavior of clockwise port rotation when the structure is unformed, followed by an immediate formation recheck. Both GitHub jobs passed in run [43544310146](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43544310146), and the playable Linux client ZIP and checksums are verified in [verification.md](status/verification.md). In-world Wrench status and rotation checks remain pending.
 
