@@ -43,5 +43,7 @@
   "item.arcforge.energy_upgrade": "Energy Upgrade",
   "item.arcforge.speed_upgrade": "Speed Upgrade",
   "item.arcforge.heat_upgrade": "Heat Upgrade",
-  "item.arcforge.thermoelectric_upgrade": "Thermoelectric Efficiency Upgrade"
+  "item.arcforge.thermoelectric_upgrade": "Thermoelectric Efficiency Upgrade",
+  "block.arcforge.steam_boiler_array_controller": "Steam Boiler Array Controller",
+  "block.arcforge.steam_boiler_array_casing": "Steam Boiler Array Casing"
 }

@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "condition": { "type": "minecraft:survives_explosion" },
+      "entries": [{ "type": "minecraft:item", "name": "arcforge:steam_boiler_array_controller" }],
+      "rolls": 1
+    }
+  ],
+  "random_sequence": "arcforge:blocks/steam_boiler_array_controller"
+}

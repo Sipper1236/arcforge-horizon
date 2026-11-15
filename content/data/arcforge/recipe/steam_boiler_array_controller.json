@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": ["PGP", "FCF", "PQP"],
+  "key": {
+    "P": "#c:plates/steel",
+    "G": "#c:glass_blocks",
+    "F": "arcforge:firebox",
+    "C": "arcforge:steam_boiler_array_casing",
+    "Q": "minecraft:comparator"
+  },
+  "result": { "id": "arcforge:steam_boiler_array_controller", "count": 1 }
+}
