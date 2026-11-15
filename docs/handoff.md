@@ -1,7 +1,9 @@
 # Project handoff: Arcforge for Horizon
 
 **Snapshot date:** 2026-11-15
-## Current snapshot — commit a28440c
+## Current snapshot — commit 86eaceb (Steam Boiler Array alpha slice)
+
+The Steam Boiler Array alpha slice is pushed as code commit `86eaceb`; GitHub run [43743930371](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43743930371) passed the package and Linux client build. Artifacts are archived under `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-run-43743930371/`. The build is not an in-game test. See `docs/plan/systems/steam-resources-industry.md` for source gaps and testing.
 
 Project and builds are stored on the remote drive at `/mnt/hdd2tb/arcforge-horizon` and `/mnt/hdd2tb/arcforge-horizon-builds`; `/home/rayyan/Projects/arcforge-horizon*` are symlinks. GitHub Actions run [43738891125](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43738891125) passed at commit `9da8a49`, against Horizon Nightly 2026-11-13 revision `9f42064c11efe7ef3e5ed2baad7ddc2a3b36eea0`. Playable client path: `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-run-43738891125/arcforge-playable-linux-x86_64-9da8a499837a3345520123ee872aaeb8ea50ad91/arcforge-linux-x86_64.zip` (SHA-256 `5227d66610ec600184bb38d978516e3617a95eed4a3d27b6854fa800e3c38170`). Imported locally as `imported-2026-11-15-4f43d47`; isolated test instance `arcforge-area-tools-test` points to it and contains the matching content pack/manifest. No launch or in-world test was performed. Next: test the Hammer/Excavator behavior in that instance when able, then continue the source feature inventory in [goal.md](goal.md).
 
@@ -10,7 +12,7 @@ Read-only source checkouts are also on that drive: Arcforge at `/mnt/hdd2tb/arcf
 **Project:** `/mnt/hdd2tb/arcforge-horizon` on `rayyan@100.89.43.102`
 
 **Active goal:** see [goal.md](goal.md)  
-**Status:** Latest build is GitHub run 43738891125 at commit 9da8a49; the Linux client was imported into the isolated area-tools test instance, but has not been played in-world. The prior 43658856875 status below is historical.
+**Status:** Latest Linux client build: GitHub run 43743930371, commit `86eaceb`, Horizon Nightly 2026-11-13. Client ZIP: `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-run-43743930371/arcforge-playable-linux-x86_64-86eacebef534ee06d1c8071a660a28bf56f0ac37/arcforge-linux-x86_64.zip`. Boiler in-game validation remains outstanding.
 
 Commit `5920fdd` adds an Arcforge Furnace Wrench status line for formation, temperature, burn time, and active recipe requirements/progress. Both GitHub jobs passed in run [43542601271](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43542601271); its package and playable client ZIPs and internal checksums are verified. In-world status verification remains pending. Commit `f15a514` adds the upstream behavior of clockwise port rotation when the structure is unformed, followed by an immediate formation recheck. Both GitHub jobs passed in run [43544310146](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43544310146), and the playable Linux client ZIP and checksums are verified in [verification.md](status/verification.md). In-world Wrench status and rotation checks remain pending.
 
@@ -45,10 +47,10 @@ The build confirms packaging and client assembly, not in-world behavior. Test th
 
 ## 1. Resume here
 
-1. Latest playable client artifact ZIP: `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-run-43658856875/arcforge-playable-linux-x86_64-f400ed3a060867948ffcc6c4333b07b5e2134d8c.zip`. It includes the Hammer/Excavator alpha slice; test the area mining behavior in game.
-2. Verify the Handbook's conduit instructions against item/fluid/gas routing, rates, Auto detection, and save/reload; then test Wrench FE/progress readouts, Crushing Array port defaults and processing, supported Upgrade effects/caps/persistence, and Energy Cell visuals/transfer.
-3. Continue through Cylinder drops/placement, other tiers/gases, ore distribution, recipe obtainability, processor behavior, and broader machine automation. Do not describe the full Arcforge feature set as complete or fully playable yet. Per-casing Array face reconfiguration remains unavailable through the pinned API hooks.
-4. Use the verified artifact instructions in [CI build setup](ci-build.md); the matching visibility-fix client is available from run [43488089381](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43488089381).
+1. Install the matching client from `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-run-43743930371/arcforge-playable-linux-x86_64-86eacebef534ee06d1c8071a660a28bf56f0ac37/arcforge-linux-x86_64.zip`; follow its `INSTALL.txt` and install the matching `arcforge.hmod` in the test instance.
+2. In a disposable world, craft the Steam Boiler Array Controller and casing. Build a hollow 3x3x3 shell with the controller centered in its north face, casing corners, casing or Pressure Glass on other boundary blocks, and the interior clear.
+3. Fill the boiler using Water Buckets, attach a supported heat source or Thermal Conduit and a fluid output network, then use the Wrench to inspect formation, temperature, tank amounts, and gas grade. Test save/reload. Then continue with larger boiler shells, safety behavior, turbines, and closed loops.
+4. Record in-game results and fix any failures without changing Horizon API/source. Then continue the source-size and safety behavior gap documented in `docs/plan/systems/steam-resources-industry.md`.
 
 **Observed local smoke:** On the pinned Nightly 2026-11-08 build, the imported client with matching manifest and content pack opened a disposable creative world. `/give arcforge:wrought_heat_cell 1` and `/give arcforge:steel_ingot 1` both succeeded and appeared in inventory. Runtime ore data parsed without skipped Arcforge placed features after conversion to `worldgen/feature/` and flattened target states. That earlier smoke logged unsupported conduit and Solar multipart properties; commit `158d858` declares those custom states, but corrected rendering is not yet verified. Machine behavior, ore distribution, and progression were not verified.
 

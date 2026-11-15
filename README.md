@@ -24,6 +24,8 @@ The complete feature inventory is version-sensitive. The source audit was made a
 5. **Explicit compatibility.** Pin the Horizon source revision for the native bundle. Record required native-hook API versions, test LAN/client-server parity, and plan a migration for every saved-data schema change.
 
 ## Current state
+The initial Steam Boiler Array alpha slice is in `api/src/steam_boiler.rs`: a fixed 3×3×3 shell, water bucket input, heat-powered steam output, and a two-slot controller screen. It is not yet in-game verified; see [implemented behavior](docs/status/implemented.md), [remaining work](docs/status/not-built.md), and [steam system plan](docs/plan/systems/steam-resources-industry.md).
+
 
 The native crate in `api/` registers the Metal Press, Sifter, Arc Crusher, a formed three-lane Arc Crushing Array with 3×3×3 casing, Carbonizer, Induction Furnace, Infuser, Resin Tap, Firebox, Geothermal Plant, Fuel Burner, all four Fluid Tank tiers, Thermoelectric Plant, four Energy Conduit tiers, four Item Conduit tiers, four Fluid Conduit tiers, four thermal conduit tiers, four Energy Cell tiers, four Heat Cell tiers, four portable FE Battery items, a Wrench that rotates supported single-block machines and configures conduit faces, Fiberizer, Vulcanizer, Grain Dryer, the Arcforge Furnace port/bricks/walls, a separate Steelworks compatibility prototype, Combustion Plant, coke blocks, treated wood blocks, custom Creosote/Latex buckets, four tiered portable canisters, the tungsten heating coil, seven Steel tools, four Steel armor pieces, and processing materials. Its machine state is saved in Horizon block entities; FE and fluid handlers use Horizon's native capabilities.
 
@@ -92,7 +94,7 @@ The target is functional parity with Arcforge's survival gameplay, not a byte-fo
 
 ### Steam, world resources and refining
 
-- Electric Pump, Industrial Water Intake, Steam Boiler Array, Steam Turbine Array, Superheater Array, Condenser Array and closed water/steam loops.
+- Electric Pump and Industrial Water Intake; Steam Boiler Array (currently a fixed 3×3×3 alpha slice); Steam Turbine Array, Superheater Array, Condenser Array, Closed Heat Exchanger, Fluid Router, Steam Engine and other steam systems.
 - Oil deposits, Seismic Survey Tool, Oil Derrick, Well Head, Pumpjack and shared deposit depletion.
 - Distillation Array and fuels/products; Cracking Unit, Catalytic Reformer, Coker, Lubricant Blender, Hydrotreater, Sulfur Recovery Unit, Steam Cracker, Diesel Generator and Flare Stack.
 - Fluids and gases: water, brine, creosote, crude/sour crude, refinery fractions, steam grades, exhaust steam, hydrogen, oxygen, syngas, acid, chlorine, plastics and byproducts.
@@ -193,7 +195,7 @@ The implementation phases are ordered by dependency. The alpha's player unlock o
 
 ### Phase 6 — steam and renewable heat
 
-- Port Industrial Water Intake, Steam Boiler Array, Steam Turbine Array, Superheater Array, Condenser Array and Electric Pump.
+- Extend the Steam Boiler Array alpha toward source sizes and safety behavior, then port Industrial Water Intake, Steam Turbine Array, Superheater Array, Condenser Array, Electric Pump, Closed Heat Exchanger, Fluid Router and Steam Engine where Horizon hooks permit.
 - Add three steam grades, water/exhaust loops, overpressure/venting, turbine spin-up, lubricant bonus, temperature/pressure modes and solar thermal tracking.
 - Add relevant fluid/gas ports, environmental cooling, closed-loop examples and screen readouts.
 

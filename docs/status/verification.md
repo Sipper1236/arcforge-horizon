@@ -1,4 +1,7 @@
 # Verification record
+## Steam Boiler Array alpha - CI client build verified (2026-11-15)
+Commit `86eaceb` adds the first fixed 3x3x3 Steam Boiler Array alpha slice. GitHub Actions run [43743930371](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43743930371) passed formatting, content packaging, the native mod package job, and the Linux x86_64 Horizon client build. Artifacts are archived at `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-run-43743930371/`: client ZIP SHA-256 `99625ebce431023b2e53353fb51fbfb8cd09fabffd947bcc6e71caf2755a128b`, `arcforge.hmod` SHA-256 `933ae22476afbec945e541e15198943c6de3465d22e5bf6f87629f6e5073087e`, and `arcforge.hnmod` SHA-256 `5330abe935d416a927f1dd5ac309e39764a9bed2efd2849f96b8bcaeb671cb8f`. Build success does not prove in-world behavior. The alpha shell, water-bucket interface, heat acceptance, steam output, recipes, and save/reload need testing in the matching client.
+
 
 ## Horizon Nightly update and player-context area mining — client build verified (2026-11-15)
 

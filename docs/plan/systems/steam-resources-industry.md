@@ -22,7 +22,11 @@ Continue in Arcforge's chapter order through Steam Power, Turbines & Engines, Oi
 
 ## Current state
 
-These systems are not implemented in the current port. The existing 8,000 mB creosote tanks support limited Carbonizer/Infuser recipes; they do not constitute the broader steam, petroleum, refinery, or chemistry systems.
+**Steam Boiler Array alpha slice implemented in source (2026-11-15):** `api/src/steam_boiler.rs` adds a fixed 3×3×3 shell, controller and casing blocks, a two-slot water-bucket interface, 48,000 mB water and steam tanks, and heat input from supported Arcforge heat producers. At 100°C it consumes 8 HU/mB and outputs steam; at 500°C it outputs high-pressure steam at 12 HU/mB; at 900°C it outputs superheated steam at 16 HU/mB. Wrench use reports formation, temperature, water, and output gas/amount.
+
+This is a first native slice, not Steam Power completion or source parity. Arcforge supports 3×3 through 7×7 shells with heights 3–16, selectable operating modes, source-specific capacity and efficiency behavior, and overpressure venting. The alpha currently supports only one 3×3×3 shell, a separate controller block added as Horizon scaffolding, one default orientation, and no vent or safety behavior. Its 48,000 mB per tank and 300,000 HU store are fixed implementation limits. Do not describe it as fully playable until a matching client has been installed and the shell, bucket input, heat transfer, steam output, and save/reload have been tested in-game.
+
+Next in this system: obtain a matching-client in-game check for the boiler slice; then extend the source shell sizes, pressure controls and safety behavior where Horizon hooks permit, followed by the upstream turbine and closed-loop chain. The Electric Pump source-block pickup remains deferred because the current Horizon Host API lacks safe source-fluid pickup and removal semantics; do not change Horizon API.
 
 ## API-constrained alpha decision — Electric Pump (2026-11-15)
 
