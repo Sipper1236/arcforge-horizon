@@ -1,4 +1,7 @@
-## GitHub Actions workflow (current)s (current)
+# Build and compile policy (updated 2026-11-15)
+All future Arcforge builds and compile verification must run through GitHub Actions. Do not invoke the hybrid remote build script or compile on rx580/local. Previous hybrid results below are historical records only.
+
+## Current build policy
 
 Current instruction: build only with GitHub Actions. Do not run the hybrid compile workflow. Push a change under api/, content/, tools/, or .github/workflows/build.yml to trigger the public Actions workflow; it checks Rust, builds/checks content, packages the native mod, and builds the pinned Linux client.
 

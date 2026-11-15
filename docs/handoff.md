@@ -1,3 +1,7 @@
+# Current build policy (updated 2026-11-15)
+Build and compile only through GitHub Actions. Do not run hybrid or local compilation. Earlier hybrid artifacts and steps below are historical; use GitHub Actions artifacts for current playtesting.
+Latest successful GitHub build: run 43769113792; remote artifact copy: /mnt/hdd2tb/arcforge-horizon-builds/arcforge-github-43769113792/.
+
 # Project handoff: Arcforge for Horizon
 
 ## Current working checkpoint — Electric Pump alpha
@@ -61,7 +65,7 @@ The build confirms packaging and client assembly, not in-world behavior. Test th
 
 ## 1. Resume here
 
-1. Use the hybrid client bundle listed above. Import it into Horizon Nightly 2026-11-13 (`9f42064c11efe7ef3e5ed2baad7ddc2a3b36eea0`) with the included `INSTALL.txt`; install `arcforge.hmod` in the instance and enable `mod.arcforge`.
+1. Use the playable artifact from GitHub Actions run 43769113792; its remote copy is in /mnt/hdd2tb/arcforge-horizon-builds/arcforge-github-43769113792/. Import it into Horizon Nightly 2026-11-13 (`9f42064c11efe7ef3e5ed2baad7ddc2a3b36eea0`) with the included `INSTALL.txt`; install `arcforge.hmod` in the instance and enable `mod.arcforge`.
 2. In a disposable world, craft the Steam Turbine Array Controller, build a 3×3×3 shell with casing corners, a hollow air core, and the controller centered on the front face. Use Pressure Glass or casing for the other shell blocks.
 3. Feed steam from the Steam Boiler Array through a fluid conduit. Use the Wrench to check formation, steam flow, RPM, and FE; connect an energy conduit and extract Exhaust Steam from the controller.
 4. Break and replace a shell block, rotate the controller with the Wrench, and save/reload. Record any issue, fix it without changing Horizon API/source, update verification docs, then continue through Arcforge’s progression.
