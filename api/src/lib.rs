@@ -5350,10 +5350,11 @@ fn show_superheater_status(host: &mut dyn Host, pos: [i32; 3]) {
     let Some(entity) = host.mod_block_entity(pos) else {
         return;
     };
-    for player in host.players() {
-        if player.dimension == host.dimension() {
-            host.action_bar(player.uuid, Text::literal(superheater::status(&entity)));
-        }
+    if entity.id != SUPERHEATER_ARRAY_CONTROLLER {
+        return;
+    }
+    if let Some(player) = host.acting_player() {
+        host.action_bar(player.uuid, Text::literal(superheater::status(&entity)));
     }
 }
 fn show_steam_condenser_status(host: &mut dyn Host, pos: [i32; 3]) {

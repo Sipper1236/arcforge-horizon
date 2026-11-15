@@ -382,7 +382,7 @@ pub(crate) fn accepts(fluid: &str) -> bool {
 pub(crate) fn fluid_tanks() -> horizon_client::mod_api::ModFluidTanks {
     horizon_client::mod_api::ModFluidTanks {
         tanks: vec![MAX_TANK as i32, MAX_TANK as i32],
-        faces: [vec![0, 1]; 6],
+        faces: std::array::from_fn(|_| vec![0, 1]),
         inputs: vec![0],
         outputs: vec![1],
     }
@@ -452,7 +452,7 @@ fn write_shell(n: &mut Compound, s: Option<Shell>) {
 }
 fn set_prop(h: &mut dyn Host, p: [i32; 3], k: &str, v: &str) {
     if h.block_property(p, k).as_deref() != Some(v) {
-        h.set_block_property(p, k, v)
+        h.set_block_property(p, k, v);
     }
 }
 fn get_i32(n: &Compound, k: &str) -> i32 {
@@ -466,10 +466,10 @@ fn set_i32(n: &mut Compound, k: &str, v: i32) {
 }
 fn get_string(n: &Compound, k: &str) -> Option<String> {
     match n.get(&k.into()) {
-        Some(Tag::String(v)) => Some(v.clone()),
+        Some(Tag::String(v)) => Some(v.to_string_lossy()),
         _ => None,
     }
 }
 fn set_string(n: &mut Compound, k: &str, v: &str) {
-    n.insert(k.into(), Tag::String(v.to_owned()));
+    n.insert(k.into(), Tag::String(v.into()));
 }
