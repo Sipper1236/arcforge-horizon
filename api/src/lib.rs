@@ -47,6 +47,7 @@ mod solar;
 mod steam_boiler;
 mod steam_condenser;
 mod steam_turbine;
+mod superheater;
 mod thermal;
 mod water_intake;
 
@@ -90,6 +91,8 @@ const STEAM_BOILER_ARRAY_CASING: &str = steam_boiler::CASING;
 const STEAM_TURBINE_ARRAY_CONTROLLER: &str = steam_turbine::CONTROLLER;
 const STEAM_CONDENSER_ARRAY_CONTROLLER: &str = steam_condenser::CONTROLLER;
 const STEAM_CONDENSER_ARRAY_CASING: &str = steam_condenser::CASING;
+const SUPERHEATER_ARRAY_CONTROLLER: &str = superheater::CONTROLLER;
+const SUPERHEATER_ARRAY_CASING: &str = superheater::CASING;
 const WATER_INTAKE_CONTROLLER: &str = water_intake::CONTROLLER;
 const WATER_INTAKE_CASING: &str = water_intake::CASING;
 const ELECTRIC_PUMP: &str = electric_pump::BLOCK;
@@ -332,6 +335,12 @@ impl Hooks for Arcforge {
         ) {
             steam_condenser::notify_placed(host, event.pos);
         }
+        if matches!(
+            event.stack.item.as_ref(),
+            SUPERHEATER_ARRAY_CONTROLLER | SUPERHEATER_ARRAY_CASING
+        ) {
+            superheater::notify_placed(host, event.pos);
+        }
         if host
             .mod_block_entity(event.pos)
             .is_some_and(|entity| entity.id == ARC_CRUSHING_ARRAY_CASING)
@@ -420,6 +429,9 @@ impl Hooks for Arcforge {
             if entity.id == STEAM_CONDENSER_ARRAY_CONTROLLER {
                 steam_condenser::unform(host, event.pos, &entity.nbt);
             }
+            if entity.id == SUPERHEATER_ARRAY_CONTROLLER {
+                superheater::unform(host, event.pos, &entity.nbt);
+            }
             if entity.id == WATER_INTAKE_CONTROLLER {
                 water_intake::unform(host, event.pos, &entity);
             }
@@ -441,6 +453,9 @@ impl Hooks for Arcforge {
         ) {
             steam_turbine::unform_near(host, event.pos);
             steam_condenser::unform_near(host, event.pos);
+        }
+        if host.block(event.pos) == SUPERHEATER_ARRAY_CASING {
+            superheater::unform_near(host, event.pos);
         }
         if matches!(
             host.block(event.pos).as_str(),
@@ -753,6 +768,28 @@ impl Hooks for Arcforge {
             .is_some_and(|entity| energy_cell_spec(&entity.id).is_some())
         {
             show_energy_cell_status(host, event.pos);
+            return Flow::Cancel;
+        }
+        if host
+            .mod_block_entity(event.pos)
+            .is_some_and(|entity| entity.id == SUPERHEATER_ARRAY_CONTROLLER)
+        {
+            let requested_facing = match event.face {
+                [0, 0, -1] => Some("north"),
+                [1, 0, 0] => Some("east"),
+                [0, 0, 1] => Some("south"),
+                [-1, 0, 0] => Some("west"),
+                _ => None,
+            };
+            let current_facing = host.block_property(event.pos, "facing");
+            if let Some(facing) =
+                requested_facing.filter(|facing| current_facing.as_deref() != Some(*facing))
+            {
+                superheater::face(host, event.pos, facing);
+            } else {
+                superheater::cycle_pressure(host, event.pos);
+            }
+            show_superheater_status(host, event.pos);
             return Flow::Cancel;
         }
         if host
@@ -1113,6 +1150,47 @@ impl Hooks for Arcforge {
                 ("facing".to_owned(), "north".to_owned()),
                 ("formed".to_owned(), "false".to_owned()),
                 ("lit".to_owned(), "false".to_owned()),
+            ]
+            .into_iter()
+            .collect();
+        }
+        register_content!(&mut event.blocks, id: SUPERHEATER_ARRAY_CONTROLLER.into(), template: "minecraft:blast_furnace".into(), item: true);
+        if let Some(block) = event
+            .blocks
+            .iter_mut()
+            .find(|block| block.id == SUPERHEATER_ARRAY_CONTROLLER)
+        {
+            block.state_properties = serde_json::from_value(serde_json::json!({
+                "facing": { "type": "enum", "values": ["north", "east", "south", "west"] },
+                "formed": { "type": "boolean" }, "lit": { "type": "boolean" }
+            }))
+            .expect("valid Superheater Array controller states");
+            block.default_state = [
+                ("facing".to_owned(), "north".to_owned()),
+                ("formed".to_owned(), "false".to_owned()),
+                ("lit".to_owned(), "false".to_owned()),
+            ]
+            .into_iter()
+            .collect();
+        }
+        register_content!(&mut event.blocks, id: SUPERHEATER_ARRAY_CASING.into(), template: "minecraft:iron_block".into(), item: true);
+        if let Some(block) = event
+            .blocks
+            .iter_mut()
+            .find(|block| block.id == SUPERHEATER_ARRAY_CASING)
+        {
+            block.state_properties = serde_json::from_value(serde_json::json!({
+                "facing": { "type": "enum", "values": ["north", "east", "south", "west"] },
+                "lit": { "type": "boolean" },
+                "part": { "type": "enum", "values": ["none", "center", "other"] },
+                "box": { "type": "boolean" }
+            }))
+            .expect("valid Superheater Array casing states");
+            block.default_state = [
+                ("facing".to_owned(), "north".to_owned()),
+                ("lit".to_owned(), "false".to_owned()),
+                ("part".to_owned(), "none".to_owned()),
+                ("box".to_owned(), "false".to_owned()),
             ]
             .into_iter()
             .collect();
@@ -2529,6 +2607,9 @@ impl Hooks for Arcforge {
             && !steam_condenser::accepts(event.fluid)
         {
             Flow::Cancel
+        } else if event.block == SUPERHEATER_ARRAY_CONTROLLER && !superheater::accepts(event.fluid)
+        {
+            Flow::Cancel
         } else if event.block == WATER_INTAKE_CONTROLLER && !water_intake::accepts(event.fluid) {
             Flow::Cancel
         } else if event.block == ELECTRIC_PUMP && !electric_pump::accepts(event.fluid) {
@@ -2670,6 +2751,8 @@ impl Hooks for Arcforge {
             Some(steam_turbine::fluid_tanks())
         } else if event.block == STEAM_CONDENSER_ARRAY_CONTROLLER {
             Some(steam_condenser::fluid_tanks())
+        } else if event.block == SUPERHEATER_ARRAY_CONTROLLER {
+            Some(superheater::fluid_tanks())
         } else if event.block == WATER_INTAKE_CONTROLLER {
             Some(water_intake::fluid_tanks())
         } else if event.block == ELECTRIC_PUMP {
@@ -2805,6 +2888,7 @@ impl Hooks for Arcforge {
             STEAM_CONDENSER_ARRAY_CONTROLLER => {
                 steam_condenser::tick(host, event.pos, event.entity)
             }
+            SUPERHEATER_ARRAY_CONTROLLER => superheater::tick(host, event.pos, event.entity),
             WATER_INTAKE_CONTROLLER => water_intake::tick(host, event.pos, event.entity),
             ELECTRIC_PUMP => electric_pump::tick(host, event.pos, event.entity),
             SOLAR_ARRAY_CONTROLLER => tick_solar_array(host, event.pos, event.entity),
@@ -5262,6 +5346,16 @@ fn show_water_intake_status(host: &mut dyn Host, pos: [i32; 3]) {
     }
 }
 
+fn show_superheater_status(host: &mut dyn Host, pos: [i32; 3]) {
+    let Some(entity) = host.mod_block_entity(pos) else {
+        return;
+    };
+    for player in host.players() {
+        if player.dimension == host.dimension() {
+            host.action_bar(player.uuid, Text::literal(superheater::status(&entity)));
+        }
+    }
+}
 fn show_steam_condenser_status(host: &mut dyn Host, pos: [i32; 3]) {
     let Some(entity) = host.mod_block_entity(pos) else {
         return;
@@ -6260,6 +6354,9 @@ fn transfer_supported_heat_to_neighbor(
     }
     if target.id == STEAM_BOILER_ARRAY_CONTROLLER {
         return steam_boiler::accept_heat(host, neighbor, heat, rate);
+    }
+    if target.id == SUPERHEATER_ARRAY_CONTROLLER {
+        return superheater::accept_heat(host, neighbor, heat, rate);
     }
     let (min_temperature, capacity, max_temperature) = match target.id.as_str() {
         FIBERIZER => (800, 10_000, 1100),

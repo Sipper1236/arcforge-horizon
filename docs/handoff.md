@@ -2,6 +2,9 @@
 Build and compile only through GitHub Actions. Do not run hybrid or local compilation. Earlier hybrid artifacts and steps below are historical; use GitHub Actions artifacts for current playtesting.
 Latest successful GitHub build: run 43769113792; remote artifact copy: /mnt/hdd2tb/arcforge-horizon-builds/arcforge-github-43769113792/.
 
+## Current working checkpoint — Superheater Array alpha (build pending)
+The current uncommitted work adds api/src/superheater.rs, native controller/casing registrations, fixed maximum Horizon fluid capability tanks with shell-scaled processing, thermal-conduit heat input, pressure-mode cycling, recipes, drops, item models, and handbook text. The only permitted compile/build route is GitHub Actions. Push the feature commit to main, inspect both workflow jobs, and fix any failures through a new GitHub Actions run. Do not use the historical hybrid script.
+
 # Project handoff: Arcforge for Horizon
 
 ## Current working checkpoint — Electric Pump alpha

@@ -56,5 +56,7 @@
   "item.arcforge.water_intake_controller": "Industrial Water Intake Controller",
   "item.arcforge.water_intake_casing": "Industrial Water Intake Casing",
   "block.arcforge.electric_pump": "Electric Pump",
-  "item.arcforge.electric_pump": "Electric Pump"
+  "item.arcforge.electric_pump": "Electric Pump",
+  "block.arcforge.superheater_array_controller": "Superheater Array Controller",
+  "block.arcforge.superheater_array_casing": "Superheater Array Casing"
 }

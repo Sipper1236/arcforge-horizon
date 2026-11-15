@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " I ",
+    "GCG",
+    " R "
+  ],
+  "key": {
+    "I": "minecraft:iron_ingot",
+    "G": "arcforge:superheater_array_casing",
+    "C": "#c:gears/steel",
+    "R": "minecraft:comparator"
+  },
+  "result": {
+    "id": "arcforge:superheater_array_controller",
+    "count": 1
+  }
+}

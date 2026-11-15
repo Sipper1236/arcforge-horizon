@@ -3,6 +3,9 @@
 
 Current GitHub artifact: /mnt/hdd2tb/arcforge-horizon-builds/arcforge-github-43769113792/arcforge-playable-linux-x86_64-f56e5e41ed3ae81e895b93714281b143084c7f29/arcforge-linux-x86_64.zip (SHA-256 c5c2f72fb81bc82de337eb49a05677b5170aa6991b548862da2a600797179112). HMOD 88d689174a64eb2276a8cc2ca9fe2602fb953dd1b224d7788126563e880a077b; HNMOD ebd974da714a466565ece02edf0f9acfd759887b6eb1678a8c3228a90c74e233.
 
+## Superheater Array alpha
+api/src/superheater.rs adds the 3–7 block cubic multiblock, steam-grade conversion, pressure modes, persisted heat, survival recipes and drops, and thermal-conduit integration. GitHub Actions build and in-game behavior are pending.
+
 ## Portable FE Batteries
 
 Four battery items expose Horizon's native item-energy capability with source capacities/rates of 250,000 FE / 1,000 FE/t, 1,000,000 FE / 4,000 FE/t, 4,000,000 FE / 16,000 FE/t, and 16,000,000 FE / 64,000 FE/t. Four source-pattern crafting recipes and localized names are packaged. Shaped tier-upgrade crafting cannot preserve charge because the pinned crafting hook does not expose ingredient components. A mod-side hand interaction now transfers FE between a charged Arcforge energy item and an Energy Cell, or extracts FE into an empty item. It respects both item and cell rates/capacities, updates saved item/block data together, and reports amounts in the action bar. Transfers require a single item in the held stack. This is an alpha adaptation of Arcforge's two-slot GUI; the hand path still needs matching-client and save/reload verification. Lithium Cells and Battery Arrays are not implemented.
