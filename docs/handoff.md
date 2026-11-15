@@ -2,6 +2,8 @@
 Build and compile only through GitHub Actions. Do not run hybrid or local compilation. Earlier hybrid artifacts and steps below are historical; use GitHub Actions artifacts for current playtesting.
 Latest successful GitHub build: run 43773403158; remote artifacts: /mnt/hdd2tb/arcforge-horizon-builds/arcforge-github-43773403158/.
 
+## Current working checkpoint — Oil deposit survey alpha (GitHub build pending)
+The working tree adds api/src/oil_deposit.rs, registers the Seismic Survey Tool, and reports deterministic ordinary-weight Overworld deposit results on block use. It does not yet extract oil or persist depleted volumes. Build only through GitHub Actions.
 ## Current working checkpoint — Superheater Array alpha (GitHub verified; gameplay pending)
 Commit f1f8608 includes the Superheater Array and Horizon host-type fixes. GitHub Actions run 43773403158 passed the native crate check, Horizon content build/check, mod packaging, and Linux client build. The importable client ZIP is /mnt/hdd2tb/arcforge-horizon-builds/arcforge-github-43773403158/arcforge-playable-linux-x86_64-f1f8608b1d6ce52b67cbe38dbbb6ae5ff2dd1cc9/arcforge-linux-x86_64.zip (SHA-256 63654ada508bb66a4501b67aa34a627d10025e21312e6f3ea968a1b7b4e5c813). Embedded checksums and ZIP integrity verified. This proves build/package integrity, not in-game behavior. Next, import the client, craft Superheater Array Controller/Casing, form a 3x3x3 shell, use the Wrench to set facing and pressure mode, connect a thermal conduit, feed Steam, and confirm flow/status; then test High-Pressure and Superheated upgrades and save/reload. Build and compile only through GitHub Actions.
 

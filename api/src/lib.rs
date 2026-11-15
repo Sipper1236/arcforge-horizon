@@ -42,6 +42,7 @@ mod fuel_burner;
 mod heat;
 mod heat_cell;
 mod item_conduit;
+mod oil_deposit;
 mod pressurized_cylinder;
 mod solar;
 mod steam_boiler;
@@ -52,6 +53,7 @@ mod thermal;
 mod water_intake;
 
 const MACHINE: &str = "arcforge:steelworks";
+const SEISMIC_SURVEY_TOOL: &str = "arcforge:seismic_survey_tool";
 const STEEL: &str = "arcforge:steel_ingot";
 const IRON: &str = "minecraft:iron_ingot";
 const COKE: &str = "arcforge:coal_coke";
@@ -614,6 +616,15 @@ impl Hooks for Arcforge {
         host: &mut dyn Host,
         event: &mut horizon_client::mod_api::UseItemOnEvent<'_>,
     ) -> Flow {
+        if event.stack.item.as_ref() == SEISMIC_SURVEY_TOOL {
+            if let Some(player) = host.acting_player() {
+                host.action_bar(
+                    player.uuid,
+                    Text::literal(oil_deposit::survey(host, event.pos)),
+                );
+            }
+            return Flow::Cancel;
+        }
         if event.stack.item.as_ref() == SPEED_UPGRADE
             && host
                 .mod_block_entity(event.pos)
@@ -1625,6 +1636,7 @@ impl Hooks for Arcforge {
 
     fn items(&self, event: &mut ItemsEvent<'_>) {
         register_content!(&mut event.items, id: WRENCH.into(), template: "minecraft:iron_pickaxe".into(), max_stack_size: Some(1));
+        register_content!(&mut event.items, id: SEISMIC_SURVEY_TOOL.into(), template: "minecraft:spyglass".into(), max_stack_size: Some(1));
         register_content!(&mut event.items, id: "arcforge:turbine_blade_set".into(), template: "minecraft:iron_sword".into());
         register_content!(&mut event.items, id: PINE_RESIN.into(), template: "minecraft:slime_ball".into());
         register_content!(&mut event.items, id: WOOD_ASH.into(), template: "minecraft:bone_meal".into());

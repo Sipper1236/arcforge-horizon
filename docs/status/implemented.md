@@ -3,6 +3,9 @@
 
 Current GitHub playable artifact: /mnt/hdd2tb/arcforge-horizon-builds/arcforge-github-43773403158/.
 
+## Current unbuilt work — Oil deposit survey
+The Seismic Survey Tool and seed-based ordinary-region deposit report are implemented locally and awaiting GitHub Actions. This is prospecting only; oil extraction/depletion is not implemented.
+
 ## Superheater Array alpha
 api/src/superheater.rs adds the 3–7 block cubic multiblock, steam-grade conversion, pressure modes, persisted heat, survival recipes and drops, and thermal-conduit integration. GitHub Actions run 43773403158 passed both jobs; in-game behavior is pending.
 
@@ -16,7 +19,7 @@ Four battery items expose Horizon's native item-energy capability with source ca
 
 ## Recipe data present
 
-The content directory contains 416 recipe JSON files (Arcforge machine recipes and vanilla recipe types):
+The content directory contains 417 recipe JSON files (Arcforge machine recipes and vanilla recipe types):
 
 | Recipe group | Files |
 |---|---:|
@@ -41,6 +44,7 @@ The content directory contains 416 recipe JSON files (Arcforge machine recipes a
 | Steam Turbine Array casing, blade-set, and controller crafting | 3 |
 | Condenser Array casing and controller crafting | 2 |
 | Superheater Array casing and controller crafting | 2 |
+| Seismic Survey Tool crafting | 1 |
 | Water Intake casing and controller crafting | 2 |
 | Electric Pump crafting | 1 |
 | Solar Thermal Array parts and structure crafting | 5 |

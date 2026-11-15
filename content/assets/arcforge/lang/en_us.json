@@ -58,5 +58,6 @@
   "block.arcforge.electric_pump": "Electric Pump",
   "item.arcforge.electric_pump": "Electric Pump",
   "block.arcforge.superheater_array_controller": "Superheater Array Controller",
-  "block.arcforge.superheater_array_casing": "Superheater Array Casing"
+  "block.arcforge.superheater_array_casing": "Superheater Array Casing",
+  "item.arcforge.seismic_survey_tool": "Seismic Survey Tool"
 }
