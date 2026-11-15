@@ -1,9 +1,11 @@
 # Project handoff: Arcforge for Horizon
 
 **Snapshot date:** 2026-11-15
-## Current snapshot — build 43738891125
+## Current snapshot — commit a28440c
 
 Project and builds are stored on the remote drive at `/mnt/hdd2tb/arcforge-horizon` and `/mnt/hdd2tb/arcforge-horizon-builds`; `/home/rayyan/Projects/arcforge-horizon*` are symlinks. GitHub Actions run [43738891125](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43738891125) passed at commit `9da8a49`, against Horizon Nightly 2026-11-13 revision `9f42064c11efe7ef3e5ed2baad7ddc2a3b36eea0`. Playable client path: `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-run-43738891125/arcforge-playable-linux-x86_64-9da8a499837a3345520123ee872aaeb8ea50ad91/arcforge-linux-x86_64.zip` (SHA-256 `5227d66610ec600184bb38d978516e3617a95eed4a3d27b6854fa800e3c38170`). Imported locally as `imported-2026-11-15-4f43d47`; isolated test instance `arcforge-area-tools-test` points to it and contains the matching content pack/manifest. No launch or in-world test was performed. Next: test the Hammer/Excavator behavior in that instance when able, then continue the source feature inventory in [goal.md](goal.md).
+
+Read-only source checkouts are also on that drive: Arcforge at `/mnt/hdd2tb/arcforge-upstream` commit `8843cb02cf9132f278f6a8e804b6d78837d3cbcb`, and Horizon at `/mnt/hdd2tb/horizon-reference` revision `9f42064c11efe7ef3e5ed2baad7ddc2a3b36eea0`. The latest API-boundary audit records why exact Halite beds and source-block Electric Pump pickup stay simplified/deferred under the current hooks; see [materials/worldgen](plan/systems/materials-and-worldgen.md), [steam/resources/industry](plan/systems/steam-resources-industry.md), and [parity notes](status/parity-notes.md).
 
 **Project:** `/mnt/hdd2tb/arcforge-horizon` on `rayyan@100.89.43.102`
 
