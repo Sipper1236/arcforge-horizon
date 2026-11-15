@@ -231,7 +231,11 @@ pub(crate) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
             state: BoilerState::Heating,
         }
     };
-    set_i32(&mut entity.nbt, "HeatHU", heat.stored_hu().min(i32::MAX as u64) as i32);
+    set_i32(
+        &mut entity.nbt,
+        "HeatHU",
+        heat.stored_hu().min(i32::MAX as u64) as i32,
+    );
     set_i32(&mut entity.nbt, "TemperatureC", heat.temperature_c() as i32);
     set_i32(&mut entity.nbt, "BoilerState", result.state as i32);
     set_i32(&mut entity.nbt, "BoiledLastTick", result.boiled as i32);
@@ -252,7 +256,9 @@ fn boil_tick(
     let incoming = if sim.last_stored < 0 {
         0
     } else {
-        stored.saturating_sub(sim.last_stored as u64).min(u32::MAX as u64) as u32
+        stored
+            .saturating_sub(sim.last_stored as u64)
+            .min(u32::MAX as u64) as u32
     };
     if incoming > 0 {
         sim.heat_in += (incoming as f64 - sim.heat_in) * HEAT_IN_SMOOTHING;
@@ -416,7 +422,9 @@ impl BoilerSim {
         let above_top = heat.stored_hu() as f64
             - min_stored_at(shell.heat_capacity(), top) as f64
             - self.pending_heat;
-        let floor = set_grade.filter(|_| at_set).map_or(100, SteamGrade::min_temperature);
+        let floor = set_grade
+            .filter(|_| at_set)
+            .map_or(100, SteamGrade::min_temperature);
         let above_floor = heat.stored_hu() as f64
             - min_stored_at(shell.heat_capacity(), floor) as f64
             - self.pending_heat;
@@ -433,7 +441,8 @@ impl BoilerSim {
         let mut budget = (usable.min(above_floor).min(max_heat as f64)).max(0.0);
         let steam_held = crate::fluid::amount(nbt, 1);
         if making != target {
-            let lift_per_mb = (target.hu_per_mb() - making.hu_per_mb()) * shell.heat_cost_multiplier();
+            let lift_per_mb =
+                (target.hu_per_mb() - making.hu_per_mb()) * shell.heat_cost_multiplier();
             let spend = budget.min((f64::from(steam_held) - self.lifted).max(0.0) * lift_per_mb);
             if lift_per_mb > 0.0 {
                 self.lifted += spend / lift_per_mb;
@@ -458,11 +467,7 @@ impl BoilerSim {
         let boil = possible.min(water - self.pending_steam).max(0.0);
         self.pending_steam += boil;
         self.pending_heat += boil * hu_per_mb;
-        let mb = self
-            .pending_steam
-            .floor()
-            .max(0.0)
-            .min(water) as u32;
+        let mb = self.pending_steam.floor().max(0.0).min(water) as u32;
         let hu = self
             .pending_heat
             .floor()
@@ -514,8 +519,8 @@ impl BoilerSim {
 fn min_stored_at(capacity: u64, celsius: u32) -> u64 {
     let span = u64::from(MAX_TEMPERATURE_C - AMBIENT_C);
     let degrees = u64::from(celsius.saturating_sub(AMBIENT_C));
-    ((capacity as u128 * degrees as u128 + span as u128 - 1) / span as u128)
-        .min(u64::MAX as u128) as u64
+    ((capacity as u128 * degrees as u128 + span as u128 - 1) / span as u128).min(u64::MAX as u128)
+        as u64
 }
 
 fn retag_steam(nbt: &mut Compound, grade: SteamGrade) {
@@ -590,9 +595,7 @@ fn find_shell(host: &dyn Host, controller: [i32; 3], facing: &str) -> Option<She
                             valid = false;
                             break 'volume;
                         }
-                    } else if boundaries == 3
-                        || (edges_must_be_casing && boundaries >= 2)
-                    {
+                    } else if boundaries == 3 || (edges_must_be_casing && boundaries >= 2) {
                         if block != CASING {
                             valid = false;
                             break 'volume;
@@ -680,7 +683,11 @@ pub(crate) fn accept_heat(
         let mut sink = heat_store(&entity.nbt, shell);
         moved = source.transfer_to(&mut sink, rate);
         if moved > 0 {
-            set_i32(&mut entity.nbt, "HeatHU", sink.stored_hu().min(i32::MAX as u64) as i32);
+            set_i32(
+                &mut entity.nbt,
+                "HeatHU",
+                sink.stored_hu().min(i32::MAX as u64) as i32,
+            );
             set_i32(&mut entity.nbt, "TemperatureC", sink.temperature_c() as i32);
         }
     });
@@ -716,9 +723,12 @@ fn get_f64_or(nbt: &Compound, key: &str, default: f64) -> f64 {
 }
 
 fn set_f64(nbt: &mut Compound, key: &str, value: f64) {
-    nbt.insert(key.into(), Tag::Double(if value.is_finite() {
-        value.to_bits()
-    } else {
-        0.0_f64.to_bits()
-    }));
+    nbt.insert(
+        key.into(),
+        Tag::Double(if value.is_finite() {
+            value.to_bits()
+        } else {
+            0.0_f64.to_bits()
+        }),
+    );
 }

@@ -9,6 +9,7 @@ import hashlib
 import json
 import os
 from pathlib import Path, PurePosixPath
+import re
 import time
 import urllib.error
 import urllib.request
@@ -106,6 +107,9 @@ def main() -> None:
 
     def fetch_library(entry: tuple[dict, Path]) -> Path:
         artifact, destination = entry
+        if destination.is_file() and destination.stat().st_size == artifact.get("size"):
+            if hashlib.sha1(destination.read_bytes()).hexdigest() == artifact["sha1"]:
+                return destination
         content = checked_download(artifact["url"], artifact["sha1"], artifact.get("size"))
         destination.parent.mkdir(parents=True, exist_ok=True)
         temporary = destination.with_suffix(destination.suffix + ".part")
@@ -117,9 +121,48 @@ def main() -> None:
         for completed, path in enumerate(pool.map(fetch_library, artifacts), start=1):
             print(f"Verified library {completed}/{len(artifacts)}: {path.relative_to(args.destination)}")
 
+    asset_index = manifest.get("assetIndex")
+    if not asset_index:
+        raise ValueError("Mojang's version manifest has no assetIndex")
+    asset_index_sha1 = asset_index.get("sha1", "")
+    if not re.fullmatch(r"[0-9a-f]{40}", asset_index_sha1):
+        raise ValueError(f"invalid Mojang asset index SHA-1: {asset_index_sha1!r}")
+    # The version manifest bytes were verified against the pinned research-lock SHA-1,
+    # so this index hash is transitively authenticated even when Mojang republishes an index.
+    asset_index_bytes = checked_download(
+        asset_index["url"], asset_index_sha1, asset_index.get("size")
+    )
+    asset_index_dir = args.destination / "assets" / "indexes"
+    asset_index_dir.mkdir(parents=True, exist_ok=True)
+    (asset_index_dir / f"{asset_index['id']}.json").write_bytes(asset_index_bytes)
+    asset_index_data = json.loads(asset_index_bytes)
+    objects = list(asset_index_data.get("objects", {}).values())
+
+    def fetch_asset(asset: dict) -> Path:
+        digest = asset.get("hash", "")
+        if not re.fullmatch(r"[0-9a-f]{40}", digest):
+            raise ValueError(f"invalid Mojang asset hash: {digest!r}")
+        destination = args.destination / "assets" / "objects" / digest[:2] / digest
+        size = asset.get("size")
+        if destination.is_file() and destination.stat().st_size == size:
+            if hashlib.sha1(destination.read_bytes()).hexdigest() == digest:
+                return destination
+        url = f"https://resources.download.minecraft.net/{digest[:2]}/{digest}"
+        content = checked_download(url, digest, size)
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        temporary = destination.with_suffix(destination.suffix + ".part")
+        temporary.write_bytes(content)
+        os.replace(temporary, destination)
+        return destination
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=16) as pool:
+        for completed, path in enumerate(pool.map(fetch_asset, objects), start=1):
+            if completed == 1 or completed == len(objects) or completed % 500 == 0:
+                print(f"Verified Minecraft asset {completed}/{len(objects)}: {path.name}")
+
     print(
         f"Fetched Minecraft {version}: verified client jar, version JSON, "
-        f"and {len(artifacts)} Linux library artifacts from Mojang."
+        f"{len(artifacts)} Linux library artifacts, and {len(objects)} assets from Mojang."
     )
 
 

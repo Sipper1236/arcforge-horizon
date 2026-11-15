@@ -742,9 +742,9 @@ impl Hooks for Arcforge {
                 _ => None,
             };
             let current_facing = host.block_property(event.pos, "facing");
-            if let Some(facing) = requested_facing.filter(|facing| {
-                current_facing.as_deref() != Some(*facing)
-            }) {
+            if let Some(facing) =
+                requested_facing.filter(|facing| current_facing.as_deref() != Some(*facing))
+            {
                 host.set_block_property(event.pos, "facing", facing);
             } else {
                 steam_boiler::cycle_pressure(host, event.pos);
@@ -2601,9 +2601,7 @@ impl Hooks for Arcforge {
             FIREBOX => tick_firebox(host, event.pos, event.entity),
             FIREBOX_ARRAY_CONTROLLER => tick_firebox_array(host, event.pos, event.entity),
             STEAM_BOILER_ARRAY_CONTROLLER => steam_boiler::tick(host, event.pos, event.entity),
-            STEAM_TURBINE_ARRAY_CONTROLLER => {
-                steam_turbine::tick(host, event.pos, event.entity)
-            }
+            STEAM_TURBINE_ARRAY_CONTROLLER => steam_turbine::tick(host, event.pos, event.entity),
             SOLAR_ARRAY_CONTROLLER => tick_solar_array(host, event.pos, event.entity),
             GEOTHERMAL_PLANT => tick_geothermal_plant(host, event.pos, event.entity),
             FUEL_BURNER => tick_fuel_burner(host, event.pos, event.entity),

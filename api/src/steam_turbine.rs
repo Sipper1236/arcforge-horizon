@@ -47,7 +47,9 @@ impl Shell {
     }
 
     fn max_flow(self) -> u32 {
-        (FLOW_PER_SECTION * self.sections()).round().clamp(1.0, f64::from(MAX_FLOW)) as u32
+        (FLOW_PER_SECTION * self.sections())
+            .round()
+            .clamp(1.0, f64::from(MAX_FLOW)) as u32
     }
 
     fn contains(self, center: [i32; 3], facing: &str, pos: [i32; 3]) -> bool {
@@ -55,11 +57,7 @@ impl Shell {
             return false;
         };
         let inward = [-out[0], -out[1], -out[2]];
-        let along = [
-            pos[0] - center[0],
-            pos[1] - center[1],
-            pos[2] - center[2],
-        ];
+        let along = [pos[0] - center[0], pos[1] - center[1], pos[2] - center[2]];
         let length_offset = along[0] * axis[0] + along[2] * axis[2];
         let width_offset = along[0] * inward[0] + along[2] * inward[2];
         let height_offset = along[1];
@@ -146,8 +144,8 @@ pub(crate) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
     let lubricant = crate::fluid::name(&entity.nbt, 1);
     let lubricant_amount = crate::fluid::amount(&entity.nbt, 1);
     let exhaust_before = crate::fluid::amount(&entity.nbt, 2);
-    let exhaust_compatible = crate::fluid::name(&entity.nbt, 2)
-        .is_none_or(|fluid| fluid == EXHAUST_STEAM);
+    let exhaust_compatible =
+        crate::fluid::name(&entity.nbt, 2).is_none_or(|fluid| fluid == EXHAUST_STEAM);
     let vacuum = exhaust_before < EXHAUST_TANK_CAPACITY;
     let can_run = formed && energy < ENERGY_BUFFER_CAPACITY;
     let flow = if can_run && grade.is_some() {
@@ -177,12 +175,12 @@ pub(crate) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
 
     let grade_fe = grade.map_or(0.0, |(_, fe)| fe);
     let target = if flow > 0 && max_flow > 0 {
-        f64::from(MAX_RPM) * f64::from(flow) * grade_fe
-            / (f64::from(max_flow) * 56.0)
+        f64::from(MAX_RPM) * f64::from(flow) * grade_fe / (f64::from(max_flow) * 56.0)
     } else {
         0.0
     };
-    let lubricated = lubricant_amount > 0 && lubricant.as_deref().and_then(lubricant_bonus).is_some();
+    let lubricated =
+        lubricant_amount > 0 && lubricant.as_deref().and_then(lubricant_bonus).is_some();
     let spin_up = SPIN_UP * if lubricated && flow > 0 { 2.0 } else { 1.0 };
     rpm += (target - rpm) * if target > rpm { spin_up } else { SPIN_DOWN };
     if rpm < 0.5 && target == 0.0 {
@@ -190,7 +188,10 @@ pub(crate) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
     }
 
     let lube_share = if lubricated {
-        lubricant.as_deref().and_then(lubricant_bonus).unwrap_or(0.0)
+        lubricant
+            .as_deref()
+            .and_then(lubricant_bonus)
+            .unwrap_or(0.0)
     } else {
         0.0
     };
@@ -198,9 +199,10 @@ pub(crate) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
     if flow > 0 && grade.is_some() {
         let spun = (rpm / target.max(1.0)).clamp(0.0, 1.0);
         let bonus = 1.0 + lube_share + if vacuum { VACUUM_BONUS } else { 0.0 };
-        let max_output = (f64::from(max_flow) * 56.0 * (1.0 + PREMIUM_LUBRICANT_BONUS + VACUUM_BONUS))
-            .round()
-            .min(f64::from(MAX_OUTPUT_FE)) as u32;
+        let max_output =
+            (f64::from(max_flow) * 56.0 * (1.0 + PREMIUM_LUBRICANT_BONUS + VACUUM_BONUS))
+                .round()
+                .min(f64::from(MAX_OUTPUT_FE)) as u32;
         let wanted = (f64::from(flow) * grade_fe * spun * bonus).round() as u32;
         generated = wanted
             .min(max_output)
@@ -231,7 +233,11 @@ fn find_shell(host: &dyn Host, controller: [i32; 3], facing: &str) -> Option<She
     }
     candidates.sort_unstable();
     for (_, width, height, length) in candidates {
-        let shell = Shell { width, height, length };
+        let shell = Shell {
+            width,
+            height,
+            length,
+        };
         let center_length = (length - 1) / 2;
         let center_height = (height - 1) / 2;
         let wide = width != 3 || height != 3;
@@ -267,7 +273,10 @@ fn find_shell(host: &dyn Host, controller: [i32; 3], facing: &str) -> Option<She
                             valid = false;
                             break 'shell;
                         }
-                    } else if !matches!(block.as_str(), "minecraft:air" | "minecraft:cave_air" | "minecraft:void_air") {
+                    } else if !matches!(
+                        block.as_str(),
+                        "minecraft:air" | "minecraft:cave_air" | "minecraft:void_air"
+                    ) {
                         valid = false;
                         break 'shell;
                     }
@@ -281,7 +290,13 @@ fn find_shell(host: &dyn Host, controller: [i32; 3], facing: &str) -> Option<She
     None
 }
 
-fn set_shell_formed(host: &mut dyn Host, controller: [i32; 3], facing: &str, shell: Shell, formed: bool) {
+fn set_shell_formed(
+    host: &mut dyn Host,
+    controller: [i32; 3],
+    facing: &str,
+    shell: Shell,
+    formed: bool,
+) {
     for pos in shell.positions(controller, facing) {
         match host.block(pos).as_str() {
             CONTROLLER | CASING | PRESSURE_GLASS => {
@@ -400,7 +415,14 @@ pub(crate) fn fluid_tanks() -> horizon_client::mod_api::ModFluidTanks {
             LUBRICANT_TANK_CAPACITY as i32,
             EXHAUST_TANK_CAPACITY as i32,
         ],
-        faces: [vec![0, 1, 2], vec![0, 1, 2], vec![0, 1, 2], vec![0, 1, 2], vec![0, 1, 2], vec![0, 1, 2]],
+        faces: [
+            vec![0, 1, 2],
+            vec![0, 1, 2],
+            vec![0, 1, 2],
+            vec![0, 1, 2],
+            vec![0, 1, 2],
+            vec![0, 1, 2],
+        ],
         inputs: vec![0, 1],
         outputs: vec![2],
     }
@@ -516,7 +538,11 @@ fn get_f64(nbt: &Compound, key: &str) -> f64 {
 fn set_f64(nbt: &mut Compound, key: &str, value: f64) {
     nbt.insert(
         key.into(),
-        Tag::Double(if value.is_finite() { value.to_bits() } else { 0.0_f64.to_bits() }),
+        Tag::Double(if value.is_finite() {
+            value.to_bits()
+        } else {
+            0.0_f64.to_bits()
+        }),
     );
 }
 
