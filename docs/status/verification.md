@@ -1,5 +1,11 @@
 # Verification record
 
+## Steel Hammer and Excavator area mining — CI verified (2026-11-15)
+Commit `f400ed3` adds a survival 3×3 sweep to both tools, skips the center block, disables the sweep while sneaking, and charges one durability per additional block while preserving the tool stack for loot. GitHub Actions run [43656997138](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43656997138) passed the native package job and the Linux playable-client build.
+
+The playable client and mod package are archived at `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-run-43656997138/`. Their SHA-256 values are `5481053c80011c1af8947d53b1b9696aaf450ce97f1119d49ce750c3450c08d9` (playable client) and `f37577f83b2d0fce9f76d88b5e3ebf543e18336eaa840e20c39e36b161dce628` (mod package). No in-world test was run. This alpha only affects allowlisted block groups and neighbors with the same block ID; it approximates the hit face from player view and does not dispatch extra breaks with player context or apply enchantment-aware durability.
+
+
 ## Liquid fuel bucket registration and client bundle — CI verified (2026-11-14)
 Commit `ca31112` registers the 10 additional pinned source liquid fuel buckets alongside Creosote, adds their fluid item capability, and connects them to Fluid Tank and Fuel Burner hand interactions. The handlers validate the expected fluid and exact 1,000 mB volume. GitHub Actions run [43654606595](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43654606595) passed formatting, native crate checking, content build/check, mod packaging, and the Linux playable-client build.
 

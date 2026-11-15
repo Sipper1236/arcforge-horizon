@@ -1,9 +1,9 @@
 # Project handoff: Arcforge for Horizon
 
-**Snapshot date:** 2026-11-14
+**Snapshot date:** 2026-11-15
 **Project:** `/home/rayyan/Projects/arcforge-horizon`  
 **Active goal:** see [goal.md](goal.md)  
-**Status:** Commit `ca31112` registers all 11 pinned Arcforge liquid fuel buckets and wires them through the tank and Fuel Burner interactions. GitHub Actions run [43654606595](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43654606595) passed both the package job and the Linux playable-client build. This is build-verified; the new bucket interactions have not been tested in-world.
+**Status:** Commit `f400ed3` adds an alpha 3×3 area-mining sweep for the Steel Hammer and Excavator. GitHub Actions run [43656997138](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43656997138) passed the package and Linux playable-client builds. This is build-verified; area mining still needs in-game verification and has documented API-driven parity limits.
 
 Commit `5920fdd` adds an Arcforge Furnace Wrench status line for formation, temperature, burn time, and active recipe requirements/progress. Both GitHub jobs passed in run [43542601271](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43542601271); its package and playable client ZIPs and internal checksums are verified. In-world status verification remains pending. Commit `f15a514` adds the upstream behavior of clockwise port rotation when the structure is unformed, followed by an immediate formation recheck. Both GitHub jobs passed in run [43544310146](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43544310146), and the playable Linux client ZIP and checksums are verified in [verification.md](status/verification.md). In-world Wrench status and rotation checks remain pending.
 
@@ -19,7 +19,15 @@ Commit `158d858` adds explicit custom state schemas/defaults to the conduit tier
 
 The working tree is stored at `sftp://rayyan@100.89.43.102/mnt/hdd2tb/arcforge-horizon`. This machine mounts `/mnt/hdd2tb` at `/home/rayyan/mnt/hdd2tb` with the enabled user service `arcforge-hdd2tb.service`; `/home/rayyan/Projects/arcforge-horizon` is a symlink to the remote checkout. GitHub build packages and playable client bundles are archived under `/mnt/hdd2tb/arcforge-horizon-builds/`, with a local compatibility symlink at `/home/rayyan/Projects/arcforge-horizon-builds`. Keep future project edits and build artifacts on that remote disk.
 
-## Latest build artifacts — 2026-11-14
+## Latest build artifacts — 2026-11-15
+GitHub Actions run [43656997138](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43656997138) passed both the package and Linux client jobs. Both artifacts were downloaded into the remote build archive:
+
+- `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-run-43656997138/arcforge-playable-linux-x86_64-f400ed3a060867948ffcc6c4333b07b5e2134d8c.zip` — SHA-256 `5481053c80011c1af8947d53b1b9696aaf450ce97f1119d49ce750c3450c08d9`
+- `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-run-43656997138/arcforge-f400ed3a060867948ffcc6c4333b07b5e2134d8c.zip` — SHA-256 `f37577f83b2d0fce9f76d88b5e3ebf543e18336eaa840e20c39e36b161dce628`
+
+CI confirms packaging and client assembly, not in-game area mining behavior. The sweep is limited to matching block IDs, approximates the hit plane, and cannot dispatch each extra break with player context through the pinned API.
+
+## Previous build artifacts — liquid fuel buckets (2026-11-14)
 GitHub Actions run [43654606595](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43654606595) passed both jobs. The package and Linux client ZIPs were downloaded directly into the remote build archive:
 
 - `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-run-43654606595/arcforge-playable-linux-x86_64-ca311120c37dac56515b0c0e77010e4948477afa.zip` — SHA-256 `6a979da8a6ff9bd37de89c0982ee1a8192f14869a6b16351afc01ea880080e33`
@@ -29,7 +37,7 @@ The build confirms packaging and client assembly, not in-world behavior. Test th
 
 ## 1. Resume here
 
-1. Latest playable client artifact ZIP: `/home/rayyan/Projects/arcforge-horizon-builds/arcforge-run-43654606595/arcforge-playable-linux-x86_64-ca311120c37dac56515b0c0e77010e4948477afa.zip`. The build passed CI assembly; bucket behavior still needs in-game verification.
+1. Latest playable client artifact ZIP: `/home/rayyan/Projects/arcforge-horizon-builds/arcforge-run-43656997138/arcforge-playable-linux-x86_64-f400ed3a060867948ffcc6c4333b07b5e2134d8c.zip`. It includes the Hammer/Excavator alpha slice; test the area mining behavior in game.
 2. Verify the Handbook's conduit instructions against item/fluid/gas routing, rates, Auto detection, and save/reload; then test Wrench FE/progress readouts, Crushing Array port defaults and processing, supported Upgrade effects/caps/persistence, and Energy Cell visuals/transfer.
 3. Continue through Cylinder drops/placement, other tiers/gases, ore distribution, recipe obtainability, processor behavior, and broader machine automation. Do not describe the full Arcforge feature set as complete or fully playable yet. Per-casing Array face reconfiguration remains unavailable through the pinned API hooks.
 4. Use the verified artifact instructions in [CI build setup](ci-build.md); the matching visibility-fix client is available from run [43488089381](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43488089381).
