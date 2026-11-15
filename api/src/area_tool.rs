@@ -37,6 +37,25 @@ pub(crate) fn mining_axis(yaw: f32, pitch: f32) -> Axis {
     }
 }
 
+/// Select the face axis from Horizon's exact ray hit point. The block-break
+/// event carries only the position, but the pinned Host raycast helper retains
+/// the intersection point.
+pub(crate) fn axis_from_hit(center: [i32; 3], point: [f64; 3]) -> Axis {
+    let local = [
+        point[0] - f64::from(center[0]),
+        point[1] - f64::from(center[1]),
+        point[2] - f64::from(center[2]),
+    ];
+    let face_distance = local.map(|value| value.abs().min((1.0 - value).abs()));
+    if face_distance[0] <= face_distance[1] && face_distance[0] <= face_distance[2] {
+        Axis::X
+    } else if face_distance[1] <= face_distance[2] {
+        Axis::Y
+    } else {
+        Axis::Z
+    }
+}
+
 /// Positions in the 3×3 plane normal to the player's view axis, in the same
 /// deterministic order used by Arcforge's area tools.
 pub(crate) fn targets(center: [i32; 3], axis: Axis) -> [[i32; 3]; 8] {
@@ -58,66 +77,85 @@ pub(crate) fn targets(center: [i32; 3], axis: Axis) -> [[i32; 3]; 8] {
     positions
 }
 
-/// Horizon exposes neither the vanilla effective-tool query nor block
-/// hardness in this hook. Keep this alpha behavior to common, breakable stone
-/// and soil groups; identical IDs guarantee the neighbors match the center's
-/// tool tier and hardness.
+/// Horizon does not expose the vanilla effective-tool or destroy-speed query
+/// in this hook. Approximate them for the source's common stone/ore and soil
+/// groups; the source compares neighbor hardness with the center block.
 pub(crate) fn supports_center(item: &str, block: &str) -> bool {
+    hardness(item, block).is_some()
+}
+
+/// The pinned API supplies no block-hardness query, so use source vanilla
+/// hardness values for the blocks the early survival progression mines.
+pub(crate) fn allows_target(item: &str, center: &str, target: &str) -> bool {
+    let Some(center_hardness) = hardness(item, center) else {
+        return false;
+    };
+    hardness(item, target).is_some_and(|target_hardness| target_hardness <= center_hardness)
+}
+
+fn hardness(item: &str, block: &str) -> Option<f32> {
     if item == STEEL_HAMMER {
         if block.starts_with("arcforge:") && block.ends_with("_ore") {
-            return true;
+            // Arcite requires a diamond pickaxe; the Steel Hammer is iron-tier.
+            if block.ends_with("arcite_ore") {
+                return None;
+            }
+            return Some(if block.contains("deepslate") {
+                4.5
+            } else {
+                3.0
+            });
         }
         if block.starts_with("minecraft:") && block.ends_with("_ore") {
-            return true;
+            return Some(if block.starts_with("minecraft:deepslate_") {
+                4.5
+            } else {
+                3.0
+            });
         }
-        return matches!(
-            block,
+        return match block {
             "minecraft:stone"
-                | "minecraft:cobblestone"
-                | "minecraft:granite"
-                | "minecraft:diorite"
-                | "minecraft:andesite"
-                | "minecraft:polished_granite"
-                | "minecraft:polished_diorite"
-                | "minecraft:polished_andesite"
-                | "minecraft:deepslate"
-                | "minecraft:cobbled_deepslate"
-                | "minecraft:polished_deepslate"
-                | "minecraft:tuff"
-                | "minecraft:calcite"
-                | "minecraft:dripstone_block"
-                | "minecraft:netherrack"
-                | "minecraft:blackstone"
-                | "minecraft:basalt"
-                | "minecraft:smooth_basalt"
-                | "minecraft:end_stone"
-                | "minecraft:sandstone"
-                | "minecraft:red_sandstone"
-        );
+            | "minecraft:granite"
+            | "minecraft:diorite"
+            | "minecraft:andesite"
+            | "minecraft:polished_granite"
+            | "minecraft:polished_diorite"
+            | "minecraft:polished_andesite"
+            | "minecraft:tuff"
+            | "minecraft:dripstone_block" => Some(1.5),
+            "minecraft:cobblestone" | "minecraft:blackstone" => Some(2.0),
+            "minecraft:deepslate"
+            | "minecraft:cobbled_deepslate"
+            | "minecraft:polished_deepslate"
+            | "minecraft:end_stone" => Some(3.0),
+            "minecraft:calcite" | "minecraft:sandstone" | "minecraft:red_sandstone" => Some(0.75),
+            "minecraft:netherrack" => Some(0.4),
+            "minecraft:basalt" | "minecraft:smooth_basalt" => Some(1.25),
+            _ => None,
+        };
     }
     if item == STEEL_EXCAVATOR {
-        return matches!(
-            block,
+        return match block {
             "minecraft:dirt"
-                | "minecraft:coarse_dirt"
-                | "minecraft:rooted_dirt"
-                | "minecraft:grass_block"
-                | "minecraft:podzol"
-                | "minecraft:mycelium"
-                | "minecraft:dirt_path"
-                | "minecraft:farmland"
-                | "minecraft:sand"
-                | "minecraft:red_sand"
-                | "minecraft:gravel"
-                | "minecraft:clay"
-                | "minecraft:snow"
-                | "minecraft:snow_block"
-                | "minecraft:powder_snow"
-                | "minecraft:soul_sand"
-                | "minecraft:soul_soil"
-                | "minecraft:mud"
-                | "minecraft:muddy_mangrove_roots"
-        );
+            | "minecraft:coarse_dirt"
+            | "minecraft:rooted_dirt"
+            | "minecraft:podzol"
+            | "minecraft:sand"
+            | "minecraft:red_sand"
+            | "minecraft:soul_sand"
+            | "minecraft:soul_soil"
+            | "minecraft:mud" => Some(0.5),
+            "minecraft:grass_block"
+            | "minecraft:mycelium"
+            | "minecraft:farmland"
+            | "minecraft:gravel"
+            | "minecraft:clay" => Some(0.6),
+            "minecraft:dirt_path" | "minecraft:muddy_mangrove_roots" => Some(0.65),
+            "minecraft:snow" => Some(0.1),
+            "minecraft:snow_block" => Some(0.2),
+            "minecraft:powder_snow" => Some(0.25),
+            _ => None,
+        };
     }
-    false
+    None
 }

@@ -327,13 +327,19 @@ impl Hooks for Arcforge {
                     .carried_stack(player.selected_slot as i32)
                     .map(|stack| stack.clone())
             {
-                let axis = area_tool::mining_axis(player.yaw, player.pitch);
+                let axis = host
+                    .raycast(8.0)
+                    .filter(|hit| [hit.block_x, hit.block_y, hit.block_z] == event.pos)
+                    .map(|hit| area_tool::axis_from_hit(event.pos, [hit.x, hit.y, hit.z]))
+                    .unwrap_or_else(|| area_tool::mining_axis(player.yaw, player.pitch));
                 for target in area_tool::targets(event.pos, axis) {
                     let remaining = area_tool::DURABILITY.saturating_sub(tool.damage);
                     if remaining <= 1 {
                         break;
                     }
-                    if host.block(target) != center_block || host.mod_block_entity(target).is_some()
+                    let target_block = host.block(target);
+                    if !area_tool::allows_target(&item, &center_block, &target_block)
+                        || host.mod_block_entity(target).is_some()
                     {
                         continue;
                     }

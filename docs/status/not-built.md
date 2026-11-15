@@ -25,7 +25,7 @@ The full scope remains the [feature inventory](../../README.md#full-feature-inve
 
 ## Player features and UX
 
-- The Hammer/Excavator 3×3 behavior is an alpha slice limited to matching center block IDs. Source parity still needs cross-block targets, the exact face hit, tool effectiveness/hardness checks, per-player break/protection dispatch, and enchantment-aware durability. Horizon’s machine break helper has no player context, so the current simplified path must not be treated as multiplayer protection parity. Basic Steel tools and armor are registered and craftable.
+- The Hammer/Excavator 3×3 behavior covers common vanilla and Arcforge stone/ore/soil blocks with explicit hardness values. It still needs dynamic block-tag and hardness reads for arbitrary content, enchantment-aware extra durability, and per-player break/protection dispatch. Horizon’s machine break helper has no player context, so the current path does not provide multiplayer protection parity. Basic Steel tools and armor are registered and craftable.
 - Optional questline and triggers after the recipe/progression graph works without them.
 - Optional integration with other Horizon-native content mods.
 
