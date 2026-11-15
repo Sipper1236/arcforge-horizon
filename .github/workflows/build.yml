@@ -185,7 +185,9 @@ jobs:
       - name: Assemble and verify the importable Linux client bundle
         run: |
           set -euo pipefail
-          native_version_dir="$(find "$HORIZON_LAUNCHER_HOME/versions" -mindepth 1 -maxdepth 1 -type d -name 'native-fdc87ae-*' -print -quit)"
+          horizon_revision="$(sed -n 's/^horizon_revision = "\(.*\)"$/\1/p' horizon-mixin.toml)"
+          revision_short="${horizon_revision:0:7}"
+          native_version_dir="$(find "$HORIZON_LAUNCHER_HOME/versions" -mindepth 1 -maxdepth 1 -type d -name "native-${revision_short}-*" -print -quit)"
           test -n "$native_version_dir"
           test -x "$native_version_dir/horizon-client"
           test -s "$native_version_dir/native-mods.json"
