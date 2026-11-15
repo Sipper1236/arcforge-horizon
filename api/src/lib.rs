@@ -716,6 +716,21 @@ impl Hooks for Arcforge {
             .mod_block_entity(event.pos)
             .is_some_and(|entity| entity.id == STEAM_BOILER_ARRAY_CONTROLLER)
         {
+            let requested_facing = match event.face {
+                [0, 0, -1] => Some("north"),
+                [1, 0, 0] => Some("east"),
+                [0, 0, 1] => Some("south"),
+                [-1, 0, 0] => Some("west"),
+                _ => None,
+            };
+            let current_facing = host.block_property(event.pos, "facing");
+            if let Some(facing) = requested_facing.filter(|facing| {
+                current_facing.as_deref() != Some(*facing)
+            }) {
+                host.set_block_property(event.pos, "facing", facing);
+            } else {
+                steam_boiler::cycle_pressure(host, event.pos);
+            }
             show_steam_boiler_status(host, event.pos);
             return Flow::Cancel;
         }

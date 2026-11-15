@@ -18,7 +18,7 @@ The full scope remains the [feature inventory](../../README.md#full-feature-inve
 
 ## Steam, resources, and advanced industry
 
-- Steam Boiler Array: a limited 3×3×3 alpha slice now exists in `api/src/steam_boiler.rs`; remaining work includes 3×3–7×7 and 3–16 height source structures, source controller parity, selectable pressure modes, overpressure safety, and in-game verification. Turbines, superheaters, condensers, full water intake, pumps, and closed-loop behavior remain unimplemented. The Electric Pump source-fluid-block pickup is deferred because Horizon Host hooks do not provide safe pickup and removal semantics.
+- Steam Boiler Array: the code now handles source-sized 3×3–7×7 by 3–16 shells, source-like pressure modes, and thermal venting, but expanded client behavior has not been verified in-game. It still uses a separate Horizon controller instead of Arcforge's casing-master structure, and fixed 48,000 mB water/steam tanks instead of per-section capacity because the current Horizon fluid capability hook has no block-entity context. Confirm formation, pressure cycling, venting, heat transfer, bucket handling, fluid output, and persistence in a client build. Turbines, superheaters, condensers, full water intake, pumps, and closed-loop behavior remain unimplemented. The Electric Pump source-fluid-block pickup is deferred because Horizon Host hooks do not provide safe pickup and removal semantics.
 - Oil deposits and extraction, distillation, refinery machines, fuel chains, gases, catalysts, and byproducts.
 - Chemistry, salt/brine/lithium, batteries, agriculture, biofuel, and their complete recipe graphs.
 - Nuclear materials, fuel fabrication, reactors, heat/cooling/safety, spent-fuel cycle, and advanced cores.

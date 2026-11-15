@@ -1,9 +1,9 @@
 # Project handoff: Arcforge for Horizon
 
 **Snapshot date:** 2026-11-15
-## Current snapshot — commit c7b03e8 (hybrid build recorded)
+## Current snapshot — working tree based on `2c791ab`
 
-The Steam Boiler Array code is in commit `86eaceb`; commit `7393389` updates the Handbook and project docs. The hybrid remote Rust build passed at `7393389`. GitHub run [43746453494](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43746453494) passed the content/package job; its Linux client job was cancelled at the user's direction to switch to hybrid builds. The latest full client ZIP remains from run 43743930371 and does not contain the corrected Handbook. Do not start another GitHub build until the user asks.
+The uncommitted working tree expands the initial Steam Boiler Array alpha. It recognizes 3×3–7×7 footprints and 3–16 height, matches Arcforge shell corner/edge rules, scales heat storage and per-tick heat limits, implements pressure modes and source-like venting, and adds Wrench facing/pressure controls. Each fluid tank remains fixed at 48,000 mB because the pinned Horizon fluid capability does not expose the target block-entity position during capacity declaration. The separate controller remains alpha scaffolding in place of Arcforge's casing master. The latest Rust build is a successful rx580 hybrid build; it does not create a Horizon client artifact. Do not start GitHub Actions until the user explicitly switches back.
 
 Project and builds are stored on the remote drive at `/mnt/hdd2tb/arcforge-horizon` and `/mnt/hdd2tb/arcforge-horizon-builds`; `/home/rayyan/Projects/arcforge-horizon*` are symlinks. GitHub Actions run [43738891125](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43738891125) passed at commit `9da8a49`, against Horizon Nightly 2026-11-13 revision `9f42064c11efe7ef3e5ed2baad7ddc2a3b36eea0`. Playable client path: `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-run-43738891125/arcforge-playable-linux-x86_64-9da8a499837a3345520123ee872aaeb8ea50ad91/arcforge-linux-x86_64.zip` (SHA-256 `5227d66610ec600184bb38d978516e3617a95eed4a3d27b6854fa800e3c38170`). Imported locally as `imported-2026-11-15-4f43d47`; isolated test instance `arcforge-area-tools-test` points to it and contains the matching content pack/manifest. No launch or in-world test was performed. Next: test the Hammer/Excavator behavior in that instance when able, then continue the source feature inventory in [goal.md](goal.md).
 
@@ -12,7 +12,7 @@ Read-only source checkouts are also on that drive: Arcforge at `/mnt/hdd2tb/arcf
 **Project:** `/mnt/hdd2tb/arcforge-horizon` on `rayyan@100.89.43.102`
 
 **Active goal:** see [goal.md](goal.md)  
-**Status:** Hybrid remote Rust build passed on rx580 at commit `7393389` using `RUSTC_WRAPPER=` and 16 jobs. No full client bundle exists yet for the corrected Handbook. Latest complete client artifact: GitHub run 43743930371 under `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-run-43743930371/`. Await the user's instruction before switching back to GitHub builds.
+**Status:** Expanded Steam Boiler Rust source compiles on rx580 through `hybrid-remote-build`; the current working-tree version has not been packaged into a Horizon client or tested in-game. Latest complete client artifact is GitHub run 43743930371 under `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-run-43743930371/`, which predates the expanded boiler. Keep builds hybrid until the user says to switch to GitHub.
 
 Commit `5920fdd` adds an Arcforge Furnace Wrench status line for formation, temperature, burn time, and active recipe requirements/progress. Both GitHub jobs passed in run [43542601271](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43542601271); its package and playable client ZIPs and internal checksums are verified. In-world status verification remains pending. Commit `f15a514` adds the upstream behavior of clockwise port rotation when the structure is unformed, followed by an immediate formation recheck. Both GitHub jobs passed in run [43544310146](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43544310146), and the playable Linux client ZIP and checksums are verified in [verification.md](status/verification.md). In-world Wrench status and rotation checks remain pending.
 
@@ -47,10 +47,10 @@ The build confirms packaging and client assembly, not in-world behavior. Test th
 
 ## 1. Resume here
 
-1. The latest complete client is run 43743930371; its package predates the Handbook correction. For a client bundle containing the current content, wait until the user authorizes switching back to GitHub builds.
-2. In a disposable world, craft the Steam Boiler Array Controller and casing. Build a hollow 3x3x3 shell with the controller centered in its north face, casing corners, casing or Pressure Glass on other boundary blocks, and the interior clear.
-3. Fill the boiler using Water Buckets, attach a supported heat source or Thermal Conduit and a fluid output network, then use the Wrench to inspect formation, temperature, tank amounts, and gas grade. Test save/reload. Then continue with larger boiler shells, safety behavior, turbines, and closed loops.
-4. After the matching current client is built and installed, record in-game results and fix failures without changing Horizon API/source. Then continue the source-size and safety gaps documented in `docs/plan/systems/steam-resources-industry.md`.
+1. The latest complete client is run 43743930371 and contains only the original fixed-size boiler. Keep using rx580 hybrid Rust builds; wait for the user to authorize GitHub builds before creating a client package for the expanded source.
+2. After a matching client exists, use a disposable world to form the controller-facing shell. Start with 3×3×3, then verify a larger footprint where all edges must be casing, and a taller shell. Confirm Pressure Glass windows are accepted only on face panels and already-formed glass is rejected.
+3. Fill with Water Buckets, connect a supported heat source/Thermal Conduit and fluid output, verify heat scaling, pressure-mode cycling, facing control, all steam grades, venting, and tank readouts. Save and reload while the boiler contains water, heat, and steam.
+4. Fix runtime issues without changing Horizon API/source, update `docs/status/verification.md`, then continue with turbines, condensers, water intake, and closed loops in `docs/plan/systems/steam-resources-industry.md`.
 
 **Observed local smoke:** On the pinned Nightly 2026-11-08 build, the imported client with matching manifest and content pack opened a disposable creative world. `/give arcforge:wrought_heat_cell 1` and `/give arcforge:steel_ingot 1` both succeeded and appeared in inventory. Runtime ore data parsed without skipped Arcforge placed features after conversion to `worldgen/feature/` and flattened target states. That earlier smoke logged unsupported conduit and Solar multipart properties; commit `158d858` declares those custom states, but corrected rendering is not yet verified. Machine behavior, ore distribution, and progression were not verified.
 
