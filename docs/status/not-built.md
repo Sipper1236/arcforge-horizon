@@ -18,6 +18,8 @@ The full scope remains the [feature inventory](../../README.md#full-feature-inve
 
 ## Steam, resources, and advanced industry
 
+- Electric Pump alpha now processes infinite source water at source rates; finite-fluid extraction, bucket-slot interaction, speed/energy upgrades, Seawater conversion, and in-game verification remain outstanding.
+
 - Industrial Water Intake now has a bounded 3×3×3 alpha (400 connected source blocks, 8,000 mB/t, 0.25 FE/mB, 128,000 mB tank). River/ocean bonus, loaded-chunk filtering, and in-game validation remain outstanding; Electric Pump and other water extraction mechanics are still not built.
 
 - Steam Turbine Array alpha compiles and has controller recipe, model, and drop data, but formation, fluid routing, FE generation, and persistence need in-game verification.

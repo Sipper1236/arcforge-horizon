@@ -1,5 +1,8 @@
 # Verification record
 
+## Electric Pump alpha — hybrid remote build (2026-11-15)
+The pump's Rust crate and Horizon content build/check passed, and the native Horizon 26.3 client bundle was assembled on rx580 against revision 9f42064c11efe7ef3e5ed2baad7ddc2a3b36eea0. The build verified 66 Linux libraries and 5,147 Minecraft asset objects. Source extraction and pump gameplay have not been verified in game; finite-fluid pickup and biome-based Seawater conversion remain unavailable in the pinned API. Artifact checksum is recorded in the remote handoff directory.
+
 ## Industrial Water Intake alpha — hybrid remote build (2026-11-15)
 Built on rx580 from /mnt/hdd2tb/arcforge-horizon against pinned Horizon revision 9f42064c11efe7ef3e5ed2baad7ddc2a3b36eea0. tools/build_hybrid_client.sh passed Rust formatting/build, Horizon content build/check, native-client assembly, and asset verification (66 libraries and 5,147 Minecraft 26.3 asset objects). The source-water scan and machine behavior have not been verified in game. River/ocean multiplier and loaded-chunk checks remain deferred to unavailable pinned hooks. Artifact: /mnt/hdd2tb/arcforge-horizon-builds/arcforge-hybrid-2026-11-15-water-intake/arcforge-linux-x86_64.zip (SHA-256 6b2b445fef553ae8ffe0aea752a3d951ae0d0a99ba78b2c9a7d594b0f91841b4); bundle SHA manifests and unpacked files are in the same remote directory.
 

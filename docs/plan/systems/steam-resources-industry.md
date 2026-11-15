@@ -22,6 +22,8 @@ Continue in Arcforge's chapter order through Steam Power, Turbines & Engines, Oi
 
 ## Current state
 
+**Electric Pump alpha (2026-11-15):** api/src/electric_pump.rs registers the source-default 10 FE/t, 1,000 mB per 20 ticks pump with a 20,000 FE buffer and 16,000 mB water tank. It extracts only from infinite water sources and exposes output to fluid conduits. Finite extraction and seawater conversion remain API-limited; no game test has been run.
+
 **Industrial Water Intake alpha (2026-11-15):** api/src/water_intake.rs adds the fixed 3×3×3 shell, horizontal-face controller, bounded 400-source-water scan, FE-powered pumping (8,000 mB/t at 0.25 FE/mB), and 128,000 mB output tank. Water is not consumed. The pinned Host API has no biome or loaded-chunk query, so the river/ocean multiplier and unloaded-chunk filtering are deferred; test the installed alpha in game.
 **Condenser Array alpha (2026-11-15):** `api/src/steam_condenser.rs` forms a 3–7 block box around a separate controller, accepts Exhaust Steam, and returns water 1:1. Its open-air rate is 400 mB/t per 27 blocks, touching water/ice adds the source bonuses, and the 800 mB/t per-cube cap is retained. It has fixed 203,259 mB tanks (the maximum source box capacity) and no biome-temperature multiplier because the pinned Host hooks do not expose biome climate here. Recipes, drops, item models, localization, and handbook instructions are present. It compiled and packaged in the rx580 hybrid client build; formation, cooling, fluid transfer, and save/reload remain unverified. The separate controller and fixed maximum-sized tanks are alpha simplifications.
 
@@ -34,7 +36,7 @@ The current Horizon fluid capability is declared by block ID and does not provid
 
 ## API-constrained alpha decision — Electric Pump (2026-11-15)
 
-Arcforge's Electric Pump picks up a source-fluid block and removes it unless adjacent water sources make it infinite. The pinned Horizon mod `Host` exposes block reads, property changes, and a machine-destroy helper, but no source-fluid pickup operation with `BucketPickup` semantics; block destruction is not equivalent. Keep exact source-block pumping deferred rather than adding a Horizon API hook or creating fluid from ordinary blocks. Steam machines can use water supplied by buckets and existing fluid transfer while this boundary remains.
+The alpha operates only over an infinite water source: it requires at least two horizontal neighboring source-water blocks and leaves that pool in place, matching Arcforge's default infinite-water case. Finite-fluid source extraction remains deferred because the pinned Host exposes no source-fluid pickup operation; destroying a block is not equivalent. The alpha also omits the ocean/beach Seawater conversion because no biome query is exposed. No Horizon API hooks were changed.
 
 ## Acceptance checks
 

@@ -77,7 +77,7 @@ The matching native-mods.json must be beside horizon-client in the imported vers
 Install arcforge.hmod in the instance's horizon-mods/ folder and enable mod.arcforge.
 arcforge.hnmod is the matching native source package. Horizon may ask you to trust native code.
 
-Water Intake, Steam Turbine, and Condenser gameplay have not yet been verified in game.
+Electric Pump, Water Intake, Steam Turbine, and Condenser gameplay have not yet been verified in game.
 EOF
 
 (cd "$bundle" && sha256sum horizon-client native-mods.json arcforge.hmod arcforge.hnmod > SHA256SUMS)

@@ -54,5 +54,7 @@
   "block.arcforge.water_intake_controller": "Industrial Water Intake Controller",
   "block.arcforge.water_intake_casing": "Industrial Water Intake Casing",
   "item.arcforge.water_intake_controller": "Industrial Water Intake Controller",
-  "item.arcforge.water_intake_casing": "Industrial Water Intake Casing"
+  "item.arcforge.water_intake_casing": "Industrial Water Intake Casing",
+  "block.arcforge.electric_pump": "Electric Pump",
+  "item.arcforge.electric_pump": "Electric Pump"
 }

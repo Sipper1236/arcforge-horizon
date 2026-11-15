@@ -33,6 +33,7 @@ fn default_registry_entry<T: Default>(_: &[T]) -> T {
 
 mod area_tool;
 mod crushing_catalog;
+mod electric_pump;
 mod energy;
 mod energy_conduit;
 mod fluid;
@@ -91,6 +92,7 @@ const STEAM_CONDENSER_ARRAY_CONTROLLER: &str = steam_condenser::CONTROLLER;
 const STEAM_CONDENSER_ARRAY_CASING: &str = steam_condenser::CASING;
 const WATER_INTAKE_CONTROLLER: &str = water_intake::CONTROLLER;
 const WATER_INTAKE_CASING: &str = water_intake::CASING;
+const ELECTRIC_PUMP: &str = electric_pump::BLOCK;
 const STEAM_TURBINE_ARRAY_CASING: &str = steam_turbine::CASING;
 const FUEL_BURNER: &str = "arcforge:fuel_burner";
 const WROUGHT_FLUID_TANK: &str = "arcforge:wrought_fluid_tank";
@@ -777,6 +779,23 @@ impl Hooks for Arcforge {
         }
         if host
             .mod_block_entity(event.pos)
+            .is_some_and(|entity| entity.id == ELECTRIC_PUMP)
+        {
+            let requested_facing = match event.face {
+                [0, 0, -1] => Some("north"),
+                [1, 0, 0] => Some("east"),
+                [0, 0, 1] => Some("south"),
+                [-1, 0, 0] => Some("west"),
+                _ => None,
+            };
+            if let Some(facing) = requested_facing {
+                host.set_block_property(event.pos, "facing", facing);
+            }
+            show_electric_pump_status(host, event.pos);
+            return Flow::Cancel;
+        }
+        if host
+            .mod_block_entity(event.pos)
             .is_some_and(|entity| entity.id == WATER_INTAKE_CONTROLLER)
         {
             let requested_facing = match event.face {
@@ -1093,6 +1112,24 @@ impl Hooks for Arcforge {
             block.default_state = [
                 ("facing".to_owned(), "north".to_owned()),
                 ("formed".to_owned(), "false".to_owned()),
+                ("lit".to_owned(), "false".to_owned()),
+            ]
+            .into_iter()
+            .collect();
+        }
+        register_content!(&mut event.blocks, id: ELECTRIC_PUMP.into(), template: "minecraft:iron_block".into());
+        if let Some(block) = event
+            .blocks
+            .iter_mut()
+            .find(|block| block.id == ELECTRIC_PUMP)
+        {
+            block.state_properties = serde_json::from_value(serde_json::json!({
+                "facing": { "type": "enum", "values": ["north", "east", "south", "west"] },
+                "lit": { "type": "boolean" }
+            }))
+            .expect("valid Electric Pump states");
+            block.default_state = [
+                ("facing".to_owned(), "north".to_owned()),
                 ("lit".to_owned(), "false".to_owned()),
             ]
             .into_iter()
@@ -1816,6 +1853,7 @@ impl Hooks for Arcforge {
             || event.block == STEAM_TURBINE_ARRAY_CONTROLLER
             || event.block == STEAM_CONDENSER_ARRAY_CONTROLLER
             || event.block == WATER_INTAKE_CONTROLLER
+            || event.block == ELECTRIC_PUMP
             || event.block == SOLAR_ARRAY_CONTROLLER
             || event.block == GEOTHERMAL_PLANT
             || event.block == FUEL_BURNER
@@ -1869,6 +1907,7 @@ impl Hooks for Arcforge {
             || event.block == STEAM_TURBINE_ARRAY_CONTROLLER
             || event.block == STEAM_CONDENSER_ARRAY_CONTROLLER
             || event.block == WATER_INTAKE_CONTROLLER
+            || event.block == ELECTRIC_PUMP
             || event.block == SOLAR_ARRAY_CONTROLLER
             || event.block == GEOTHERMAL_PLANT
             || event.block == FUEL_BURNER
@@ -2492,6 +2531,8 @@ impl Hooks for Arcforge {
             Flow::Cancel
         } else if event.block == WATER_INTAKE_CONTROLLER && !water_intake::accepts(event.fluid) {
             Flow::Cancel
+        } else if event.block == ELECTRIC_PUMP && !electric_pump::accepts(event.fluid) {
+            Flow::Cancel
         } else if event.block == GEOTHERMAL_PLANT && event.fluid != "minecraft:lava" {
             Flow::Cancel
         } else if event.block == FUEL_BURNER && fuel_burner::fuel(event.fluid).is_none() {
@@ -2605,6 +2646,8 @@ impl Hooks for Arcforge {
             })
         } else if event.block == WATER_INTAKE_CONTROLLER {
             Some(water_intake::energy_buffer())
+        } else if event.block == ELECTRIC_PUMP {
+            Some(electric_pump::energy_buffer())
         } else if event.block == THERMOELECTRIC_PLANT {
             Some(horizon_client::mod_api::ModEnergyBuffer {
                 capacity: THERMOELECTRIC_FE_CAPACITY as i32,
@@ -2629,6 +2672,8 @@ impl Hooks for Arcforge {
             Some(steam_condenser::fluid_tanks())
         } else if event.block == WATER_INTAKE_CONTROLLER {
             Some(water_intake::fluid_tanks())
+        } else if event.block == ELECTRIC_PUMP {
+            Some(electric_pump::fluid_tanks())
         } else if event.block == STEAM_BOILER_ARRAY_CONTROLLER {
             Some(horizon_client::mod_api::ModFluidTanks {
                 tanks: vec![
@@ -2761,6 +2806,7 @@ impl Hooks for Arcforge {
                 steam_condenser::tick(host, event.pos, event.entity)
             }
             WATER_INTAKE_CONTROLLER => water_intake::tick(host, event.pos, event.entity),
+            ELECTRIC_PUMP => electric_pump::tick(host, event.pos, event.entity),
             SOLAR_ARRAY_CONTROLLER => tick_solar_array(host, event.pos, event.entity),
             GEOTHERMAL_PLANT => tick_geothermal_plant(host, event.pos, event.entity),
             FUEL_BURNER => tick_fuel_burner(host, event.pos, event.entity),
@@ -5189,6 +5235,18 @@ fn show_steam_turbine_status(host: &mut dyn Host, pos: [i32; 3]) {
     }
     if let Some(player) = host.acting_player() {
         host.action_bar(player.uuid, Text::literal(steam_turbine::status(&entity)));
+    }
+}
+
+fn show_electric_pump_status(host: &mut dyn Host, pos: [i32; 3]) {
+    let Some(entity) = host.mod_block_entity(pos) else {
+        return;
+    };
+    if entity.id != ELECTRIC_PUMP {
+        return;
+    }
+    if let Some(player) = host.acting_player() {
+        host.action_bar(player.uuid, Text::literal(electric_pump::status(&entity)));
     }
 }
 

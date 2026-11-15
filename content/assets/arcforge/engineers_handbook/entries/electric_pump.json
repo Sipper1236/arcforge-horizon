@@ -2,13 +2,16 @@
   "title": "Electric Pump",
   "icon": "arcforge:electric_pump",
   "items": [
-    "arcforge:electric_pump",
-    "arcforge:seawater_bucket"
+    "arcforge:electric_pump"
   ],
   "pages": [
     {
       "type": "text",
-      "text": "Pumps the fluid source block directly below it: a bucket every second for 10 FE/t. It pushes up to 1,000 mB/t out of its top.\nIt removes the source it pumps, except water that refills itself (two or more water sources beside it), which it leaves in place: an endless water supply for boilers.\nOn water in an ocean or beach biome it pumps Seawater instead, for the Thermal Evaporator Array."
+      "text": "The Electric Pump extracts water from the source directly below it. In this Horizon alpha, it works only with an infinite water source: the source block needs at least two horizontal neighboring water sources. A finite water source is left untouched because the pinned Horizon hooks do not allow a machine to remove a world block."
+    },
+    {
+      "type": "text",
+      "text": "The pump uses 10 FE/t and fills the 16,000 mB tank by 1,000 mB every 20 ticks. Supply FE and connect a Fluid Conduit to draw out the water. Right-click the pump to see source, cycle, tank, and energy status. Ocean and beach water is not converted to Seawater in this alpha."
     }
   ]
 }

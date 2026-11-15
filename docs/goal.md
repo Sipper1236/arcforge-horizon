@@ -6,6 +6,9 @@ Port the complete survival gameplay scope of the pinned Arcforge release to Hori
 
 The current code is an early prototype, not a complete port. Continue implementing real gameplay from the scope in the root [README](../README.md), preserve Arcforge's recognizable mechanics and progression, and update the as-built and remaining-work documents whenever implementation changes.
 
+### Current slice — Electric Pump alpha (2026-11-15)
+api/src/electric_pump.rs adds a powered Electric Pump with the source defaults: 10 FE/t, one 1,000 mB bucket every 20 ticks, a 20,000 FE buffer, and a 16,000 mB output tank. It only operates over an infinite water source (two or more horizontal neighboring source blocks), matching Arcforge's default infinite-water behavior; it never removes world blocks. Right-clicking sets its facing and reports source, progress, tank, and energy. Fluid output is available to conduits. Finite-fluid extraction, bucket slots, speed/energy upgrades, and ocean/beach Seawater conversion remain unimplemented because the pinned Host does not expose source-fluid pickup or biome queries. In-game behavior has not been verified.
+
 ### Current slice — Industrial Water Intake alpha (2026-11-15)
 api/src/water_intake.rs now adds the fixed Arcforge 3×3×3 intake shell. It needs 400 connected source-water blocks below its center, draws 0.25 FE per mB at up to 8,000 mB/t, and stores up to 128,000 mB. The source water is not consumed. Right-clicking a horizontal face sets controller direction and shows formation, water, flow, tank, and energy status. Fluid output is exposed through Horizon's tank capability. This alpha scans at most 400 water sources every 100 ticks. Biome-based river/ocean bonus and loaded-chunk filtering are deferred because the pinned Host hooks do not expose those queries. Build succeeds; in-game behavior is not yet verified.
 

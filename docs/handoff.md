@@ -1,5 +1,8 @@
 # Project handoff: Arcforge for Horizon
 
+## Current working checkpoint — Electric Pump alpha
+The remote checkout contains api/src/electric_pump.rs, block and capability registrations, source recipe/drop data, existing pump models, and an updated handbook entry. It uses 10 FE/t, fills 1,000 mB every 20 ticks, and has a 20,000 FE buffer plus a 16,000 mB tank. It pumps only infinite source water, requiring two horizontal neighboring source-water blocks, and does not remove those blocks. Finite-fluid pickup and ocean/beach Seawater conversion are deferred to unavailable pinned hooks. It builds successfully; in-game behavior has not been verified. The latest hybrid artifact is recorded below after packaging.
+
 ## Current working checkpoint — Industrial Water Intake alpha
 The remote checkout now contains api/src/water_intake.rs, controller/casing registrations, survival recipes and loot, controller assets, and a right-click status readout. It implements a fixed 3×3×3 shell over at least 400 connected source-water blocks, pumps up to 8,000 mB/t at 0.25 FE/mB into a 128,000 mB tank, and leaves world water in place. The source count is capped at 400 and refreshed every 100 ticks. River/ocean rate bonus and loaded-chunk filtering are not represented because pinned Horizon hooks lack those queries. Hybrid build passed; gameplay has not been tested. Build ZIP: /mnt/hdd2tb/arcforge-horizon-builds/arcforge-hybrid-2026-11-15-water-intake/arcforge-linux-x86_64.zip (SHA-256 6b2b445fef553ae8ffe0aea752a3d951ae0d0a99ba78b2c9a7d594b0f91841b4). SHA manifests and unpacked files are beside it.
 ## Current working checkpoint — Condenser Array alpha on hybrid client
