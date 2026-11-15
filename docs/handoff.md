@@ -3,7 +3,7 @@
 **Snapshot date:** 2026-11-14
 **Project:** `/home/rayyan/Projects/arcforge-horizon`  
 **Active goal:** see [goal.md](goal.md)  
-**Status:** Source commit `41b795d` adds all 16 pinned Arcforge burner fuel profiles to the Horizon Fuel Burner. GitHub Actions run [43646950706](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43646950706) passed both the mod package build and Linux playable-client build. The working tree was clean after the source commit; documentation now records this build.
+**Status:** Commit `ca31112` registers all 11 pinned Arcforge liquid fuel buckets and wires them through the tank and Fuel Burner interactions. GitHub Actions run [43654606595](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43654606595) passed both the package job and the Linux playable-client build. This is build-verified; the new bucket interactions have not been tested in-world.
 
 Commit `5920fdd` adds an Arcforge Furnace Wrench status line for formation, temperature, burn time, and active recipe requirements/progress. Both GitHub jobs passed in run [43542601271](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43542601271); its package and playable client ZIPs and internal checksums are verified. In-world status verification remains pending. Commit `f15a514` adds the upstream behavior of clockwise port rotation when the structure is unformed, followed by an immediate formation recheck. Both GitHub jobs passed in run [43544310146](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43544310146), and the playable Linux client ZIP and checksums are verified in [verification.md](status/verification.md). In-world Wrench status and rotation checks remain pending.
 
@@ -19,9 +19,17 @@ Commit `158d858` adds explicit custom state schemas/defaults to the conduit tier
 
 The working tree is stored at `sftp://rayyan@100.89.43.102/mnt/hdd2tb/arcforge-horizon`. This machine mounts `/mnt/hdd2tb` at `/home/rayyan/mnt/hdd2tb` with the enabled user service `arcforge-hdd2tb.service`; `/home/rayyan/Projects/arcforge-horizon` is a symlink to the remote checkout. GitHub build packages and playable client bundles are archived under `/mnt/hdd2tb/arcforge-horizon-builds/`, with a local compatibility symlink at `/home/rayyan/Projects/arcforge-horizon-builds`. Keep future project edits and build artifacts on that remote disk.
 
+## Latest build artifacts — 2026-11-14
+GitHub Actions run [43654606595](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43654606595) passed both jobs. The package and Linux client ZIPs were downloaded directly into the remote build archive:
+
+- `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-run-43654606595/arcforge-playable-linux-x86_64-ca311120c37dac56515b0c0e77010e4948477afa.zip` — SHA-256 `6a979da8a6ff9bd37de89c0982ee1a8192f14869a6b16351afc01ea880080e33`
+- `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-run-43654606595/arcforge-ca311120c37dac56515b0c0e77010e4948477afa.zip` — SHA-256 `d02329c30343b101e61847fcc3d2f7461bd07658c68d808b1a27416e9d36cf6c`
+
+The build confirms packaging and client assembly, not in-world behavior. Test the liquid fuel bucket interactions in Minecraft before treating them as runtime verified.
+
 ## 1. Resume here
 
-1. Latest playable client: `/home/rayyan/Projects/arcforge-horizon-builds/arcforge-run-43646950706/playable-artifact/arcforge-linux-x86_64.zip` (41,333,296 bytes; archive and embedded SHA256SUMS verified). Outer artifact wrapper and checked mod package are also archived in `arcforge-run-43646950706/` on the remote build volume. See [verification.md](status/verification.md) for hashes.
+1. Latest playable client artifact ZIP: `/home/rayyan/Projects/arcforge-horizon-builds/arcforge-run-43654606595/arcforge-playable-linux-x86_64-ca311120c37dac56515b0c0e77010e4948477afa.zip`. The build passed CI assembly; bucket behavior still needs in-game verification.
 2. Verify the Handbook's conduit instructions against item/fluid/gas routing, rates, Auto detection, and save/reload; then test Wrench FE/progress readouts, Crushing Array port defaults and processing, supported Upgrade effects/caps/persistence, and Energy Cell visuals/transfer.
 3. Continue through Cylinder drops/placement, other tiers/gases, ore distribution, recipe obtainability, processor behavior, and broader machine automation. Do not describe the full Arcforge feature set as complete or fully playable yet. Per-casing Array face reconfiguration remains unavailable through the pinned API hooks.
 4. Use the verified artifact instructions in [CI build setup](ci-build.md); the matching visibility-fix client is available from run [43488089381](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43488089381).

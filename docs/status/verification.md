@@ -1,5 +1,11 @@
 # Verification record
 
+## Liquid fuel bucket registration and client bundle — CI verified (2026-11-14)
+Commit `ca31112` registers the 10 additional pinned source liquid fuel buckets alongside Creosote, adds their fluid item capability, and connects them to Fluid Tank and Fuel Burner hand interactions. The handlers validate the expected fluid and exact 1,000 mB volume. GitHub Actions run [43654606595](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43654606595) passed formatting, native crate checking, content build/check, mod packaging, and the Linux playable-client build.
+
+Artifacts are stored on the remote build volume under `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-run-43654606595/`. The playable client ZIP SHA-256 is `6a979da8a6ff9bd37de89c0982ee1a8192f14869a6b16351afc01ea880080e33`; the mod package ZIP SHA-256 is `d02329c30343b101e61847fcc3d2f7461bd07658c68d808b1a27416e9d36cf6c`. No in-world verification of the newly registered bucket interactions was performed; production chains for the fuels remain incomplete.
+
+
 ## Fuel Burner source profiles — CI verified (2026-11-14)
 
 Commit `c50158c` adds the 16 pinned Arcforge fuel profiles to the Fuel Burner. GitHub Actions run [43646950706](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43646950706) passed Rust formatting, native crate checking, Horizon content build/check, mod packaging, and Linux playable-client assembly. Follow-up formatting commit `41b795d` reran the workflow successfully. No tests or in-world fuel behavior checks were run.
