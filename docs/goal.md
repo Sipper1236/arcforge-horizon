@@ -6,6 +6,9 @@ Port the complete survival gameplay scope of the pinned Arcforge release to Hori
 
 The current code is an early prototype, not a complete port. Continue implementing real gameplay from the scope in the root [README](../README.md), preserve Arcforge's recognizable mechanics and progression, and update the as-built and remaining-work documents whenever implementation changes.
 
+### Current slice — Industrial Water Intake alpha (2026-11-15)
+api/src/water_intake.rs now adds the fixed Arcforge 3×3×3 intake shell. It needs 400 connected source-water blocks below its center, draws 0.25 FE per mB at up to 8,000 mB/t, and stores up to 128,000 mB. The source water is not consumed. Right-clicking a horizontal face sets controller direction and shows formation, water, flow, tank, and energy status. Fluid output is exposed through Horizon's tank capability. This alpha scans at most 400 water sources every 100 ticks. Biome-based river/ocean bonus and loaded-chunk filtering are deferred because the pinned Host hooks do not expose those queries. Build succeeds; in-game behavior is not yet verified.
+
 ### Current slice — Condenser Array alpha (2026-11-15)
 `api/src/steam_condenser.rs` now forms 3–7 block boxes with a separate face controller, accepts Exhaust Steam, and converts it to water at 1:1 up to source-shaped ambient and surrounding water/ice cooling rates. Fixed 203,259 mB tanks use Horizon's block-ID-only fluid declarations; biome climate multipliers and source per-section capacities are not expressible in this callback setup. Recipes, loot, names, models, and handbook instructions are included. The hybrid client build passed on rx580; in-game formation, fluid routing, cooling, and persistence are still unverified. Do not treat Steam Power as complete.
 

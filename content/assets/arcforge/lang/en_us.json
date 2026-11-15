@@ -50,5 +50,9 @@
   "block.arcforge.steam_turbine_array_controller": "Steam Turbine Array Controller",
   "block.arcforge.steam_turbine_array_casing": "Steam Turbine Array Casing",
   "block.arcforge.condenser_array_controller": "Condenser Array Controller",
-  "block.arcforge.condenser_array_casing": "Condenser Array Casing"
+  "block.arcforge.condenser_array_casing": "Condenser Array Casing",
+  "block.arcforge.water_intake_controller": "Industrial Water Intake Controller",
+  "block.arcforge.water_intake_casing": "Industrial Water Intake Casing",
+  "item.arcforge.water_intake_controller": "Industrial Water Intake Controller",
+  "item.arcforge.water_intake_casing": "Industrial Water Intake Casing"
 }

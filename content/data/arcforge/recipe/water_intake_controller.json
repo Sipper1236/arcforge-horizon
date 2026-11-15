@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "PCP",
+    "TGT",
+    "PCP"
+  ],
+  "key": {
+    "P": "#c:plates/steel",
+    "C": "arcforge:water_intake_casing",
+    "T": "arcforge:tempered_alloy",
+    "G": "#c:glass_blocks"
+  },
+  "result": {
+    "id": "arcforge:water_intake_controller",
+    "count": 1
+  }
+}

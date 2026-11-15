@@ -1,17 +1,18 @@
 {
   "title": "Industrial Water Intake",
-  "icon": "arcforge:water_intake_casing",
+  "icon": "arcforge:water_intake_controller",
   "items": [
+    "arcforge:water_intake_controller",
     "arcforge:water_intake_casing"
   ],
   "pages": [
     {
       "type": "text",
-      "text": "A 3×3×3 pump house that stands in water and pumps it with FE: enough for a full-size Steam Boiler Array.\n# Placing it\n- Its intake is the middle of its bottom face: the block under it must be a water source.\n- That water must be part of a body of at least 400 connected water sources (counted through water sources only). A lake, a river or the sea will do; a pond won't.\n- It doesn't use the water up.\n# Pumping\n- 8,000 mB/t, ×1.25 in rivers and oceans.\n- 0.25 FE per mB: 2,000 FE/t.\n- Its Output ports push the water out on their own, as fast as it pumps; Fluid Conduits can pull it too."
+      "text": "Build the 3×3×3 shell with Industrial Water Intake Casings and place the controller at the center of one outside face with its front facing away from the shell. Casings extend behind it; use a horizontal right-click on a controller face to set its direction. The bottom-center block must touch a body containing at least 400 connected source-water blocks. The intake pumps up to 8,000 mB/t, uses 0.25 FE per mB, and stores 128,000 mB. World water is not consumed. Right-click the controller to view formation, water count, flow, tank, and energy."
     },
     {
-      "type": "multiblock",
-      "structure": "water_intake"
+      "type": "text",
+      "text": "The alpha refreshes its bounded water count every 100 ticks. River and ocean speed bonus and unloaded-chunk filtering are not available with the pinned Horizon hooks. Connect a Fluid Conduit to the controller's output capability and supply FE."
     }
   ]
 }

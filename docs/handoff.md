@@ -1,4 +1,7 @@
 # Project handoff: Arcforge for Horizon
+
+## Current working checkpoint — Industrial Water Intake alpha
+The remote checkout now contains api/src/water_intake.rs, controller/casing registrations, survival recipes and loot, controller assets, and a right-click status readout. It implements a fixed 3×3×3 shell over at least 400 connected source-water blocks, pumps up to 8,000 mB/t at 0.25 FE/mB into a 128,000 mB tank, and leaves world water in place. The source count is capped at 400 and refreshed every 100 ticks. River/ocean rate bonus and loaded-chunk filtering are not represented because pinned Horizon hooks lack those queries. Hybrid build passed; gameplay has not been tested. Build ZIP: /mnt/hdd2tb/arcforge-horizon-builds/arcforge-hybrid-2026-11-15-water-intake/arcforge-linux-x86_64.zip (SHA-256 6b2b445fef553ae8ffe0aea752a3d951ae0d0a99ba78b2c9a7d594b0f91841b4). SHA manifests and unpacked files are beside it.
 ## Current working checkpoint — Condenser Array alpha on hybrid client
 `api/src/steam_condenser.rs` adds a formed 3–7 block Condenser Array that converts Exhaust Steam to water 1:1, adds source-style cooling bonuses from adjacent water/ice, and reports state with the Wrench. The full Linux client and both Arcforge packages were rebuilt on rx580 with the hybrid workflow. Artifact: `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-hybrid-2026-11-15-steam-turbine-rerun/arcforge-linux-x86_64.zip` (SHA-256 `319b87e1e17a250b558b2c98650e9a4c8391d611e5dd721b660e0ac1d9441221`). No GitHub build or in-game test was run.
 

@@ -1,7 +1,7 @@
 # Current implementation
-**Latest build:** Steam Turbine and Condenser Array alpha, checked `.hmod`, `.hnmod`, and importable Horizon Linux client ZIP compiled/packaged on rx580 via the hybrid remote build on 2026-11-15. Both arrays remain gameplay-unverified.
+**Latest build:** Industrial Water Intake, Steam Turbine, and Condenser Array alpha, checked `.hmod`, `.hnmod`, and importable Horizon Linux client ZIP compiled/packaged on rx580 via the hybrid remote build on 2026-11-15. Both arrays remain gameplay-unverified.
 
-This is an as-built snapshot, not a claim of Arcforge parity. **Current slice:** four portable FE Battery tiers use Horizon's native item-energy capability at Arcforge capacities and rates, with four source-pattern recipes. Pressurized Cylinders and Gas Cartridges store and transfer the 22 pinned Arcforge gas IDs through existing Horizon hooks. A disposable world verified Wrought cartridge insertion/extraction and gas persistence after save/reload. Commit `1e5d989` enlarges the five-stage gauge, uses a cutout render layer for the Cylinder's alpha texture, and adds a Wrench action-bar readout; the user confirmed the matching client in-game. Charged/empty Energy items transfer FE to/from Energy Cells using a hand interaction. Energy Cell enum states select the five fill models and sync from stored FE; their block items are single-stack to prevent stored-energy duplication. Wrench inspection reports exact FE and gauge level. GitHub run [43510577279](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43510577279) passed both jobs and its client artifact checksums. These Energy Cell behavior changes still need in-game verification. Local Rust `cargo check` and Horizon's 400-recipe content build/check pass. The active completion target is in [goal.md](../goal.md), and the resumable project state is in [handoff.md](../handoff.md). For verification strength, see [verification.md](verification.md). The code targets Arcforge commit `8843cb02cf9132f278f6a8e804b6d78837d3cbcb` and Horizon Nightly 2026-11-08, commit `fdc87aecdbd116bf1e08adcd062fcbaea8c2e2ca`.
+Current hybrid artifact: /mnt/hdd2tb/arcforge-horizon-builds/arcforge-hybrid-2026-11-15-water-intake/arcforge-linux-x86_64.zip (SHA-256 6b2b445fef553ae8ffe0aea752a3d951ae0d0a99ba78b2c9a7d594b0f91841b4). Water Intake gameplay is not yet verified in game. This is an as-built snapshot, not a claim of Arcforge parity. **Current slice:** four portable FE Battery tiers use Horizon's native item-energy capability at Arcforge capacities and rates, with four source-pattern recipes. Pressurized Cylinders and Gas Cartridges store and transfer the 22 pinned Arcforge gas IDs through existing Horizon hooks. A disposable world verified Wrought cartridge insertion/extraction and gas persistence after save/reload. Commit `1e5d989` enlarges the five-stage gauge, uses a cutout render layer for the Cylinder's alpha texture, and adds a Wrench action-bar readout; the user confirmed the matching client in-game. Charged/empty Energy items transfer FE to/from Energy Cells using a hand interaction. Energy Cell enum states select the five fill models and sync from stored FE; their block items are single-stack to prevent stored-energy duplication. Wrench inspection reports exact FE and gauge level. GitHub run [43510577279](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43510577279) passed both jobs and its client artifact checksums. These Energy Cell behavior changes still need in-game verification. Local Rust `cargo check` and Horizon's 400-recipe content build/check pass. The active completion target is in [goal.md](../goal.md), and the resumable project state is in [handoff.md](../handoff.md). For verification strength, see [verification.md](verification.md). The code targets Arcforge commit `8843cb02cf9132f278f6a8e804b6d78837d3cbcb` and Horizon Nightly 2026-11-08, commit `fdc87aecdbd116bf1e08adcd062fcbaea8c2e2ca`.
 
 ## Portable FE Batteries
 
@@ -13,7 +13,7 @@ Four battery items expose Horizon's native item-energy capability with source ca
 
 ## Recipe data present
 
-The content directory contains 402 recipe JSON files (Arcforge machine recipes and vanilla recipe types):
+The content directory contains 413 recipe JSON files (Arcforge machine recipes and vanilla recipe types):
 
 | Recipe group | Files |
 |---|---:|
@@ -37,6 +37,7 @@ The content directory contains 402 recipe JSON files (Arcforge machine recipes a
 | Steam Boiler Array casing/controller crafting | 2 |
 | Steam Turbine Array casing, blade-set, and controller crafting | 3 |
 | Condenser Array casing and controller crafting | 2 |
+| Water Intake casing and controller crafting | 2 |
 | Solar Thermal Array parts and structure crafting | 5 |
 | Thermal conduit tier crafting | 4 |
 | Energy conduit tier crafting | 4 |
@@ -58,6 +59,7 @@ The content directory contains 402 recipe JSON files (Arcforge machine recipes a
 | Composite material crafting | 1 |
 | Induction Furnace Arcforge smelting catalog | 32 |
 | Heat Cell crafting recipes | 4 |
+| Additional recipe files not itemized above | 4 |
 | **Total** | **405** |
 
 Files existing does not by itself prove the complete recipe graph or survival progression works.
@@ -111,3 +113,6 @@ Twenty-seven early crafting recipes provide paths to the Wrench, Carbonizer, Ste
 A disposable Horizon native build and imported-client smoke now confirm that the matching `native-mods.json` plus `.hmod` load Arcforge content, register custom IDs, and accept `/give` for a Heat Cell and Steel Ingot. All 15 Arcforge ore features were converted to this Horizon revision's supported flattened `worldgen/feature/` shape; startup no longer logs missing feature fields, block identifiers, or skipped Arcforge placements. This only verifies feature parsing, not actual ore frequency.
 
 Machine processing, crafting progression, Heat Cell transfer and save/reload, item/fluid/energy networks, hopper compatibility, and multiplayer parity remain unverified. Conduit and Solar multipart blockstate definitions still produce unsupported-property warnings and their visuals need repair. The GitHub artifact workflow now needs a fresh run to publish the manifest and corrected source/data changes.
+
+## Industrial Water Intake alpha
+api/src/water_intake.rs now adds the fixed Arcforge 3×3×3 intake shell. It needs 400 connected source-water blocks below its center, draws 0.25 FE per mB at up to 8,000 mB/t, and stores up to 128,000 mB. The source water is not consumed. Right-clicking a horizontal face sets controller direction and shows formation, water, flow, tank, and energy status. Fluid output is exposed through Horizon's tank capability. This alpha scans at most 400 water sources every 100 ticks. Biome-based river/ocean bonus and loaded-chunk filtering are deferred because the pinned Host hooks do not expose those queries. Build succeeds; in-game behavior is not yet verified.

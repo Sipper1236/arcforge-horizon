@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "condition": {
+        "type": "minecraft:survives_explosion"
+      },
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "arcforge:water_intake_controller"
+        }
+      ],
+      "rolls": 1
+    }
+  ],
+  "random_sequence": "arcforge:blocks/water_intake_controller"
+}
