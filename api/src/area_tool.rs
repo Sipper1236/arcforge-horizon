@@ -2,8 +2,9 @@
 //!
 //! The pinned Horizon API can break neighboring blocks with normal loot and a
 //! supplied tool, but it does not expose a player-context break for each
-//! neighbor. This alpha path therefore limits each sweep to the same block ID
-//! as the center and applies one point of tool damage per additional block.
+//! neighbor. This alpha path therefore supports an explicit set of common blocks
+//! whose estimated hardness does not exceed the center, and applies one point
+//! of tool damage per additional block.
 
 pub(crate) const STEEL_HAMMER: &str = "arcforge:steel_hammer";
 pub(crate) const STEEL_EXCAVATOR: &str = "arcforge:steel_excavator";
