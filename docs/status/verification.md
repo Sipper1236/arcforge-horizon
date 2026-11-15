@@ -1,5 +1,13 @@
 # Verification record
 
+## Steel Hammer and Excavator mixed-block mining — client build verified (2026-11-15)
+
+Commit `0f45ffb` uses the raycast hit face to orient the 3×3 sweep and permits supported common vanilla and Arcforge blocks whose estimated hardness does not exceed the center. The sweep still skips the center, is disabled while sneaking, and applies one durability point for each extra block. Run [43658856875](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43658856875) passed package and Linux client build/assembly. The client was not verified in-world.
+
+The package is `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-run-43658856875/arcforge-package.zip` (SHA-256 `f9bf29f98e9bebc780d61594a021af9c98190f0361cbc16bb6d70806a748da7b`). The playable artifact wrapper is `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-run-43658856875/arcforge-playable-linux-x86_64.zip` (SHA-256 `b199b5d4c4d53033e6567a28f947a8ad610c0be27fe22496012afc086e869f77`); its inner client ZIP is `arcforge-linux-x86_64.zip` (SHA-256 `06f8b62938fab34f3b78c42fafebb5a92a9358b4e8513d73a5885f5658c92515`).
+
+Commit `638969a` only corrects the area-tool module comment; it does not change behavior. Its exact-commit rebuild is queued as run [43660398711](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43660398711).
+
 ## Steel Hammer and Excavator area mining — CI verified (2026-11-15)
 Commit `f400ed3` adds a survival 3×3 sweep to both tools, skips the center block, disables the sweep while sneaking, and charges one durability per additional block while preserving the tool stack for loot. GitHub Actions run [43656997138](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43656997138) passed the native package job and the Linux playable-client build.
 
