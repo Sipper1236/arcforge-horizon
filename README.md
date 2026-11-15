@@ -264,7 +264,7 @@ The implementation phases are ordered by dependency. The alpha's player unlock o
 
 ## Build the current prototype
 
-This native mod is pinned to Horizon Nightly 2026-11-08, commit `fdc87aecdbd116bf1e08adcd062fcbaea8c2e2ca`. Review native code before building; native mods run with the user's permissions.
+This native mod is pinned to Horizon Nightly 2026-11-13, commit `9f42064c11efe7ef3e5ed2baad7ddc2a3b36eea0`. Review native code before building; native mods run with the user's permissions.
 
 ```sh
 /home/rayyan/Applications/Horizon.AppImage native-build \
@@ -277,4 +277,4 @@ Review the source before running this command: `--trust-native-code` grants the 
 
 ## Latest verification
 
-Recorded 2026-11-15. Horizon remains pinned to Nightly 2026-11-08 commit `fdc87aecdbd116bf1e08adcd062fcbaea8c2e2ca`. GitHub Actions run [43658856875](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43658856875) passed the native package and Linux client build for commit `0f45ffb`. The playable bundle contains `horizon-client`, `native-mods.json`, `arcforge.hmod`, and `arcforge.hnmod`; it is archived on the remote build volume at `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-run-43658856875/`. Its GitHub artifact digest and nested client ZIP checksum are recorded in [verification.md](docs/status/verification.md). The build verifies packaging and assembly only; the area-mining changes still need in-world testing. Commit `638969a` only corrects a stale source comment, and its exact-commit build is queued as run [43660398711](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43660398711).
+Recorded 2026-11-15. Horizon remains pinned to Nightly 2026-11-08 commit `9f42064c11efe7ef3e5ed2baad7ddc2a3b36eea0`. GitHub Actions run [43658856875](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43658856875) passed the native package and Linux client build for commit `0f45ffb`. The playable bundle contains `horizon-client`, `native-mods.json`, `arcforge.hmod`, and `arcforge.hnmod`; it is archived on the remote build volume at `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-run-43658856875/`. Its GitHub artifact digest and nested client ZIP checksum are recorded in [verification.md](docs/status/verification.md). The build verifies packaging and assembly only; the area-mining changes still need in-world testing. Commit `638969a` only corrects a stale source comment, and its exact-commit build is queued as run [43660398711](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43660398711).

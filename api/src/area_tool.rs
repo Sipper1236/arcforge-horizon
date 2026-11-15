@@ -1,14 +1,38 @@
 //! Steel Hammer and Excavator 3×3 mining behavior.
 //!
-//! The pinned Horizon API can break neighboring blocks with normal loot and a
-//! supplied tool, but it does not expose a player-context break for each
-//! neighbor. This alpha path therefore supports an explicit set of common blocks
-//! whose estimated hardness does not exceed the center, and applies one point
-//! of tool damage per additional block.
+//! Steel Hammer and Excavator 3×3 mining behavior.
+//!
+//! Neighboring blocks use Horizon's player-break helper, so their drops,
+//! enchantments, events and tool wear follow the normal player path. The
+//! current API still requires an explicit block allowlist with estimated
+//! hardness for the source tool-effectiveness and area comparison rules.
 
 pub(crate) const STEEL_HAMMER: &str = "arcforge:steel_hammer";
 pub(crate) const STEEL_EXCAVATOR: &str = "arcforge:steel_excavator";
 pub(crate) const DURABILITY: u32 = 1_500;
+thread_local! {
+    static PLAYER_BREAK_ACTIVE: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
+}
+pub(crate) fn player_break_is_active() -> bool {
+    PLAYER_BREAK_ACTIVE.with(std::cell::Cell::get)
+}
+pub(crate) struct PlayerBreakGuard;
+impl PlayerBreakGuard {
+    pub(crate) fn enter() -> Option<Self> {
+        PLAYER_BREAK_ACTIVE.with(|active| {
+            if active.replace(true) {
+                None
+            } else {
+                Some(Self)
+            }
+        })
+    }
+}
+impl Drop for PlayerBreakGuard {
+    fn drop(&mut self) {
+        PLAYER_BREAK_ACTIVE.with(|active| active.set(false));
+    }
+}
 
 #[derive(Clone, Copy)]
 pub(crate) enum Axis {

@@ -31,7 +31,7 @@ jobs:
         uses: actions/checkout@v7
         with:
           repository: horizon-rust/horizon
-          ref: fdc87aecdbd116bf1e08adcd062fcbaea8c2e2ca
+          ref: 9f42064c11efe7ef3e5ed2baad7ddc2a3b36eea0
           path: horizon-source
 
       - name: Install stable Rust
@@ -127,7 +127,7 @@ jobs:
         uses: actions/checkout@v7
         with:
           repository: horizon-rust/horizon
-          ref: fdc87aecdbd116bf1e08adcd062fcbaea8c2e2ca
+          ref: 9f42064c11efe7ef3e5ed2baad7ddc2a3b36eea0
           path: horizon-source
 
       - name: Install Rust and Horizon Linux build dependencies
@@ -145,9 +145,9 @@ jobs:
       - name: Install pinned Horizon Nightly and create a CI instance
         run: |
           launcher="$PWD/horizon-source/launcher/target/debug/horizon-launcher"
-          "$launcher" install nightly-2026-11-08-fdc87ae
+          "$launcher" install nightly-2026-11-13-9f42064
           "$launcher" instance create arcforge-ci
-          "$launcher" instance version arcforge-ci nightly-2026-11-08-fdc87ae
+          "$launcher" instance version arcforge-ci nightly-2026-11-13-9f42064
 
       - name: Fetch the pinned Minecraft 26.3 inputs from Mojang
         run: |
@@ -160,7 +160,7 @@ jobs:
         run: |
           horizon-source/launcher/target/debug/horizon-launcher prepare \
             --minecraft "$PWD/ci-minecraft" \
-            --version nightly-2026-11-08-fdc87ae
+            --version nightly-2026-11-13-9f42064
 
       - name: Stage the native mod source for Horizon's symlink-safe packer
         run: |
@@ -172,7 +172,7 @@ jobs:
         run: |
           horizon-source/launcher/target/debug/horizon-launcher native-build "$PWD/target/native-build/arcforge" \
             --instance arcforge-ci \
-            --version nightly-2026-11-08-fdc87ae \
+            --version nightly-2026-11-13-9f42064 \
             --profile performance \
             --trust-native-code
 
@@ -198,12 +198,12 @@ jobs:
           Arcforge Horizon Linux x86_64 client
 
           This client executable contains the Arcforge native Rust mod and is built for
-          Horizon Nightly 2026-11-08 (fdc87aecdbd116bf1e08adcd062fcbaea8c2e2ca).
+          Horizon Nightly 2026-11-13 (9f42064c11efe7ef3e5ed2baad7ddc2a3b36eea0).
           It is not a standalone Minecraft installation. Install that exact Horizon Nightly,
           then import this client with:
 
             Horizon.AppImage import-build ./horizon-client \
-              --version nightly-2026-11-08-fdc87ae --trust-unsigned
+              --version nightly-2026-11-13-9f42064 --trust-unsigned
 
           Use the imported version for an instance, and install arcforge.hmod in that instance
           for recipes, loot, tags, and other content. The imported executable also needs its
@@ -245,7 +245,7 @@ jobs:
         run: |
           {
             echo '### Playable Linux client'
-            echo '- Built Horizon Nightly 2026-11-08 with Arcforge native code.'
+            echo '- Built Horizon Nightly 2026-11-13 with Arcforge native code.'
             echo '- Uploaded an importable Linux x86_64 client bundle with the matching `.hmod` and `.hnmod`.'
             echo '- Pull requests package sources only; native code is built on pushes and manual dispatches.'
           } >> "$GITHUB_STEP_SUMMARY"

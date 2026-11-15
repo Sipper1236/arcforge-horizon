@@ -315,7 +315,8 @@ impl Hooks for Arcforge {
         host: &mut dyn Host,
         event: &mut horizon_client::mod_api::DestroyBlockEvent,
     ) -> Flow {
-        if let Some(player) = host.acting_player()
+        if !area_tool::player_break_is_active()
+            && let Some(player) = host.acting_player()
             && player.game_mode == 0
             && !player.sneaking
             && let Some((item, _, _)) = host.held()
@@ -326,6 +327,7 @@ impl Hooks for Arcforge {
                 && let Some(mut tool) = host
                     .carried_stack(player.selected_slot as i32)
                     .map(|stack| stack.clone())
+                && let Some(_guard) = area_tool::PlayerBreakGuard::enter()
             {
                 let axis = host
                     .raycast(8.0)
@@ -333,8 +335,7 @@ impl Hooks for Arcforge {
                     .map(|hit| area_tool::axis_from_hit(event.pos, [hit.x, hit.y, hit.z]))
                     .unwrap_or_else(|| area_tool::mining_axis(player.yaw, player.pitch));
                 for target in area_tool::targets(event.pos, axis) {
-                    let remaining = area_tool::DURABILITY.saturating_sub(tool.damage);
-                    if remaining <= 1 {
+                    if area_tool::DURABILITY.saturating_sub(tool.damage) <= 1 {
                         break;
                     }
                     let target_block = host.block(target);
@@ -343,14 +344,13 @@ impl Hooks for Arcforge {
                     {
                         continue;
                     }
-                    if host.destroy_block(target, Some(&tool), false).is_some() {
+                    if host.player_break_block(player.uuid, target, false) {
                         let Some(stack) = host.carried_stack(player.selected_slot as i32) else {
                             break;
                         };
                         if stack.item.as_ref() != item {
                             break;
                         }
-                        stack.damage = stack.damage.saturating_add(1);
                         tool = stack.clone();
                     }
                 }
