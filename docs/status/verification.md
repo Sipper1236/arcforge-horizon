@@ -1,5 +1,11 @@
 # Verification record
 
+## Horizon Nightly update and player-context area mining — client build verified (2026-11-15)
+
+Commit `7d168ee` updates Arcforge to Horizon Nightly 2026-11-13 revision `9f42064c11efe7ef3e5ed2baad7ddc2a3b36eea0`. Steel Hammer and Excavator sweeps now use the existing `Host::player_break_block` helper, with a re-entry guard for its nested destroy hook. The helper preserves Horizon's player break checks, drops, tool wear, mined stats, exhaustion, experience, events, particles, and sound. The supported-block/hardness table remains an approximation because Horizon has no dynamic hardness query.
+
+GitHub Actions run [43738891125](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43738891125) passed both the content/native package and Linux client jobs. The inner playable bundle is archived at `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-run-43738891125/arcforge-playable-linux-x86_64-9da8a499837a3345520123ee872aaeb8ea50ad91/arcforge-linux-x86_64.zip` (SHA-256 `5227d66610ec600184bb38d978516e3617a95eed4a3d27b6854fa800e3c38170`). It was imported as `imported-2026-11-15-4f43d47`, and the separate `arcforge-area-tools-test` instance was configured to use it. No game launch or in-world test was performed.
+
 ## Steel Hammer and Excavator mixed-block mining — client build verified (2026-11-15)
 
 Commit `0f45ffb` uses the raycast hit face to orient the 3×3 sweep and permits supported common vanilla and Arcforge blocks whose estimated hardness does not exceed the center. The sweep still skips the center, is disabled while sneaking, and applies one durability point for each extra block. Run [43658856875](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43658856875) passed package and Linux client build/assembly. The client was not verified in-world.

@@ -1,10 +1,14 @@
 # Project handoff: Arcforge for Horizon
 
 **Snapshot date:** 2026-11-15
+## Current snapshot — build 43738891125
+
+Project and builds are stored on the remote drive at `/mnt/hdd2tb/arcforge-horizon` and `/mnt/hdd2tb/arcforge-horizon-builds`; `/home/rayyan/Projects/arcforge-horizon*` are symlinks. GitHub Actions run [43738891125](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43738891125) passed at commit `9da8a49`, against Horizon Nightly 2026-11-13 revision `9f42064c11efe7ef3e5ed2baad7ddc2a3b36eea0`. Playable client path: `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-run-43738891125/arcforge-playable-linux-x86_64-9da8a499837a3345520123ee872aaeb8ea50ad91/arcforge-linux-x86_64.zip` (SHA-256 `5227d66610ec600184bb38d978516e3617a95eed4a3d27b6854fa800e3c38170`). Imported locally as `imported-2026-11-15-4f43d47`; isolated test instance `arcforge-area-tools-test` points to it and contains the matching content pack/manifest. No launch or in-world test was performed. Next: test the Hammer/Excavator behavior in that instance when able, then continue the source feature inventory in [goal.md](goal.md).
+
 **Project:** `/mnt/hdd2tb/arcforge-horizon` on `rayyan@100.89.43.102`
 
 **Active goal:** see [goal.md](goal.md)  
-**Status:** Commit `638969a` corrects the area-tool behavior comment; it does not change runtime behavior. Run [43658856875](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43658856875) built the prior behavior-identical commit into a playable Linux client. The exact latest commit rebuild is queued as run [43660398711](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43660398711).
+**Status:** Latest build is GitHub run 43738891125 at commit 9da8a49; the Linux client was imported into the isolated area-tools test instance, but has not been played in-world. The prior 43658856875 status below is historical.
 
 Commit `5920fdd` adds an Arcforge Furnace Wrench status line for formation, temperature, burn time, and active recipe requirements/progress. Both GitHub jobs passed in run [43542601271](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43542601271); its package and playable client ZIPs and internal checksums are verified. In-world status verification remains pending. Commit `f15a514` adds the upstream behavior of clockwise port rotation when the structure is unformed, followed by an immediate formation recheck. Both GitHub jobs passed in run [43544310146](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43544310146), and the playable Linux client ZIP and checksums are verified in [verification.md](status/verification.md). In-world Wrench status and rotation checks remain pending.
 
