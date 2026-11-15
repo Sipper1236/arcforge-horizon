@@ -2245,8 +2245,7 @@ impl Hooks for Arcforge {
             && !pressurized_cylinder::accepts_gas(event.block, event.fluid)
         {
             Flow::Cancel
-        } else if event.block == STEAM_BOILER_ARRAY_CONTROLLER
-            && event.fluid != steam_boiler::WATER
+        } else if event.block == STEAM_BOILER_ARRAY_CONTROLLER && event.fluid != steam_boiler::WATER
         {
             Flow::Cancel
         } else if event.block == GEOTHERMAL_PLANT && event.fluid != "minecraft:lava" {
@@ -2502,9 +2501,7 @@ impl Hooks for Arcforge {
             INFUSER => tick_infuser(host, event.entity),
             FIREBOX => tick_firebox(host, event.pos, event.entity),
             FIREBOX_ARRAY_CONTROLLER => tick_firebox_array(host, event.pos, event.entity),
-            STEAM_BOILER_ARRAY_CONTROLLER => {
-                steam_boiler::tick(host, event.pos, event.entity)
-            }
+            STEAM_BOILER_ARRAY_CONTROLLER => steam_boiler::tick(host, event.pos, event.entity),
             SOLAR_ARRAY_CONTROLLER => tick_solar_array(host, event.pos, event.entity),
             GEOTHERMAL_PLANT => tick_geothermal_plant(host, event.pos, event.entity),
             FUEL_BURNER => tick_fuel_burner(host, event.pos, event.entity),

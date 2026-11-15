@@ -14,7 +14,6 @@ pub(crate) const HEAT_CAPACITY_HU: u64 = 300_000;
 pub(crate) const MAX_HEAT_PER_TICK_HU: u64 = 1_736;
 pub(crate) const MAX_TEMPERATURE_C: u32 = 1_390;
 
-
 pub(crate) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity) {
     entity.items.resize(2, None);
     let facing = host
@@ -98,7 +97,10 @@ pub(crate) fn status(entity: &ModBlockEntity) -> String {
     let steam = crate::fluid::amount(&entity.nbt, 1);
     let heat = crate::get_i32(&entity.nbt, "TemperatureC").max(20);
     let gas = crate::fluid::name(&entity.nbt, 1).unwrap_or_else(|| "none".to_owned());
-    format!("Boiler {} | {heat}°C | Water {water}/{TANK_CAPACITY} mB | {gas} {steam}/{TANK_CAPACITY} mB", if formed { "formed" } else { "unformed" })
+    format!(
+        "Boiler {} | {heat}°C | Water {water}/{TANK_CAPACITY} mB | {gas} {steam}/{TANK_CAPACITY} mB",
+        if formed { "formed" } else { "unformed" }
+    )
 }
 
 pub(crate) fn accept_heat(
