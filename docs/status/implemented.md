@@ -1,10 +1,10 @@
 # Current implementation
-**Latest build:** Electric Pump, Industrial Water Intake, Steam Turbine, and Condenser Array alpha, built by GitHub Actions run 43769113792 for commit f56e5e41ed3ae81e895b93714281b143084c7f29. All build jobs passed; gameplay remains unverified.
+**Latest build:** Superheater Array alpha, built by GitHub Actions run 43773403158; native/content packaging and playable Linux client jobs both passed. In-game behavior is not verified yet.
 
-Current GitHub artifact: /mnt/hdd2tb/arcforge-horizon-builds/arcforge-github-43769113792/arcforge-playable-linux-x86_64-f56e5e41ed3ae81e895b93714281b143084c7f29/arcforge-linux-x86_64.zip (SHA-256 c5c2f72fb81bc82de337eb49a05677b5170aa6991b548862da2a600797179112). HMOD 88d689174a64eb2276a8cc2ca9fe2602fb953dd1b224d7788126563e880a077b; HNMOD ebd974da714a466565ece02edf0f9acfd759887b6eb1678a8c3228a90c74e233.
+Current GitHub playable artifact: /mnt/hdd2tb/arcforge-horizon-builds/arcforge-github-43773403158/.
 
 ## Superheater Array alpha
-api/src/superheater.rs adds the 3–7 block cubic multiblock, steam-grade conversion, pressure modes, persisted heat, survival recipes and drops, and thermal-conduit integration. GitHub Actions build and in-game behavior are pending.
+api/src/superheater.rs adds the 3–7 block cubic multiblock, steam-grade conversion, pressure modes, persisted heat, survival recipes and drops, and thermal-conduit integration. GitHub Actions run 43773403158 passed both jobs; in-game behavior is pending.
 
 ## Portable FE Batteries
 
@@ -16,7 +16,7 @@ Four battery items expose Horizon's native item-energy capability with source ca
 
 ## Recipe data present
 
-The content directory contains 414 recipe JSON files (Arcforge machine recipes and vanilla recipe types):
+The content directory contains 416 recipe JSON files (Arcforge machine recipes and vanilla recipe types):
 
 | Recipe group | Files |
 |---|---:|
@@ -40,6 +40,7 @@ The content directory contains 414 recipe JSON files (Arcforge machine recipes a
 | Steam Boiler Array casing/controller crafting | 2 |
 | Steam Turbine Array casing, blade-set, and controller crafting | 3 |
 | Condenser Array casing and controller crafting | 2 |
+| Superheater Array casing and controller crafting | 2 |
 | Water Intake casing and controller crafting | 2 |
 | Electric Pump crafting | 1 |
 | Solar Thermal Array parts and structure crafting | 5 |

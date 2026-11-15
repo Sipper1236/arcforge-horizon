@@ -1,9 +1,9 @@
 # Current build policy (updated 2026-11-15)
 Build and compile only through GitHub Actions. Do not run hybrid or local compilation. Earlier hybrid artifacts and steps below are historical; use GitHub Actions artifacts for current playtesting.
-Latest successful GitHub build: run 43769113792; remote artifact copy: /mnt/hdd2tb/arcforge-horizon-builds/arcforge-github-43769113792/.
+Latest successful GitHub build: run 43773403158; remote artifacts: /mnt/hdd2tb/arcforge-horizon-builds/arcforge-github-43773403158/.
 
-## Current working checkpoint — Superheater Array alpha (build pending)
-The current uncommitted work adds api/src/superheater.rs, native controller/casing registrations, fixed maximum Horizon fluid capability tanks with shell-scaled processing, thermal-conduit heat input, pressure-mode cycling, recipes, drops, item models, and handbook text. The only permitted compile/build route is GitHub Actions. Push the feature commit to main, inspect both workflow jobs, and fix any failures through a new GitHub Actions run. Do not use the historical hybrid script.
+## Current working checkpoint — Superheater Array alpha (GitHub verified; gameplay pending)
+Commit f1f8608 includes the Superheater Array and Horizon host-type fixes. GitHub Actions run 43773403158 passed the native crate check, Horizon content build/check, mod packaging, and Linux client build. The importable client ZIP is /mnt/hdd2tb/arcforge-horizon-builds/arcforge-github-43773403158/arcforge-playable-linux-x86_64-f1f8608b1d6ce52b67cbe38dbbb6ae5ff2dd1cc9/arcforge-linux-x86_64.zip (SHA-256 63654ada508bb66a4501b67aa34a627d10025e21312e6f3ea968a1b7b4e5c813). Embedded checksums and ZIP integrity verified. This proves build/package integrity, not in-game behavior. Next, import the client, craft Superheater Array Controller/Casing, form a 3x3x3 shell, use the Wrench to set facing and pressure mode, connect a thermal conduit, feed Steam, and confirm flow/status; then test High-Pressure and Superheated upgrades and save/reload. Build and compile only through GitHub Actions.
 
 # Project handoff: Arcforge for Horizon
 
@@ -68,7 +68,7 @@ The build confirms packaging and client assembly, not in-world behavior. Test th
 
 ## 1. Resume here
 
-1. Use the playable artifact from GitHub Actions run 43769113792; its remote copy is in /mnt/hdd2tb/arcforge-horizon-builds/arcforge-github-43769113792/. Import it into Horizon Nightly 2026-11-13 (`9f42064c11efe7ef3e5ed2baad7ddc2a3b36eea0`) with the included `INSTALL.txt`; install `arcforge.hmod` in the instance and enable `mod.arcforge`.
+1. Use the playable artifact from GitHub Actions run 43773403158; its remote copy is under /mnt/hdd2tb/arcforge-horizon-builds/arcforge-github-43773403158/. Import it into Horizon Nightly 2026-11-13 (`9f42064c11efe7ef3e5ed2baad7ddc2a3b36eea0`) with the included `INSTALL.txt`; install `arcforge.hmod` in the instance and enable `mod.arcforge`.
 2. In a disposable world, craft the Steam Turbine Array Controller, build a 3×3×3 shell with casing corners, a hollow air core, and the controller centered on the front face. Use Pressure Glass or casing for the other shell blocks.
 3. Feed steam from the Steam Boiler Array through a fluid conduit. Use the Wrench to check formation, steam flow, RPM, and FE; connect an energy conduit and extract Exhaust Steam from the controller.
 4. Break and replace a shell block, rotate the controller with the Wrench, and save/reload. Record any issue, fix it without changing Horizon API/source, update verification docs, then continue through Arcforge’s progression.
