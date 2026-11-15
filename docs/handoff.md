@@ -1,12 +1,12 @@
 # Project handoff: Arcforge for Horizon
-## Current working checkpoint — Steam Turbine Array alpha (commit `1c56214`)
-Commit `1c56214` adds the Steam Turbine Array controller, structure scan, steam/energy behavior, controller assets/recipe/loot, and status readout. Rust formatting and build passed through `hybrid-remote-build`; the `.hmod` was built and checked with the pinned Horizon content tool; the `.hnmod` was packaged for Horizon `9f42064c11efe7ef3e5ed2baad7ddc2a3b36eea0`, Minecraft 26.3. The install bundle is on the remote drive at `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-hybrid-2026-11-15-steam-turbine/`. No GitHub build or in-game verification was run.
+## Current working checkpoint — hybrid playable client (commit `8730e2d`)
+The Steam Turbine Array implementation is commit `1c56214`; commit `8730e2d` adds a repeatable hybrid client build and verified Minecraft asset downloads. Rust formatting/build and the Horizon `.hmod` build/check passed. The Linux client bundle was built for Horizon `9f42064c11efe7ef3e5ed2baad7ddc2a3b36eea0` and Minecraft 26.3, with verified asset index and audio assets. Artifact: `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-hybrid-2026-11-15-steam-turbine/arcforge-linux-x86_64.zip` (SHA-256 `a69928b42c1067639e76e89e8e16ad4a032e5326ade3c044347a70f3faf43aac`). No GitHub build or in-game test was run.
 
 
 **Snapshot date:** 2026-11-15
-## Current snapshot — Steam Turbine Array alpha commit `1c56214`
+## Current snapshot — Steam Turbine Array alpha and hybrid client commit `8730e2d`
 
-Commit `1c56214` adds the Steam Turbine Array alpha on top of the expanded Steam Boiler Array implementation.
+Commit `1c56214` adds the Steam Turbine Array alpha; commit `8730e2d` builds a matching Horizon Linux client and packages it with the content/native mod files.
 
 Project and builds are stored on the remote drive at `/mnt/hdd2tb/arcforge-horizon` and `/mnt/hdd2tb/arcforge-horizon-builds`; `/home/rayyan/Projects/arcforge-horizon*` are symlinks. GitHub Actions run [43738891125](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43738891125) passed at commit `9da8a49`, against Horizon Nightly 2026-11-13 revision `9f42064c11efe7ef3e5ed2baad7ddc2a3b36eea0`. Playable client path: `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-run-43738891125/arcforge-playable-linux-x86_64-9da8a499837a3345520123ee872aaeb8ea50ad91/arcforge-linux-x86_64.zip` (SHA-256 `5227d66610ec600184bb38d978516e3617a95eed4a3d27b6854fa800e3c38170`). Imported locally as `imported-2026-11-15-4f43d47`; isolated test instance `arcforge-area-tools-test` points to it and contains the matching content pack/manifest. No launch or in-world test was performed. Next: test the Hammer/Excavator behavior in that instance when able, then continue the source feature inventory in [goal.md](goal.md).
 
@@ -15,7 +15,7 @@ Read-only source checkouts are also on that drive: Arcforge at `/mnt/hdd2tb/arcf
 **Project:** `/mnt/hdd2tb/arcforge-horizon` on `rayyan@100.89.43.102`
 
 **Active goal:** see [goal.md](goal.md)  
-**Status:** Steam Turbine Array source and package builds pass on rx580 via `hybrid-remote-build`; in-game formation, routing, and save/reload remain unverified.
+**Status:** the Steam Turbine Array source, checked `.hmod`, `.hnmod`, and matching Linux client bundle build on rx580 via `hybrid-remote-build`; formation and gameplay remain unverified.
 
 Commit `5920fdd` adds an Arcforge Furnace Wrench status line for formation, temperature, burn time, and active recipe requirements/progress. Both GitHub jobs passed in run [43542601271](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43542601271); its package and playable client ZIPs and internal checksums are verified. In-world status verification remains pending. Commit `f15a514` adds the upstream behavior of clockwise port rotation when the structure is unformed, followed by an immediate formation recheck. Both GitHub jobs passed in run [43544310146](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43544310146), and the playable Linux client ZIP and checksums are verified in [verification.md](status/verification.md). In-world Wrench status and rotation checks remain pending.
 
@@ -31,7 +31,12 @@ Commit `158d858` adds explicit custom state schemas/defaults to the conduit tier
 
 The working tree is stored at `sftp://rayyan@100.89.43.102/mnt/hdd2tb/arcforge-horizon`. This machine mounts `/mnt/hdd2tb` at `/home/rayyan/mnt/hdd2tb` with the enabled user service `arcforge-hdd2tb.service`; `/home/rayyan/Projects/arcforge-horizon` is a symlink to the remote checkout. GitHub build packages and playable client bundles are archived under `/mnt/hdd2tb/arcforge-horizon-builds/`, with a local compatibility symlink at `/home/rayyan/Projects/arcforge-horizon-builds`. Keep future project edits and build artifacts on that remote disk.
 
-## Latest build artifacts — 2026-11-15
+## Latest build artifacts — hybrid remote 2026-11-15
+- Playable Linux client ZIP: `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-hybrid-2026-11-15-steam-turbine/arcforge-linux-x86_64.zip` (SHA-256 `a69928b42c1067639e76e89e8e16ad4a032e5326ade3c044347a70f3faf43aac`).
+- The archive also contains standalone `arcforge.hmod` and `arcforge.hnmod` files, plus a source-only bundle ZIP and checksums. Horizon `native-mods.json` is included beside the client in the client ZIP.
+- Import instructions are in `INSTALL.txt`. This verifies build and packaging, not in-game behavior.
+
+## Previous GitHub build artifacts — 2026-11-15
 
 GitHub Actions run [43658856875](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43658856875) passed package and Linux client build, assembly, and artifact upload for commit `0f45ffb`.
 
@@ -50,10 +55,10 @@ The build confirms packaging and client assembly, not in-world behavior. Test th
 
 ## 1. Resume here
 
-1. The latest complete client is run 43743930371 and contains only the original fixed-size boiler. Keep using rx580 hybrid Rust builds; wait for the user to authorize GitHub builds before creating a client package for the expanded source.
-2. After a matching client exists, use a disposable world to form the controller-facing shell. Start with 3×3×3, then verify a larger footprint where all edges must be casing, and a taller shell. Confirm Pressure Glass windows are accepted only on face panels and already-formed glass is rejected.
-3. Fill with Water Buckets, connect a supported heat source/Thermal Conduit and fluid output, verify heat scaling, pressure-mode cycling, facing control, all steam grades, venting, and tank readouts. Save and reload while the boiler contains water, heat, and steam.
-4. Fix runtime issues without changing Horizon API/source, update `docs/status/verification.md`, then continue with turbines, condensers, water intake, and closed loops in `docs/plan/systems/steam-resources-industry.md`.
+1. Use the hybrid client bundle listed above. Import it into Horizon Nightly 2026-11-13 (`9f42064c11efe7ef3e5ed2baad7ddc2a3b36eea0`) with the included `INSTALL.txt`; install `arcforge.hmod` in the instance and enable `mod.arcforge`.
+2. In a disposable world, craft the Steam Turbine Array Controller, build a 3×3×3 shell with casing corners, a hollow air core, and the controller centered on the front face. Use Pressure Glass or casing for the other shell blocks.
+3. Feed steam from the Steam Boiler Array through a fluid conduit. Use the Wrench to check formation, steam flow, RPM, and FE; connect an energy conduit and extract Exhaust Steam from the controller.
+4. Break and replace a shell block, rotate the controller with the Wrench, and save/reload. Record any issue, fix it without changing Horizon API/source, update verification docs, then continue through Arcforge’s progression.
 
 **Observed local smoke:** On the pinned Nightly 2026-11-08 build, the imported client with matching manifest and content pack opened a disposable creative world. `/give arcforge:wrought_heat_cell 1` and `/give arcforge:steel_ingot 1` both succeeded and appeared in inventory. Runtime ore data parsed without skipped Arcforge placed features after conversion to `worldgen/feature/` and flattened target states. That earlier smoke logged unsupported conduit and Solar multipart properties; commit `158d858` declares those custom states, but corrected rendering is not yet verified. Machine behavior, ore distribution, and progression were not verified.
 

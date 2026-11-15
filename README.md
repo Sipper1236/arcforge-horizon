@@ -279,6 +279,8 @@ This native mod is pinned to Horizon Nightly 2026-11-13, commit `9f42064c11efe7e
 Review the source before running this command: `--trust-native-code` grants the compiled mod the user's permissions. The build selects the native bundle for the disposable `arcforge-port-test` instance. Keep the build target and gameplay trial world disposable until the save migration and client/server behavior gates above are in place.
 
 ## Latest verification
-Current build: commit `9da8a49`, Horizon Nightly 2026-11-13 (`9f42064c11efe7ef3e5ed2baad7ddc2a3b36eea0`). GitHub Actions run [43738891125](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43738891125) passed the package and Linux client jobs. The client bundle is archived on the remote drive at `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-run-43738891125/`; it has been imported and assigned to the isolated `arcforge-area-tools-test` instance. This is build/import verification, not an in-world test. The client uses Horizon's existing player-context block-break helper for area tools; see [verification](docs/status/verification.md).
+The hybrid remote build produced a checked content pack and importable Linux Horizon client for source commit `8730e2d`, Horizon Nightly 2026-11-13, Minecraft 26.3. The archive is `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-hybrid-2026-11-15-steam-turbine/arcforge-linux-x86_64.zip` (SHA-256 `a69928b42c1067639e76e89e8e16ad4a032e5326ade3c044347a70f3faf43aac`). It packages the matching `native-mods.json`, `.hmod`, and `.hnmod`. This is build/package verification only; turbine gameplay is not yet in-game verified. No GitHub Actions run was used for this checkpoint.
 
-The active pin and latest CI result are recorded above; the Nov 8 reference below is historical context.
+Previous GitHub build: commit `9da8a49`, Horizon Nightly 2026-11-13 (`9f42064c11efe7ef3e5ed2baad7ddc2a3b36eea0`). GitHub Actions run [43738891125](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43738891125) passed the package and Linux client jobs; this is historical relative to the hybrid build above.
+
+The active Horizon pin is recorded above;
