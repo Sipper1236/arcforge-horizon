@@ -1,12 +1,12 @@
 # Project handoff: Arcforge for Horizon
-## Current working checkpoint — hybrid playable client (commit `8730e2d`)
-The Steam Turbine Array implementation is commit `1c56214`; commit `8730e2d` adds a repeatable hybrid client build and verified Minecraft asset downloads. Rust formatting/build and the Horizon `.hmod` build/check passed. The Linux client bundle was built for Horizon `9f42064c11efe7ef3e5ed2baad7ddc2a3b36eea0` and Minecraft 26.3, with verified asset index and audio assets. Artifact: `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-hybrid-2026-11-15-steam-turbine/arcforge-linux-x86_64.zip` (SHA-256 `a69928b42c1067639e76e89e8e16ad4a032e5326ade3c044347a70f3faf43aac`). No GitHub build or in-game test was run.
+## Current working checkpoint — Condenser Array alpha on hybrid client
+`api/src/steam_condenser.rs` adds a formed 3–7 block Condenser Array that converts Exhaust Steam to water 1:1, adds source-style cooling bonuses from adjacent water/ice, and reports state with the Wrench. The full Linux client and both Arcforge packages were rebuilt on rx580 with the hybrid workflow. Artifact: `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-hybrid-2026-11-15-steam-turbine-rerun/arcforge-linux-x86_64.zip` (SHA-256 `319b87e1e17a250b558b2c98650e9a4c8391d611e5dd721b660e0ac1d9441221`). No GitHub build or in-game test was run.
 
 
 **Snapshot date:** 2026-11-15
-## Current snapshot — Steam Turbine Array alpha and hybrid client commit `8730e2d`
+## Current snapshot — Steam Turbine and Condenser Array alpha
 
-Commit `1c56214` adds the Steam Turbine Array alpha; commit `8730e2d` builds a matching Horizon Linux client and packages it with the content/native mod files.
+The Condenser Array source, content, and native package build on rx580 alongside the earlier Steam Turbine implementation. `docs/status/verification.md` records exact checksums. The Condenser Array slice is committed locally on `main`; it has not been pushed to GitHub.
 
 Project and builds are stored on the remote drive at `/mnt/hdd2tb/arcforge-horizon` and `/mnt/hdd2tb/arcforge-horizon-builds`; `/home/rayyan/Projects/arcforge-horizon*` are symlinks. GitHub Actions run [43738891125](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43738891125) passed at commit `9da8a49`, against Horizon Nightly 2026-11-13 revision `9f42064c11efe7ef3e5ed2baad7ddc2a3b36eea0`. Playable client path: `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-run-43738891125/arcforge-playable-linux-x86_64-9da8a499837a3345520123ee872aaeb8ea50ad91/arcforge-linux-x86_64.zip` (SHA-256 `5227d66610ec600184bb38d978516e3617a95eed4a3d27b6854fa800e3c38170`). Imported locally as `imported-2026-11-15-4f43d47`; isolated test instance `arcforge-area-tools-test` points to it and contains the matching content pack/manifest. No launch or in-world test was performed. Next: test the Hammer/Excavator behavior in that instance when able, then continue the source feature inventory in [goal.md](goal.md).
 
@@ -15,7 +15,7 @@ Read-only source checkouts are also on that drive: Arcforge at `/mnt/hdd2tb/arcf
 **Project:** `/mnt/hdd2tb/arcforge-horizon` on `rayyan@100.89.43.102`
 
 **Active goal:** see [goal.md](goal.md)  
-**Status:** the Steam Turbine Array source, checked `.hmod`, `.hnmod`, and matching Linux client bundle build on rx580 via `hybrid-remote-build`; formation and gameplay remain unverified.
+**Status:** the Steam Turbine and Condenser Array sources, checked `.hmod`, `.hnmod`, and matching Linux client bundle build on rx580; both machines still need formation and gameplay verification.
 
 Commit `5920fdd` adds an Arcforge Furnace Wrench status line for formation, temperature, burn time, and active recipe requirements/progress. Both GitHub jobs passed in run [43542601271](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43542601271); its package and playable client ZIPs and internal checksums are verified. In-world status verification remains pending. Commit `f15a514` adds the upstream behavior of clockwise port rotation when the structure is unformed, followed by an immediate formation recheck. Both GitHub jobs passed in run [43544310146](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43544310146), and the playable Linux client ZIP and checksums are verified in [verification.md](status/verification.md). In-world Wrench status and rotation checks remain pending.
 
@@ -32,7 +32,7 @@ Commit `158d858` adds explicit custom state schemas/defaults to the conduit tier
 The working tree is stored at `sftp://rayyan@100.89.43.102/mnt/hdd2tb/arcforge-horizon`. This machine mounts `/mnt/hdd2tb` at `/home/rayyan/mnt/hdd2tb` with the enabled user service `arcforge-hdd2tb.service`; `/home/rayyan/Projects/arcforge-horizon` is a symlink to the remote checkout. GitHub build packages and playable client bundles are archived under `/mnt/hdd2tb/arcforge-horizon-builds/`, with a local compatibility symlink at `/home/rayyan/Projects/arcforge-horizon-builds`. Keep future project edits and build artifacts on that remote disk.
 
 ## Latest build artifacts — hybrid remote 2026-11-15
-- Playable Linux client ZIP: `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-hybrid-2026-11-15-steam-turbine/arcforge-linux-x86_64.zip` (SHA-256 `a69928b42c1067639e76e89e8e16ad4a032e5326ade3c044347a70f3faf43aac`).
+- Playable Linux client ZIP: `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-hybrid-2026-11-15-steam-turbine-rerun/arcforge-linux-x86_64.zip` (SHA-256 `319b87e1e17a250b558b2c98650e9a4c8391d611e5dd721b660e0ac1d9441221`).
 - The archive also contains standalone `arcforge.hmod` and `arcforge.hnmod` files, plus a source-only bundle ZIP and checksums. Horizon `native-mods.json` is included beside the client in the client ZIP.
 - Import instructions are in `INSTALL.txt`. This verifies build and packaging, not in-game behavior.
 

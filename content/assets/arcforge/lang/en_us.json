@@ -48,5 +48,7 @@
   "block.arcforge.steam_boiler_array_casing": "Steam Boiler Array Casing",
   "item.arcforge.turbine_blade_set": "Turbine Blade Set",
   "block.arcforge.steam_turbine_array_controller": "Steam Turbine Array Controller",
-  "block.arcforge.steam_turbine_array_casing": "Steam Turbine Array Casing"
+  "block.arcforge.steam_turbine_array_casing": "Steam Turbine Array Casing",
+  "block.arcforge.condenser_array_controller": "Condenser Array Controller",
+  "block.arcforge.condenser_array_casing": "Condenser Array Casing"
 }

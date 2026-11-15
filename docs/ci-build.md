@@ -5,10 +5,10 @@
 remote bash tools/build_hybrid_client.sh
 ```
 
-It uses the remote Horizon checkout at `/mnt/hdd2tb/horizon-reference`, downloads the Minecraft 26.3 client inputs and checksums from Mojang, and writes the ZIP to `target/arcforge-linux-x86_64.zip` in the remote build workspace. The script disables `RUSTC_WRAPPER` because the distributed cache worker has failed on an incomplete `libc` source mirror. Archive the resulting ZIP and checksums on `/mnt/hdd2tb/arcforge-horizon-builds/`; do not use GitHub Actions until explicitly requested. The bundle is build-verified but still needs in-game testing.
+It uses the remote Horizon checkout at `/mnt/hdd2tb/horizon-reference`, downloads the Minecraft 26.3 client inputs and checksums from Mojang, and writes the ZIP to `target/arcforge-linux-x86_64.zip` in the remote build workspace. The script disables `RUSTC_WRAPPER` because the distributed cache worker has failed on an incomplete `libc` source mirror. Archive the resulting ZIP and checksums on `/mnt/hdd2tb/arcforge-horizon-builds/`; do not use GitHub Actions until explicitly requested. If the local SFTP view is unavailable and the wrapper cannot sync, invoke the same script on the canonical remote checkout through `ssh rx580 'cd /mnt/hdd2tb/arcforge-horizon && bash tools/build_hybrid_client.sh'`. The bundle is build-verified but still needs in-game testing.
 
 ## Latest hybrid artifact
-`/mnt/hdd2tb/arcforge-horizon-builds/arcforge-hybrid-2026-11-15-steam-turbine/arcforge-linux-x86_64.zip` — Horizon `9f42064c11efe7ef3e5ed2baad7ddc2a3b36eea0`, Minecraft 26.3, SHA-256 `a69928b42c1067639e76e89e8e16ad4a032e5326ade3c044347a70f3faf43aac`.
+`/mnt/hdd2tb/arcforge-horizon-builds/arcforge-hybrid-2026-11-15-steam-turbine-rerun/arcforge-linux-x86_64.zip` — includes the Condenser Array alpha, Horizon `9f42064c11efe7ef3e5ed2baad7ddc2a3b36eea0`, Minecraft 26.3, SHA-256 `319b87e1e17a250b558b2c98650e9a4c8391d611e5dd721b660e0ac1d9441221`. GitHub Actions remains deferred until requested.
 
 # GitHub Actions build
 

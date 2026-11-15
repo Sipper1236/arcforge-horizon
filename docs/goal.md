@@ -6,6 +6,9 @@ Port the complete survival gameplay scope of the pinned Arcforge release to Hori
 
 The current code is an early prototype, not a complete port. Continue implementing real gameplay from the scope in the root [README](../README.md), preserve Arcforge's recognizable mechanics and progression, and update the as-built and remaining-work documents whenever implementation changes.
 
+### Current slice — Condenser Array alpha (2026-11-15)
+`api/src/steam_condenser.rs` now forms 3–7 block boxes with a separate face controller, accepts Exhaust Steam, and converts it to water at 1:1 up to source-shaped ambient and surrounding water/ice cooling rates. Fixed 203,259 mB tanks use Horizon's block-ID-only fluid declarations; biome climate multipliers and source per-section capacities are not expressible in this callback setup. Recipes, loot, names, models, and handbook instructions are included. The hybrid client build passed on rx580; in-game formation, fluid routing, cooling, and persistence are still unverified. Do not treat Steam Power as complete.
+
 ### Current slice — Fuel Burner source fuel profiles (2026-11-14)
 
 The Fuel Burner accepts all 16 pinned Arcforge burner-fuel IDs in its 8,000 mB native input tank and applies source default HU/mB, fractional mB/t, and burn temperature. The Horizon API has no Arcforge fluid data-map hook, so profiles are hardcoded in the mod and refinery config overrides remain fixed to source defaults. Creosote remains the only bucket path; oxygen/flue gas, dynamic side controls, and most survival fuel-production chains remain unported. GitHub Actions run [43646950706](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43646950706) passed package and Linux client builds; see [verification.md](status/verification.md).
