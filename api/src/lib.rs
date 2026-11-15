@@ -31,6 +31,7 @@ fn default_registry_entry<T: Default>(_: &[T]) -> T {
     T::default()
 }
 
+mod area_tool;
 mod crushing_catalog;
 mod energy;
 mod energy_conduit;
@@ -314,6 +315,41 @@ impl Hooks for Arcforge {
         host: &mut dyn Host,
         event: &mut horizon_client::mod_api::DestroyBlockEvent,
     ) -> Flow {
+        if let Some(player) = host.acting_player()
+            && player.game_mode == 0
+            && !player.sneaking
+            && let Some((item, _, _)) = host.held()
+            && area_tool::is_area_tool(&item)
+        {
+            let center_block = host.block(event.pos);
+            if area_tool::supports_center(&item, &center_block)
+                && let Some(mut tool) = host
+                    .carried_stack(player.selected_slot as i32)
+                    .map(|stack| stack.clone())
+            {
+                let axis = area_tool::mining_axis(player.yaw, player.pitch);
+                for target in area_tool::targets(event.pos, axis) {
+                    let remaining = area_tool::DURABILITY.saturating_sub(tool.damage);
+                    if remaining <= 1 {
+                        break;
+                    }
+                    if host.block(target) != center_block || host.mod_block_entity(target).is_some()
+                    {
+                        continue;
+                    }
+                    if host.destroy_block(target, Some(&tool), false).is_some() {
+                        let Some(stack) = host.carried_stack(player.selected_slot as i32) else {
+                            break;
+                        };
+                        if stack.item.as_ref() != item {
+                            break;
+                        }
+                        stack.damage = stack.damage.saturating_add(1);
+                        tool = stack.clone();
+                    }
+                }
+            }
+        }
         if let Some(entity) = host.mod_block_entity(event.pos) {
             if thermal::spec(&entity.id).is_some() {
                 thermal::invalidate_world(host);

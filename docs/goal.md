@@ -10,6 +10,9 @@ The current code is an early prototype, not a complete port. Continue implementi
 
 The Fuel Burner accepts all 16 pinned Arcforge burner-fuel IDs in its 8,000 mB native input tank and applies source default HU/mB, fractional mB/t, and burn temperature. The Horizon API has no Arcforge fluid data-map hook, so profiles are hardcoded in the mod and refinery config overrides remain fixed to source defaults. Creosote remains the only bucket path; oxygen/flue gas, dynamic side controls, and most survival fuel-production chains remain unported. GitHub Actions run [43646950706](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43646950706) passed package and Linux client builds; see [verification.md](status/verification.md).
 
+### Current slice — Steel Hammer and Excavator area mining (2026-11-14)
+The two tools now sweep up to eight adjacent same-ID blocks in a 3×3 plane in survival, with sneak-to-disable and extra durability costs. The implementation is intentionally recorded as an alpha simplification: Horizon’s machine break helper lacks player context, and the pinned API does not expose the exact hit-face/tool-effectiveness queries this behavior needs for full source parity.
+
 ### Current slice — liquid fuel buckets (2026-11-14)
 All 11 pinned source liquid fuel buckets are registered and wired through fluid tank and Fuel Burner interactions, with exact 1,000 mB content checks. Fuel production chains and in-game verification remain open. Commit `ca31112` passes both GitHub package and Linux client builds.
 
