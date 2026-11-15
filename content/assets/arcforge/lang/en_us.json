@@ -45,5 +45,8 @@
   "item.arcforge.heat_upgrade": "Heat Upgrade",
   "item.arcforge.thermoelectric_upgrade": "Thermoelectric Efficiency Upgrade",
   "block.arcforge.steam_boiler_array_controller": "Steam Boiler Array Controller",
-  "block.arcforge.steam_boiler_array_casing": "Steam Boiler Array Casing"
+  "block.arcforge.steam_boiler_array_casing": "Steam Boiler Array Casing",
+  "item.arcforge.turbine_blade_set": "Turbine Blade Set",
+  "block.arcforge.steam_turbine_array_controller": "Steam Turbine Array Controller",
+  "block.arcforge.steam_turbine_array_casing": "Steam Turbine Array Casing"
 }

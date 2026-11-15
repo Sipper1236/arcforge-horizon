@@ -44,6 +44,7 @@ mod item_conduit;
 mod pressurized_cylinder;
 mod solar;
 mod steam_boiler;
+mod steam_turbine;
 mod thermal;
 
 const MACHINE: &str = "arcforge:steelworks";
@@ -83,6 +84,8 @@ const SOLAR_ARRAY_SCAN_INTERVAL_TICKS: i32 = 40;
 const GEOTHERMAL_PLANT: &str = "arcforge:geothermal_plant";
 const STEAM_BOILER_ARRAY_CONTROLLER: &str = steam_boiler::CONTROLLER;
 const STEAM_BOILER_ARRAY_CASING: &str = steam_boiler::CASING;
+const STEAM_TURBINE_ARRAY_CONTROLLER: &str = steam_turbine::CONTROLLER;
+const STEAM_TURBINE_ARRAY_CASING: &str = steam_turbine::CASING;
 const FUEL_BURNER: &str = "arcforge:fuel_burner";
 const WROUGHT_FLUID_TANK: &str = "arcforge:wrought_fluid_tank";
 const TEMPERED_FLUID_TANK: &str = "arcforge:tempered_fluid_tank";
@@ -305,6 +308,12 @@ impl Hooks for Arcforge {
                 host.block_entity_sync(event.pos);
             }
         }
+        if matches!(
+            event.stack.item.as_ref(),
+            STEAM_TURBINE_ARRAY_CONTROLLER | STEAM_TURBINE_ARRAY_CASING | PRESSURE_GLASS
+        ) {
+            steam_turbine::notify_placed(host, event.pos);
+        }
         if host
             .mod_block_entity(event.pos)
             .is_some_and(|entity| entity.id == ARC_CRUSHING_ARRAY_CASING)
@@ -387,6 +396,9 @@ impl Hooks for Arcforge {
             if entity.id == FIREBOX_ARRAY_CONTROLLER {
                 unform_firebox_array(host, &entity.nbt);
             }
+            if entity.id == STEAM_TURBINE_ARRAY_CONTROLLER {
+                steam_turbine::unform(host, event.pos, &entity.nbt);
+            }
             if entity.id == SOLAR_ARRAY_CONTROLLER {
                 if let Some(tower) = solar::tower_from_nbt(&entity.nbt) {
                     solar::set_formed(host, tower, false);
@@ -398,6 +410,12 @@ impl Hooks for Arcforge {
             FIREBOX_ARRAY_CASING | PRESSURE_GLASS
         ) {
             unform_firebox_array_near(host, event.pos);
+        }
+        if matches!(
+            host.block(event.pos).as_str(),
+            STEAM_TURBINE_ARRAY_CASING | PRESSURE_GLASS
+        ) {
+            steam_turbine::unform_near(host, event.pos);
         }
         if matches!(
             host.block(event.pos).as_str(),
@@ -734,6 +752,23 @@ impl Hooks for Arcforge {
             show_steam_boiler_status(host, event.pos);
             return Flow::Cancel;
         }
+        if host
+            .mod_block_entity(event.pos)
+            .is_some_and(|entity| entity.id == STEAM_TURBINE_ARRAY_CONTROLLER)
+        {
+            let requested_facing = match event.face {
+                [0, 0, -1] => Some("north"),
+                [1, 0, 0] => Some("east"),
+                [0, 0, 1] => Some("south"),
+                [-1, 0, 0] => Some("west"),
+                _ => None,
+            };
+            if let Some(facing) = requested_facing {
+                steam_turbine::face(host, event.pos, facing);
+            }
+            show_steam_turbine_status(host, event.pos);
+            return Flow::Cancel;
+        }
         if host.mod_block_entity(event.pos).is_some_and(|entity| {
             entity.id == ARC_CRUSHING_ARRAY_CASING
                 && host.block_property(event.pos, "part").as_deref() == Some("center")
@@ -961,6 +996,44 @@ impl Hooks for Arcforge {
                 ("facing".to_owned(), "north".to_owned()),
                 ("formed".to_owned(), "false".to_owned()),
                 ("lit".to_owned(), "false".to_owned()),
+            ]
+            .into_iter()
+            .collect();
+        }
+        register_content!(&mut event.blocks, id: STEAM_TURBINE_ARRAY_CONTROLLER.into(), template: "minecraft:blast_furnace".into(), item: true);
+        if let Some(block) = event
+            .blocks
+            .iter_mut()
+            .find(|block| block.id == STEAM_TURBINE_ARRAY_CONTROLLER)
+        {
+            block.state_properties = serde_json::from_value(serde_json::json!({
+                "facing": { "type": "enum", "values": ["north", "east", "south", "west"] },
+                "formed": { "type": "boolean" },
+                "lit": { "type": "boolean" }
+            }))
+            .expect("valid Steam Turbine Array controller block states");
+            block.default_state = [
+                ("facing".to_owned(), "north".to_owned()),
+                ("formed".to_owned(), "false".to_owned()),
+                ("lit".to_owned(), "false".to_owned()),
+            ]
+            .into_iter()
+            .collect();
+        }
+        register_content!(&mut event.blocks, id: STEAM_TURBINE_ARRAY_CASING.into(), template: "minecraft:iron_block".into(), item: true);
+        if let Some(block) = event
+            .blocks
+            .iter_mut()
+            .find(|block| block.id == STEAM_TURBINE_ARRAY_CASING)
+        {
+            block.state_properties = serde_json::from_value(serde_json::json!({
+                "formed": { "type": "boolean" },
+                "end": { "type": "enum", "values": ["none", "generator", "bearing"] }
+            }))
+            .expect("valid Steam Turbine Array casing block states");
+            block.default_state = [
+                ("formed".to_owned(), "false".to_owned()),
+                ("end".to_owned(), "none".to_owned()),
             ]
             .into_iter()
             .collect();
@@ -1298,6 +1371,7 @@ impl Hooks for Arcforge {
 
     fn items(&self, event: &mut ItemsEvent<'_>) {
         register_content!(&mut event.items, id: WRENCH.into(), template: "minecraft:iron_pickaxe".into(), max_stack_size: Some(1));
+        register_content!(&mut event.items, id: "arcforge:turbine_blade_set".into(), template: "minecraft:iron_sword".into());
         register_content!(&mut event.items, id: PINE_RESIN.into(), template: "minecraft:slime_ball".into());
         register_content!(&mut event.items, id: WOOD_ASH.into(), template: "minecraft:bone_meal".into());
         register_content!(&mut event.items, id: "arcforge:thermocouple".into(), template: "minecraft:comparator".into());
@@ -1600,6 +1674,7 @@ impl Hooks for Arcforge {
             || event.block == FIREBOX
             || event.block == FIREBOX_ARRAY_CONTROLLER
             || event.block == STEAM_BOILER_ARRAY_CONTROLLER
+            || event.block == STEAM_TURBINE_ARRAY_CONTROLLER
             || event.block == SOLAR_ARRAY_CONTROLLER
             || event.block == GEOTHERMAL_PLANT
             || event.block == FUEL_BURNER
@@ -1650,6 +1725,7 @@ impl Hooks for Arcforge {
             || event.block == FIREBOX
             || event.block == FIREBOX_ARRAY_CONTROLLER
             || event.block == STEAM_BOILER_ARRAY_CONTROLLER
+            || event.block == STEAM_TURBINE_ARRAY_CONTROLLER
             || event.block == SOLAR_ARRAY_CONTROLLER
             || event.block == GEOTHERMAL_PLANT
             || event.block == FUEL_BURNER
@@ -2263,6 +2339,10 @@ impl Hooks for Arcforge {
         } else if event.block == STEAM_BOILER_ARRAY_CONTROLLER && event.fluid != steam_boiler::WATER
         {
             Flow::Cancel
+        } else if event.block == STEAM_TURBINE_ARRAY_CONTROLLER
+            && !steam_turbine::accepts(event.fluid)
+        {
+            Flow::Cancel
         } else if event.block == GEOTHERMAL_PLANT && event.fluid != "minecraft:lava" {
             Flow::Cancel
         } else if event.block == FUEL_BURNER && fuel_burner::fuel(event.fluid).is_none() {
@@ -2308,7 +2388,9 @@ impl Hooks for Arcforge {
                 extract_faces: [true; 6],
             });
         }
-        if event.block == COMBUSTION {
+        if event.block == STEAM_TURBINE_ARRAY_CONTROLLER {
+            Some(steam_turbine::energy_buffer())
+        } else if event.block == COMBUSTION {
             Some(horizon_client::mod_api::ModEnergyBuffer {
                 capacity: COMBUSTION_CAPACITY_FE as i32,
                 max_insert: 0,
@@ -2390,7 +2472,9 @@ impl Hooks for Arcforge {
         _host: &dyn horizon_client::mod_api::Host,
         event: &mut horizon_client::mod_api::BlockEntityFluidsEvent<'_>,
     ) -> Option<horizon_client::mod_api::ModFluidTanks> {
-        if event.block == STEAM_BOILER_ARRAY_CONTROLLER {
+        if event.block == STEAM_TURBINE_ARRAY_CONTROLLER {
+            Some(steam_turbine::fluid_tanks())
+        } else if event.block == STEAM_BOILER_ARRAY_CONTROLLER {
             Some(horizon_client::mod_api::ModFluidTanks {
                 tanks: vec![
                     steam_boiler::TANK_CAPACITY as i32,
@@ -2517,6 +2601,9 @@ impl Hooks for Arcforge {
             FIREBOX => tick_firebox(host, event.pos, event.entity),
             FIREBOX_ARRAY_CONTROLLER => tick_firebox_array(host, event.pos, event.entity),
             STEAM_BOILER_ARRAY_CONTROLLER => steam_boiler::tick(host, event.pos, event.entity),
+            STEAM_TURBINE_ARRAY_CONTROLLER => {
+                steam_turbine::tick(host, event.pos, event.entity)
+            }
             SOLAR_ARRAY_CONTROLLER => tick_solar_array(host, event.pos, event.entity),
             GEOTHERMAL_PLANT => tick_geothermal_plant(host, event.pos, event.entity),
             FUEL_BURNER => tick_fuel_burner(host, event.pos, event.entity),
@@ -4934,6 +5021,17 @@ fn show_steam_boiler_status(host: &mut dyn Host, pos: [i32; 3]) {
     }
     if let Some(player) = host.acting_player() {
         host.action_bar(player.uuid, Text::literal(steam_boiler::status(&entity)));
+    }
+}
+fn show_steam_turbine_status(host: &mut dyn Host, pos: [i32; 3]) {
+    let Some(entity) = host.mod_block_entity(pos) else {
+        return;
+    };
+    if entity.id != STEAM_TURBINE_ARRAY_CONTROLLER {
+        return;
+    }
+    if let Some(player) = host.acting_player() {
+        host.action_bar(player.uuid, Text::literal(steam_turbine::status(&entity)));
     }
 }
 

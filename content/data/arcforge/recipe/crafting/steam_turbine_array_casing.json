@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "NTN",
+    "TGT",
+    "NTN"
+  ],
+  "key": {
+    "T": "arcforge:tempered_alloy",
+    "N": "#c:plates/nickel",
+    "G": "#c:gears/steel"
+  },
+  "result": {
+    "id": "arcforge:steam_turbine_array_casing",
+    "count": 4
+  }
+}

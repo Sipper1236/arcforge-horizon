@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " B ",
+    "GCG",
+    " R "
+  ],
+  "key": {
+    "B": "arcforge:turbine_blade_set",
+    "G": "arcforge:steam_turbine_array_casing",
+    "C": "#c:gears/steel",
+    "R": "minecraft:comparator"
+  },
+  "result": {
+    "id": "arcforge:steam_turbine_array_controller",
+    "count": 1
+  }
+}
