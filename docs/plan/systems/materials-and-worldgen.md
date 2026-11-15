@@ -17,6 +17,10 @@ Follow Arcforge's Ore Processing chapter after Getting Started and Alloys & Tier
 
 The configured and placed features for the pinned Overworld, Nether, and End ore set are registered with source-default placement data, and applicable drops, mining tags, and furnace conversions are present. The source Invar Dust crafting recipe now connects the registered Iron/Nickel Dust inputs to its existing crushing and smelting paths, with a local `c:dusts/iron` tag. Halite's flat-bed shape is approximated by a vanilla ore cluster; Arcforge's per-world generation toggles are unavailable in the pinned content schema. Other material IDs, raw/refined storage, and processing paths remain incomplete; see [implemented](../../status/implemented.md) and [not-built](../../status/not-built.md) for the exact boundary.
 
+## API-constrained alpha decision — Halite beds (2026-11-15)
+
+The pinned Arcforge source (`8843cb02cf9132f278f6a8e804b6d78837d3cbcb`) implements Halite as an oval bed of size-12 ore veins on a three-block grid, radius 11, with one layer by default and three under its thick-biome tags. Horizon content mods can use the built-in `minecraft:ore` feature, but its data format does not register a custom feature serializer. The existing `native_chunk_generate` hook runs before vanilla noise and expects the mod to provide the chunk terrain; it is not a post-noise ore-placement hook. Keep the current ordinary ore-feature generation as an explicit alpha simplification, preserving the ore's survival and processing paths. Do not change Horizon's API for this feature.
+
 ## Acceptance checks
 
 - Each target ore appears only in its intended dimension/biomes and only in newly generated chunks.

@@ -24,6 +24,10 @@ Continue in Arcforge's chapter order through Steam Power, Turbines & Engines, Oi
 
 These systems are not implemented in the current port. The existing 8,000 mB creosote tanks support limited Carbonizer/Infuser recipes; they do not constitute the broader steam, petroleum, refinery, or chemistry systems.
 
+## API-constrained alpha decision — Electric Pump (2026-11-15)
+
+Arcforge's Electric Pump picks up a source-fluid block and removes it unless adjacent water sources make it infinite. The pinned Horizon mod `Host` exposes block reads, property changes, and a machine-destroy helper, but no source-fluid pickup operation with `BucketPickup` semantics; block destruction is not equivalent. Keep exact source-block pumping deferred rather than adding a Horizon API hook or creating fluid from ordinary blocks. Steam machines can use water supplied by buckets and existing fluid transfer while this boundary remains.
+
 ## Acceptance checks
 
 Each industrial chain must be obtainable in survival, bounded by input/output capacity, persistent after save/reload, and covered by a scenario that checks its outputs and byproducts. Nuclear behavior additionally needs controlled shutdown and explicit safety tests.

@@ -36,6 +36,11 @@ This list distinguishes deliberate alpha choices from unfinished work. A feature
 | Save and multiplayer | All machine state survives reload and behaves consistently in solo, LAN, and dedicated-server play. | Some state is saved in block entity compounds; no full migration/network parity test is recorded. | **Unverified.** Add scenario coverage before claiming parity. |
 | Questline | Optional 20-chapter/280-quest Hibiscus content and custom triggers. | Not implemented. | **Deferred.** Keep it optional until the full recipe/progression graph works without quests. |
 
+## API-constrained alpha simplifications (2026-11-15)
+
+- **Halite beds:** Arcforge uses a randomized 3-block-grid oval bed of size-12 veins (radius 11), with one layer by default and three under desert/ocean tags. The content pack currently uses Horizon's built-in ore feature. Horizon's native chunk-generation callback runs before vanilla noise and expects a whole replacement terrain, so it cannot append the bed to normal terrain. Keep the ordinary ore feature as an explicit alpha simplification; preserve mining drops and the Rock Salt processing chain.
+- **Electric Pump source pickup:** Arcforge removes a source-fluid block after pumping it, except for infinite water sources. The current mod `Host` has no fluid-source pickup helper; its machine block-destroy helper does not preserve bucket-pickup semantics. Defer the exact pump behavior without an API change. Water remains obtainable through buckets and existing fluid transfer.
+
 ## Recording future decisions
 
 For every deliberate simplification, add a row with the upstream behavior, actual alpha behavior, player impact, and reason the pinned modding API prevents a faithful implementation. If the feature is merely unfinished, mark it unfinished instead of calling it an API limitation. Revisit these notes as the implementation changes.
