@@ -9,27 +9,19 @@
   "pages": [
     {
       "type": "text",
-      "text": "A refinery column that splits creosote and Crude Oil into fractions with heat. The taller and wider the column, the more it makes, and the faster.\n# Building\nA solid column 2x2 or 3x3 across and 4 to 16 tall, of casings and Tray Level Casings with one controller. The controller and the trays can't be in the top or bottom layer, and on a 3x3 the controller goes on the outside. The controller's side is the front.\nFormed, it becomes a refinery tower: a round shell in flanged tray sections, a sight glass on each tray showing what pools there and the vapour rising, platforms and a caged ladder, draw-off pipes for each product, a condenser bank on top and a fired reboiler at the base that glows when it's hot. You can walk on its platforms."
+      "text": "A refinery column that splits Creosote, Crude Oil, and Sour Crude Oil into fractions using stored HU heat. Wider and taller columns process feed faster and hold more heat.\n# Building\nBuild a solid 2x2 or 3x3 column, 4 to 16 blocks high, from Distillation Array Casings and Tray Level Casings. Place one controller on an outer side, between the top and bottom layers. The controller and tray blocks cannot occupy the top or bottom layer. Once formed, the pieces stay visible as a simple static column. The alpha does not include the animated refinery shell, platforms, ladder, or draw-off pipe models."
     },
     {
       "type": "text",
-      "text": "# Size\nIt feeds 10 mB/t for a 2x2 four high, more by its cross-section (a 3x3 x2.25) and height (per 4 blocks): 20 mB/t for a 2x2x8, 90 mB/t for a 3x3x16. Its heat buffer grows the same way, and its tanks with its volume.\n# Creosote (1,000 mB, 4,000 HU, 350°C)\n- 4 high: 250 Naphtha, 2 Pitch.\n- 6 high: 250 Naphtha, 450 Heavy Oil, 1 Pitch.\n- 8 high and up: 250 Naphtha, 300 Light Oil, 300 Heavy Oil, 1 Pitch."
+      "text": "# Operation\nInsert a full 1,000 mB batch of Creosote, Crude Oil, or Sour Crude Oil into the feed tank. Supply heat through a Thermal Conduit and wait until the column reaches the recipe temperature. Pitch is collected in the controller inventory; Speed and Heat Upgrades go in the two upgrade slots. Use a Wrench on the controller to see the column size, feed, batch progress, heat, and steam.\n# Rates and heat\nA 2x2x4 column processes 10 mB/t; 2x2x8 processes 20 mB/t; 3x3x16 processes 90 mB/t. Heat capacity scales with column volume. Horizon exposes fluid tank capacities by block ID, so the alpha uses fixed capacities for every column size."
     },
     {
       "type": "text",
-      "text": "# Crude Oil (1,000 mB, 5,000 HU, 380°C)\n- 6 high: 100 Refinery Gas, 200 Naphtha, 350 Diesel, 250 Bitumen.\n- 10 high: also 150 Kerosene, 80 Light Oil and 130 Heavy Oil (100 Refinery Gas, 200 Naphtha, 190 Diesel, 100 Bitumen).\n- 14 high and up: more of the light cuts: 130 Refinery Gas, 270 Naphtha, 190 Kerosene, 100 Light Oil, 155 Diesel, 65 Heavy Oil, 60 Bitumen.\nBelow 6 it's too short for Crude Oil."
+      "text": "# Creosote (1,000 mB, 4,000 HU, 350°C)\n- 4 high: 250 Naphtha, 2 Pitch.\n- 6 high: 250 Naphtha, 450 Heavy Oil, 1 Pitch.\n- 8 high and up: 250 Naphtha, 300 Light Oil, 300 Heavy Oil, 1 Pitch.\n# Crude Oil (1,000 mB, 5,000 HU, 380°C)\n- 6 high: 100 Refinery Gas, 200 Naphtha, 350 Diesel, 250 Bitumen.\n- 10 high: 100 Refinery Gas, 200 Naphtha, 150 Kerosene, 80 Light Oil, 190 Diesel, 130 Heavy Oil, 100 Bitumen.\n- 14 high and up: 130 Refinery Gas, 270 Naphtha, 190 Kerosene, 100 Light Oil, 155 Diesel, 65 Heavy Oil, 60 Bitumen. Sour Crude uses Sour Diesel and Sour Kerosene."
     },
     {
       "type": "text",
-      "text": "# Ports\nA new column starts without ports: set a heat port (a Fuel Burner under it heats it), a feed port, and a port for each product you want out, with the Wrench in Port mode. Each product has its own mode, and Refinery Gas leaves by gas conduits.\n# Steam stripping\nSteam in its steam tank raises the Naphtha of every batch (out of the Heavy Oil for creosote, the Bitumen for Crude Oil): Steam +15%, High-Pressure +30%, Superheated +50%, 100 mB a batch.\n# Upgrades\nSpeed Upgrades feed it 2^(n/2) times as fast, using heat as fast. Heat Upgrades cut the heat per batch to 0.8^n."
-    },
-    {
-      "type": "multiblock",
-      "structure": "distillation_array"
-    },
-    {
-      "type": "multiblock",
-      "structure": "distillation_array_3x3"
+      "text": "# Steam stripping\nInsert 100 mB of Steam, High-Pressure Steam, or Superheated Steam per batch to increase Naphtha by 15%, 30%, or 50%. The extra Naphtha is taken from Heavy Oil for Creosote and Bitumen for crude feeds.\n# Outputs and limits\nFluid tanks are currently exposed on every side. The controller Wrench sets its facing, but the alpha has no configurable individual product ports. Refinery Gas is produced as fluid, but this build does not include the source mod’s dynamic gas pipe routing."
     }
   ]
 }

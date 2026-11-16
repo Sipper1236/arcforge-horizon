@@ -14,6 +14,9 @@ pub struct Fuel {
 
 const LIQUID_FUEL_BUCKETS: &[(&str, &str)] = &[
     ("arcforge:creosote", "arcforge:creosote_bucket"),
+    ("arcforge:crude_oil", "arcforge:crude_oil_bucket"),
+    ("arcforge:sour_crude_oil", "arcforge:sour_crude_oil_bucket"),
+    ("arcforge:bitumen", "arcforge:bitumen_bucket"),
     ("arcforge:naphtha", "arcforge:naphtha_bucket"),
     ("arcforge:light_oil", "arcforge:light_oil_bucket"),
     ("arcforge:heavy_oil", "arcforge:heavy_oil_bucket"),

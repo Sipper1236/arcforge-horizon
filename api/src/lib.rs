@@ -33,6 +33,7 @@ fn default_registry_entry<T: Default>(_: &[T]) -> T {
 
 mod area_tool;
 mod crushing_catalog;
+mod distillation_array;
 mod electric_pump;
 mod energy;
 mod energy_conduit;
@@ -102,6 +103,9 @@ const ELECTRIC_PUMP: &str = electric_pump::BLOCK;
 const PUMPJACK_CONTROLLER: &str = oil_pumpjack::CONTROLLER;
 const PUMPJACK_CASING: &str = oil_pumpjack::CASING;
 const WELL_HEAD: &str = oil_pumpjack::WELL_HEAD;
+const DISTILLATION_CONTROLLER: &str = distillation_array::CONTROLLER;
+const DISTILLATION_CASING: &str = distillation_array::CASING;
+const DISTILLATION_TRAY: &str = distillation_array::TRAY;
 const STEAM_TURBINE_ARRAY_CASING: &str = steam_turbine::CASING;
 const FUEL_BURNER: &str = "arcforge:fuel_burner";
 const WROUGHT_FLUID_TANK: &str = "arcforge:wrought_fluid_tank";
@@ -353,6 +357,12 @@ impl Hooks for Arcforge {
         ) {
             oil_pumpjack::notify_placed(host, event.pos);
         }
+        if matches!(
+            event.stack.item.as_ref(),
+            DISTILLATION_CONTROLLER | DISTILLATION_CASING | DISTILLATION_TRAY
+        ) {
+            distillation_array::notify_placed(host, event.pos);
+        }
         if host
             .mod_block_entity(event.pos)
             .is_some_and(|entity| entity.id == ARC_CRUSHING_ARRAY_CASING)
@@ -450,6 +460,9 @@ impl Hooks for Arcforge {
             if entity.id == PUMPJACK_CONTROLLER {
                 oil_pumpjack::unform(host, event.pos, &entity.nbt);
             }
+            if entity.id == DISTILLATION_CONTROLLER {
+                distillation_array::unform(host, event.pos, &entity.nbt);
+            }
             if entity.id == SOLAR_ARRAY_CONTROLLER {
                 if let Some(tower) = solar::tower_from_nbt(&entity.nbt) {
                     solar::set_formed(host, tower, false);
@@ -477,6 +490,12 @@ impl Hooks for Arcforge {
         }
         if matches!(
             host.block(event.pos).as_str(),
+            DISTILLATION_CASING | DISTILLATION_TRAY
+        ) {
+            distillation_array::unform_near(host, event.pos);
+        }
+        if matches!(
+            host.block(event.pos).as_str(),
             SOLAR_ARRAY_CASING | SOLAR_COLLECTOR
         ) {
             solar::unform_near(host, event.pos);
@@ -485,6 +504,17 @@ impl Hooks for Arcforge {
     }
 
     fn container_accepts(&self, host: &dyn Host, event: &mut ContainerAcceptsEvent<'_>) -> Flow {
+        if event.entity.id == DISTILLATION_CONTROLLER {
+            return if distillation_array::item_allowed(
+                event.slot,
+                event.stack.item.as_ref(),
+                event.stack.count,
+            ) {
+                Flow::Continue
+            } else {
+                Flow::Cancel
+            };
+        }
         if event.entity.id == STEAM_BOILER_ARRAY_CONTROLLER {
             return if event.slot == 0 && event.stack.item.as_ref() == "minecraft:water_bucket" {
                 Flow::Continue
@@ -856,6 +886,30 @@ impl Hooks for Arcforge {
                 host.set_block_property(event.pos, "facing", facing);
             }
             show_electric_pump_status(host, event.pos);
+            return Flow::Cancel;
+        }
+        if host
+            .mod_block_entity(event.pos)
+            .is_some_and(|entity| entity.id == DISTILLATION_CONTROLLER)
+        {
+            let requested_facing = match event.face {
+                [0, 0, -1] => Some("north"),
+                [1, 0, 0] => Some("east"),
+                [0, 0, 1] => Some("south"),
+                [-1, 0, 0] => Some("west"),
+                _ => None,
+            };
+            if let Some(facing) = requested_facing {
+                distillation_array::face(host, event.pos, facing);
+            }
+            if let Some(entity) = host.mod_block_entity(event.pos) {
+                if let Some(player) = host.acting_player() {
+                    host.action_bar(
+                        player.uuid,
+                        Text::literal(distillation_array::status(&entity)),
+                    );
+                }
+            }
             return Flow::Cancel;
         }
         if host
@@ -1300,6 +1354,60 @@ impl Hooks for Arcforge {
             block.default_state = [("gas".to_owned(), "false".to_owned())]
                 .into_iter()
                 .collect();
+        }
+        register_content!(&mut event.blocks, id: DISTILLATION_CONTROLLER.into(), template: "minecraft:blast_furnace".into(), item: true);
+        if let Some(block) = event
+            .blocks
+            .iter_mut()
+            .find(|block| block.id == DISTILLATION_CONTROLLER)
+        {
+            block.state_properties = serde_json::from_value(serde_json::json!({
+                "facing": { "type": "enum", "values": ["north", "east", "south", "west"] },
+                "formed": { "type": "boolean" },
+                "lit": { "type": "boolean" }
+            }))
+            .expect("valid Distillation Array controller states");
+            block.default_state = [
+                ("facing".to_owned(), "north".to_owned()),
+                ("formed".to_owned(), "false".to_owned()),
+                ("lit".to_owned(), "false".to_owned()),
+            ]
+            .into_iter()
+            .collect();
+        }
+        register_content!(&mut event.blocks, id: DISTILLATION_CASING.into(), template: "minecraft:iron_block".into(), item: true);
+        if let Some(block) = event
+            .blocks
+            .iter_mut()
+            .find(|block| block.id == DISTILLATION_CASING)
+        {
+            block.state_properties = serde_json::from_value(serde_json::json!({
+                "formed": { "type": "boolean" }
+            }))
+            .expect("valid Distillation Array casing states");
+            block.default_state = [("formed".to_owned(), "false".to_owned())]
+                .into_iter()
+                .collect();
+        }
+        register_content!(&mut event.blocks, id: DISTILLATION_TRAY.into(), template: "minecraft:iron_block".into(), item: true);
+        if let Some(block) = event
+            .blocks
+            .iter_mut()
+            .find(|block| block.id == DISTILLATION_TRAY)
+        {
+            block.state_properties = serde_json::from_value(serde_json::json!({
+                "formed": { "type": "boolean" },
+                "fraction": { "type": "enum", "values": ["heavy", "light", "naphtha", "vapor"] },
+                "lit": { "type": "boolean" }
+            }))
+            .expect("valid Distillation Array tray states");
+            block.default_state = [
+                ("formed".to_owned(), "false".to_owned()),
+                ("fraction".to_owned(), "heavy".to_owned()),
+                ("lit".to_owned(), "false".to_owned()),
+            ]
+            .into_iter()
+            .collect();
         }
         register_content!(&mut event.blocks, id: WATER_INTAKE_CONTROLLER.into(), template: "minecraft:blast_furnace".into());
         if let Some(block) = event
@@ -2022,6 +2130,7 @@ impl Hooks for Arcforge {
             || event.block == WATER_INTAKE_CONTROLLER
             || event.block == ELECTRIC_PUMP
             || event.block == PUMPJACK_CONTROLLER
+            || event.block == DISTILLATION_CONTROLLER
             || event.block == SOLAR_ARRAY_CONTROLLER
             || event.block == GEOTHERMAL_PLANT
             || event.block == FUEL_BURNER
@@ -2077,6 +2186,7 @@ impl Hooks for Arcforge {
             || event.block == WATER_INTAKE_CONTROLLER
             || event.block == ELECTRIC_PUMP
             || event.block == PUMPJACK_CONTROLLER
+            || event.block == DISTILLATION_CONTROLLER
             || event.block == SOLAR_ARRAY_CONTROLLER
             || event.block == GEOTHERMAL_PLANT
             || event.block == FUEL_BURNER
@@ -2104,7 +2214,9 @@ impl Hooks for Arcforge {
         host: &dyn horizon_client::mod_api::Host,
         event: &mut BlockEntityContainerEvent<'_>,
     ) -> Option<ModContainer> {
-        if event.block == STEAM_BOILER_ARRAY_CONTROLLER {
+        if event.block == DISTILLATION_CONTROLLER {
+            Some(distillation_array::container())
+        } else if event.block == STEAM_BOILER_ARRAY_CONTROLLER {
             Some(ModContainer {
                 slots: 2,
                 faces: [vec![1], vec![0], vec![0], vec![0], vec![0], vec![0]],
@@ -2683,7 +2795,11 @@ impl Hooks for Arcforge {
         _host: &dyn Host,
         event: &mut horizon_client::mod_api::BlockEntityAcceptsFluidEvent<'_>,
     ) -> Flow {
-        if pressurized_cylinder::cylinder_capacity(event.block).is_some()
+        if event.block == DISTILLATION_CONTROLLER
+            && !distillation_array::accepts(event.tank, event.fluid)
+        {
+            Flow::Cancel
+        } else if pressurized_cylinder::cylinder_capacity(event.block).is_some()
             && !pressurized_cylinder::accepts_gas(event.block, event.fluid)
         {
             Flow::Cancel
@@ -2842,7 +2958,9 @@ impl Hooks for Arcforge {
         _host: &dyn horizon_client::mod_api::Host,
         event: &mut horizon_client::mod_api::BlockEntityFluidsEvent<'_>,
     ) -> Option<horizon_client::mod_api::ModFluidTanks> {
-        if event.block == STEAM_TURBINE_ARRAY_CONTROLLER {
+        if event.block == DISTILLATION_CONTROLLER {
+            Some(distillation_array::fluid_tanks())
+        } else if event.block == STEAM_TURBINE_ARRAY_CONTROLLER {
             Some(steam_turbine::fluid_tanks())
         } else if event.block == STEAM_CONDENSER_ARRAY_CONTROLLER {
             Some(steam_condenser::fluid_tanks())
@@ -2989,6 +3107,7 @@ impl Hooks for Arcforge {
             WATER_INTAKE_CONTROLLER => water_intake::tick(host, event.pos, event.entity),
             ELECTRIC_PUMP => electric_pump::tick(host, event.pos, event.entity),
             PUMPJACK_CONTROLLER => oil_pumpjack::tick(host, event.pos, event.entity),
+            DISTILLATION_CONTROLLER => distillation_array::tick(host, event.pos, event.entity),
             SOLAR_ARRAY_CONTROLLER => tick_solar_array(host, event.pos, event.entity),
             GEOTHERMAL_PLANT => tick_geothermal_plant(host, event.pos, event.entity),
             FUEL_BURNER => tick_fuel_burner(host, event.pos, event.entity),
@@ -6467,6 +6586,9 @@ fn transfer_supported_heat_to_neighbor(
     }
     if target.id == SUPERHEATER_ARRAY_CONTROLLER {
         return superheater::accept_heat(host, neighbor, heat, rate);
+    }
+    if target.id == DISTILLATION_CONTROLLER {
+        return distillation_array::accept_heat(host, neighbor, heat, rate);
     }
     let (min_temperature, capacity, max_temperature) = match target.id.as_str() {
         FIBERIZER => (800, 10_000, 1100),

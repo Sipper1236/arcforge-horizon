@@ -65,5 +65,11 @@
   "block.arcforge.pumpjack_casing": "Pumpjack Casing",
   "item.arcforge.pumpjack_casing": "Pumpjack Casing",
   "block.arcforge.well_head": "Well Head",
-  "item.arcforge.well_head": "Well Head"
+  "item.arcforge.well_head": "Well Head",
+  "block.arcforge.distillation_array_controller": "Distillation Array Controller",
+  "item.arcforge.distillation_array_controller": "Distillation Array Controller",
+  "block.arcforge.distillation_array_casing": "Distillation Array Casing",
+  "item.arcforge.distillation_array_casing": "Distillation Array Casing",
+  "block.arcforge.tray_level_casing": "Tray Level Casing",
+  "item.arcforge.tray_level_casing": "Tray Level Casing"
 }
