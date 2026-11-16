@@ -3,7 +3,7 @@ All Arcforge builds and compile verification run through GitHub Actions. Do not 
 
 ## Current build policy
 
-Latest successful full build: commit `bb330aa`, run [43780024722](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43780024722); both the native/content package job and pinned Linux client job passed. Artifacts are under `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-github-43780024722/`.
+Latest successful full build: commit af81fc5, run [43783919669](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43783919669). The client ZIP SHA-256 is c7cf787f5e92fefd1a3f0fdd06b279e2b30d728d3e0913a1d424edb1c57e3a64.
 
 Current instruction: build only with GitHub Actions. Do not run the hybrid compile workflow. Push a source change to trigger the workflow; it checks Rust and content, packages the mod, and builds the pinned Linux client.
 ## Historical hybrid remote build (inactive)

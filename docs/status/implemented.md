@@ -1,10 +1,10 @@
 # Current implementation
-**Latest build:** Oil Pumpjack alpha, built by GitHub Actions run [43780024722](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43780024722); native/content packaging and playable Linux client jobs both passed. In-game behavior is not verified yet.
+**Latest build:** Arcforge 3×5 Pumpjack alpha, built by GitHub Actions run [43783919669](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43783919669).
 
-Current GitHub playable artifact: /mnt/hdd2tb/arcforge-horizon-builds/arcforge-github-43780024722/.
+Current GitHub playable artifact: /mnt/hdd2tb/arcforge-horizon-builds/arcforge-github-43783919669/arcforge-playable-linux-x86_64-af81fc59065c8189445ae0fe945651a7e49ca7d4/arcforge-linux-x86_64.zip.
 
 ## Oil deposit survey and Pumpjack alpha
-The last verified client (run 43780024722) contains the earlier single-block Pumpjack. The current working tree replaces it with Arcforge's 3×5 structure and a craftable Well Head stand-in; this source change is pending a GitHub Actions build and in-game verification.
+Commit af81fc5 replaces the earlier single-block Pumpjack with Arcforge's 3×5 structure, recipes and loot, visible formed controller/casing models, and a craftable Well Head stand-in. Run 43783919669 built and packaged the mod and Linux client. In-game structure formation, pumping, and save/reload are not yet verified.
 The Seismic Survey Tool reports deterministic ordinary-region Overworld deposits, including their remaining volume. `api/src/oil_pumpjack.rs` adds power-fed crude extraction, a 16,000 mB output tank, and shared world-saved depletion. The machine uses Arcforge’s default rate, depletion curve, and depleted-field trickle. The Pumpjack is currently a single-block alpha; the source 3×5 structure, derrick/wellhead path, biome modifiers, caverns, and gas extraction remain. GitHub Actions run [43780024722](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43780024722) passed; its playable client is `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-github-43780024722/arcforge-playable-linux-x86_64-bb330aa0b74946df172be4d2741b019bc07a0374/arcforge-linux-x86_64.zip` (SHA-256 `7c688ea736e805af9489cf6a19a846380b4cf78f7572014d92b2c59c46ccd559`). This proves build/package integrity, not gameplay behavior.
 ## Superheater Array alpha
 api/src/superheater.rs adds the 3–7 block cubic multiblock, steam-grade conversion, pressure modes, persisted heat, survival recipes and drops, and thermal-conduit integration. GitHub Actions run 43773403158 passed both jobs; in-game behavior is pending.

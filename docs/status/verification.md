@@ -1,3 +1,11 @@
+## Arcforge 3×5 Pumpjack alpha — GitHub Actions build (2026-11-16)
+Commit af81fc5 replaces the temporary single-block extractor with Arcforge's 3×5 Pumpjack structure, visible formed controller/casing models, recipes and loot for the controller/casing/Well Head, and handbook instructions. GitHub Actions run 43783919669 passed Rust formatting, the native crate check, Horizon content build/check, HMOD/HNMOD packaging, and Linux client build/package.
+Playable client ZIP: /mnt/hdd2tb/arcforge-horizon-builds/arcforge-github-43783919669/arcforge-playable-linux-x86_64-af81fc59065c8189445ae0fe945651a7e49ca7d4/arcforge-linux-x86_64.zip
+SHA-256: c7cf787f5e92fefd1a3f0fdd06b279e2b30d728d3e0913a1d424edb1c57e3a64
+Native HMOD SHA-256: c359c9a5916469e93f0a28e0f210e1c506f70893201044727449c598db941043
+Native HNMOD SHA-256: ac2f6378c08930fd97718d663253f01629ac69fb6d0d99794d5292a3a165ff2d
+The package bundle and client ZIP passed integrity checks; each embedded client checksum matched. The native-mod manifest pins Horizon Nightly 2026-11-13 at 9f42064c11efe7ef3e5ed2baad7ddc2a3b36eea0. This verifies build and packaging only; in-game structure formation, pumping, and save/reload remain unverified.
+
 ## Oil Pumpjack alpha — GitHub Actions build (2026-11-16)
 Commit `bb330aa` adds a powered single-block extractor, source-matched rate/depletion defaults, and world-saved shared field volume. GitHub Actions run [43780024722](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43780024722) passed Rust formatting and crate checks, Horizon content build/check, native package creation, and the pinned Linux client build.
 
