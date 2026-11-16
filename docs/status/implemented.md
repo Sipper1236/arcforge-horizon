@@ -1,10 +1,10 @@
 # Current implementation
-**Latest build:** Superheater Array alpha, built by GitHub Actions run 43773403158; native/content packaging and playable Linux client jobs both passed. In-game behavior is not verified yet.
+**Latest build:** Oil deposit survey alpha, built by GitHub Actions run 43776386544; native/content packaging and playable Linux client jobs both passed. In-game behavior is not verified yet.
 
-Current GitHub playable artifact: /mnt/hdd2tb/arcforge-horizon-builds/arcforge-github-43773403158/.
+Current GitHub playable artifact: /mnt/hdd2tb/arcforge-horizon-builds/arcforge-github-43776386544/.
 
-## Current unbuilt work — Oil deposit survey
-The Seismic Survey Tool and seed-based ordinary-region deposit report are implemented locally and awaiting GitHub Actions. This is prospecting only; oil extraction/depletion is not implemented.
+## Oil deposit survey alpha
+The Seismic Survey Tool and seed-based ordinary-region deposit report are implemented. GitHub Actions run 43776386544 passed both jobs. This is prospecting only; oil extraction/depletion is not implemented.
 
 ## Superheater Array alpha
 api/src/superheater.rs adds the 3–7 block cubic multiblock, steam-grade conversion, pressure modes, persisted heat, survival recipes and drops, and thermal-conduit integration. GitHub Actions run 43773403158 passed both jobs; in-game behavior is pending.

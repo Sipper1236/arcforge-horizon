@@ -1,4 +1,9 @@
 # Verification record
+## Oil deposit survey alpha — GitHub Actions build (2026-11-15)
+Commit 06ce84c adds deterministic Overworld regional survey results and the Seismic Survey Tool. GitHub Actions run [43776386544](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43776386544) passed both jobs: Rust crate check, content build/check, native package, and pinned Horizon Linux client build.
+Playable client artifact: /mnt/hdd2tb/arcforge-horizon-builds/arcforge-github-43776386544/arcforge-playable-linux-x86_64-06ce84c300e4a88a2881df43ba3357a6a51d5b08/arcforge-linux-x86_64.zip (SHA-256 0d2e6a423801d41f9543bcd95a11110b278b657057a00472264f58ed98c03a9c).
+The ZIP passes unzip -t and its embedded SHA256SUMS verifies horizon-client, native-mods.json, arcforge.hmod, and arcforge.hnmod. This verifies build/package integrity only; survey behavior has not been tested in-game. Extraction/depletion remains unimplemented.
+
 ## Superheater Array alpha — GitHub Actions build (2026-11-15)
 Commit f1f8608 adds the Superheater Array. GitHub Actions run [43773403158](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43773403158) passed both jobs: native Rust crate check, content pack build/check, native bundle packaging, and pinned Horizon Linux client build/package.
 Playable client artifact: /mnt/hdd2tb/arcforge-horizon-builds/arcforge-github-43773403158/arcforge-playable-linux-x86_64-f1f8608b1d6ce52b67cbe38dbbb6ae5ff2dd1cc9/arcforge-linux-x86_64.zip (SHA-256 63654ada508bb66a4501b67aa34a627d10025e21312e6f3ea968a1b7b4e5c813).

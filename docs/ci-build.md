@@ -3,7 +3,7 @@ All future Arcforge builds and compile verification must run through GitHub Acti
 
 ## Current build policy
 
-Latest successful full build: commit f1f8608, run 43773403158; both the native/content package job and pinned Linux client job passed. Artifacts are on the remote build volume under /mnt/hdd2tb/arcforge-horizon-builds/arcforge-github-43773403158/.
+Latest successful full build: commit 06ce84c, run 43776386544; both the native/content package job and pinned Linux client job passed. Artifacts are on the remote build volume under /mnt/hdd2tb/arcforge-horizon-builds/arcforge-github-43776386544/.
 
 Current instruction: build only with GitHub Actions. Do not run the hybrid compile workflow. Push a change under api/, content/, tools/, or .github/workflows/build.yml to trigger the public Actions workflow; it checks Rust, builds/checks content, packages the native mod, and builds the pinned Linux client.
 

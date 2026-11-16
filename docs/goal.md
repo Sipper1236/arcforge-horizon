@@ -6,8 +6,8 @@ Port the complete survival gameplay scope of the pinned Arcforge release to Hori
 
 The current code is an early prototype, not a complete port. Continue implementing real gameplay from the scope in the root [README](../README.md), preserve Arcforge's recognizable mechanics and progression, and update the as-built and remaining-work documents whenever implementation changes.
 
-### Current slice — Oil deposit survey alpha (2026-11-15, GitHub build pending)
-api/src/oil_deposit.rs computes deterministic, seed-based survey results for the Overworld using Arcforge's ordinary region chance, weighted deposit kinds, volume ranges, radii, depth range, sour roll, and gas-cap roll. The Seismic Survey Tool reports results in the action bar. Biome modifiers, saved Survey Records, oil caverns, pumping, and depletion remain unimplemented.
+### Current slice — Oil deposit survey alpha (2026-11-15, GitHub verified)
+api/src/oil_deposit.rs computes deterministic, seed-based survey results for the Overworld using Arcforge's ordinary region chance, weighted deposit kinds, volume ranges, radii, depth range, sour roll, and gas-cap roll. The Seismic Survey Tool reports results in the action bar. GitHub Actions run 43776386544 passed both jobs. Biome modifiers, saved Survey Records, oil caverns, pumping, and depletion remain unimplemented.
 
 ### Current slice — Superheater Array alpha (2026-11-15)
 The 3–7 block cubic array processes all three steam grades, scales active heat/flow/tank limits by formed shell volume, accepts thermal-conduit heat, and exposes mode, temperature, tank, and flow status through the Wrench. GitHub Actions run 43773403158 passed; in-game verification is pending.
