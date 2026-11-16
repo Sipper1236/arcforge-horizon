@@ -1244,7 +1244,11 @@ impl Hooks for Arcforge {
             .collect();
         }
         register_content!(&mut event.blocks, id: OIL_PUMPJACK.into(), template: "minecraft:blast_furnace".into());
-        if let Some(block) = event.blocks.iter_mut().find(|block| block.id == OIL_PUMPJACK) {
+        if let Some(block) = event
+            .blocks
+            .iter_mut()
+            .find(|block| block.id == OIL_PUMPJACK)
+        {
             block.state_properties = serde_json::from_value(serde_json::json!({
                 "facing": { "type": "enum", "values": ["north", "east", "south", "west"] },
                 "lit": { "type": "boolean" }
