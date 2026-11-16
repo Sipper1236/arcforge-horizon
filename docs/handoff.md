@@ -1,25 +1,25 @@
-# Current build policy (updated 2026-11-15)
+# Current build policy (updated 2026-11-16)
 Build and compile only through GitHub Actions. Do not run hybrid or local compilation. Earlier hybrid artifacts and steps below are historical; use GitHub Actions artifacts for current playtesting.
-Latest successful GitHub build: run 43776386544; remote artifacts: /mnt/hdd2tb/arcforge-horizon-builds/arcforge-github-43776386544/.
+Latest successful GitHub build: run 43780024722 for commit `bb330aa`; artifacts are under `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-github-43780024722/`. Playable Linux client: `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-github-43780024722/arcforge-playable-linux-x86_64-bb330aa0b74946df172be4d2741b019bc07a0374/arcforge-linux-x86_64.zip` (SHA-256 `7c688ea736e805af9489cf6a19a846380b4cf78f7572014d92b2c59c46ccd559`).
 
-## Current working checkpoint — Oil Pumpjack alpha (GitHub build pending; gameplay pending)
-The working tree adds a powered single-block Pumpjack and extends `api/src/oil_deposit.rs` with shared depletion persisted at `<world>/data/arcforge-oil-deposits.tsv`. It uses Arcforge’s defaults (60 FE/t; 30 mB/t from a full field, slowing to 25%; 40 mB/s depleted trickle; 100,000 FE buffer; 16,000 mB crude tank), selects sour or sweet crude from the surveyed deposit, and provides Wrench status plus energy/fluid ports. The Seismic Survey Tool now shows remaining and original volumes. It does not yet form the source 3×5 structure or use Derrick-built Well Heads; biome bonuses, oil caverns, and gas extraction also remain. Source and content are pending the next GitHub Actions run; no gameplay claim is made. The last verified playable artifact remains run 43776386544 at `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-github-43776386544/` until a new GitHub run passes.
-## Current working checkpoint — Superheater Array alpha (GitHub verified; gameplay pending)
+## Current working checkpoint — Oil Pumpjack alpha (GitHub verified; gameplay pending)
+Commit `bb330aa` adds a powered single-block Pumpjack and extends `api/src/oil_deposit.rs` with shared depletion persisted at `<world>/data/arcforge-oil-deposits.tsv`. It uses Arcforge’s defaults (60 FE/t; 30 mB/t from a full field, slowing to 25%; 40 mB/s depleted trickle; 100,000 FE buffer; 16,000 mB crude tank), selects sour or sweet crude from the surveyed deposit, and provides Wrench status plus energy/fluid ports. The Seismic Survey Tool now shows remaining and original volumes. It does not yet form the source 3×5 structure or use Derrick-built Well Heads; biome bonuses, oil caverns, and gas extraction also remain. GitHub Actions run [43780024722](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43780024722) passed package and Linux client builds. No gameplay claim is made.
+## Historical checkpoint — Superheater Array alpha (GitHub verified; gameplay pending)
 Commit f1f8608 includes the Superheater Array and Horizon host-type fixes. GitHub Actions run 43773403158 passed the native crate check, Horizon content build/check, mod packaging, and Linux client build. The importable client ZIP is /mnt/hdd2tb/arcforge-horizon-builds/arcforge-github-43773403158/arcforge-playable-linux-x86_64-f1f8608b1d6ce52b67cbe38dbbb6ae5ff2dd1cc9/arcforge-linux-x86_64.zip (SHA-256 63654ada508bb66a4501b67aa34a627d10025e21312e6f3ea968a1b7b4e5c813). Embedded checksums and ZIP integrity verified. This proves build/package integrity, not in-game behavior. Next, import the client, craft Superheater Array Controller/Casing, form a 3x3x3 shell, use the Wrench to set facing and pressure mode, connect a thermal conduit, feed Steam, and confirm flow/status; then test High-Pressure and Superheated upgrades and save/reload. Build and compile only through GitHub Actions.
 
 # Project handoff: Arcforge for Horizon
 
-## Current working checkpoint — Electric Pump alpha
+## Historical checkpoint — Electric Pump alpha
 The remote checkout contains api/src/electric_pump.rs, block and capability registrations, source recipe/drop data, existing pump models, and an updated handbook entry. It uses 10 FE/t, fills 1,000 mB every 20 ticks, and has a 20,000 FE buffer plus a 16,000 mB tank. It pumps only infinite source water, requiring two horizontal neighboring source-water blocks, and does not remove those blocks. Finite-fluid pickup and ocean/beach Seawater conversion are deferred to unavailable pinned hooks. It passed GitHub Actions run [43769113792](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43769113792) for commit f56e5e41ed3ae81e895b93714281b143084c7f29; the Rust/content and Linux client jobs succeeded. In-game behavior has not been verified. Client ZIP: /mnt/hdd2tb/arcforge-horizon-builds/arcforge-github-43769113792/arcforge-playable-linux-x86_64-f56e5e41ed3ae81e895b93714281b143084c7f29/arcforge-linux-x86_64.zip (SHA-256 c5c2f72fb81bc82de337eb49a05677b5170aa6991b548862da2a600797179112); HMOD 88d689174a64eb2276a8cc2ca9fe2602fb953dd1b224d7788126563e880a077b; HNMOD ebd974da714a466565ece02edf0f9acfd759887b6eb1678a8c3228a90c74e233.
 
-## Current working checkpoint — Industrial Water Intake alpha
+## Historical checkpoint — Industrial Water Intake alpha
 The remote checkout now contains api/src/water_intake.rs, controller/casing registrations, survival recipes and loot, controller assets, and a right-click status readout. It implements a fixed 3×3×3 shell over at least 400 connected source-water blocks, pumps up to 8,000 mB/t at 0.25 FE/mB into a 128,000 mB tank, and leaves world water in place. The source count is capped at 400 and refreshed every 100 ticks. River/ocean rate bonus and loaded-chunk filtering are not represented because pinned Horizon hooks lack those queries. Hybrid build passed; gameplay has not been tested. Build ZIP: /mnt/hdd2tb/arcforge-horizon-builds/arcforge-hybrid-2026-11-15-water-intake/arcforge-linux-x86_64.zip (SHA-256 6b2b445fef553ae8ffe0aea752a3d951ae0d0a99ba78b2c9a7d594b0f91841b4). SHA manifests and unpacked files are beside it.
-## Current working checkpoint — Condenser Array alpha on hybrid client
+## Historical checkpoint — Condenser Array alpha on hybrid client
 `api/src/steam_condenser.rs` adds a formed 3–7 block Condenser Array that converts Exhaust Steam to water 1:1, adds source-style cooling bonuses from adjacent water/ice, and reports state with the Wrench. The full Linux client and both Arcforge packages were rebuilt on rx580 with the hybrid workflow. Artifact: `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-hybrid-2026-11-15-steam-turbine-rerun/arcforge-linux-x86_64.zip` (SHA-256 `319b87e1e17a250b558b2c98650e9a4c8391d611e5dd721b660e0ac1d9441221`). No GitHub build or in-game test was run.
 
 
-**Snapshot date:** 2026-11-15
-## Current snapshot — Steam Turbine and Condenser Array alpha
+**Snapshot date:** 2026-11-16
+## Historical snapshot — Steam Turbine and Condenser Array alpha
 
 The Condenser Array source, content, and native package build on rx580 alongside the earlier Steam Turbine implementation. `docs/status/verification.md` records exact checksums. The Condenser Array slice is committed locally on `main`; it has not been pushed to GitHub.
 
@@ -30,7 +30,7 @@ Read-only source checkouts are also on that drive: Arcforge at `/mnt/hdd2tb/arcf
 **Project:** `/mnt/hdd2tb/arcforge-horizon` on `rayyan@100.89.43.102`
 
 **Active goal:** see [goal.md](goal.md)  
-**Status:** the Steam Turbine and Condenser Array sources, checked `.hmod`, `.hnmod`, and matching Linux client bundle build on rx580; both machines still need formation and gameplay verification.
+**Status:** the Oil Pumpjack single-block alpha and matching Linux client build passed GitHub Actions run 43780024722; gameplay remains unverified. The Derrick, Well Head, 3×5 structure, caverns, and gas extraction remain work.
 
 Commit `5920fdd` adds an Arcforge Furnace Wrench status line for formation, temperature, burn time, and active recipe requirements/progress. Both GitHub jobs passed in run [43542601271](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43542601271); its package and playable client ZIPs and internal checksums are verified. In-world status verification remains pending. Commit `f15a514` adds the upstream behavior of clockwise port rotation when the structure is unformed, followed by an immediate formation recheck. Both GitHub jobs passed in run [43544310146](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43544310146), and the playable Linux client ZIP and checksums are verified in [verification.md](status/verification.md). In-world Wrench status and rotation checks remain pending.
 

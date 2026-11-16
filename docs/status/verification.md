@@ -1,5 +1,7 @@
-## Oil Pumpjack alpha — GitHub Actions build pending
-Source changes register a powered oil extractor with world-saved shared field depletion and a source-matched depleted-field trickle. CI and runtime verification have not run yet. The last verified build remains the survey alpha documented below.
+## Oil Pumpjack alpha — GitHub Actions build (2026-11-16)
+Commit `bb330aa` adds a powered single-block extractor, source-matched rate/depletion defaults, and world-saved shared field volume. GitHub Actions run [43780024722](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43780024722) passed Rust formatting and crate checks, Horizon content build/check, native package creation, and the pinned Linux client build.
+
+Playable client ZIP: `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-github-43780024722/arcforge-playable-linux-x86_64-bb330aa0b74946df172be4d2741b019bc07a0374/arcforge-linux-x86_64.zip` (SHA-256 `7c688ea736e805af9489cf6a19a846380b4cf78f7572014d92b2c59c46ccd559`). Its embedded `SHA256SUMS` verifies `horizon-client`, `native-mods.json`, `arcforge.hmod`, and `arcforge.hnmod`; package and client ZIP integrity checks passed. HMOD SHA-256 `93804b2f1d735f636b898d303c9f6e082de22b32d6c5775f274924ba6ba2a9b8`; HNMOD SHA-256 `51322279068e619ea53940a16bdb72858bcda38e0178f3982890cfb4624e10fd`. This verifies builds and packaging only; Pumpjack gameplay has not been tested.
 
 # Verification record
 ## Oil deposit survey alpha — GitHub Actions build (2026-11-15)

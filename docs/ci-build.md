@@ -1,12 +1,11 @@
-# Build and compile policy (updated 2026-11-15)
-All future Arcforge builds and compile verification must run through GitHub Actions. Do not invoke the hybrid remote build script or compile on rx580/local. Previous hybrid results below are historical records only.
+# Build and compile policy (updated 2026-11-16)
+All Arcforge builds and compile verification run through GitHub Actions. Do not invoke the hybrid remote build script or compile on rx580/local. Previous hybrid results below are historical records only.
 
 ## Current build policy
 
-Latest successful full build: commit 06ce84c, run 43776386544; both the native/content package job and pinned Linux client job passed. Artifacts are on the remote build volume under /mnt/hdd2tb/arcforge-horizon-builds/arcforge-github-43776386544/.
+Latest successful full build: commit `bb330aa`, run [43780024722](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43780024722); both the native/content package job and pinned Linux client job passed. Artifacts are under `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-github-43780024722/`.
 
-Current instruction: build only with GitHub Actions. Do not run the hybrid compile workflow. Push a change under api/, content/, tools/, or .github/workflows/build.yml to trigger the public Actions workflow; it checks Rust, builds/checks content, packages the native mod, and builds the pinned Linux client.
-
+Current instruction: build only with GitHub Actions. Do not run the hybrid compile workflow. Push a source change to trigger the workflow; it checks Rust and content, packages the mod, and builds the pinned Linux client.
 ## Historical hybrid remote build (inactive)
 `tools/build_hybrid_client.sh` builds the Rust crate, checks the `.hmod`, packages the `.hnmod`, prepares the pinned Horizon Nightly, and creates an importable Linux client ZIP. Run it from the project root through the hybrid runner:
 

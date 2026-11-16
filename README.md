@@ -271,18 +271,8 @@ The implementation phases are ordered by dependency. The alpha's player unlock o
 
 ## Build the current prototype
 
-This native mod is pinned to Horizon Nightly 2026-11-13, commit `9f42064c11efe7ef3e5ed2baad7ddc2a3b36eea0`. Review native code before building; native mods run with the user's permissions.
-
-```sh
-/home/rayyan/Applications/Horizon.AppImage native-build \
-  /home/rayyan/Projects/arcforge-horizon \
-  --instance arcforge-port-test \
-  --trust-native-code
-```
-
-Review the source before running this command: `--trust-native-code` grants the compiled mod the user's permissions. The build selects the native bundle for the disposable `arcforge-port-test` instance. Keep the build target and gameplay trial world disposable until the save migration and client/server behavior gates above are in place.
+Build and compile Arcforge only through GitHub Actions. A push to `main` starts the public workflow, which checks Rust and content, packages the mod, and builds an importable Linux client against the pinned Horizon Nightly 2026-11-13 (`9f42064c11efe7ef3e5ed2baad7ddc2a3b36eea0`). Download artifacts from the Actions run; the latest verified playable client is run [43780024722](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43780024722).
 
 ## Latest verification
-GitHub Actions run https://github.com/Sipper1236/arcforge-horizon/actions/runs/43769113792 succeeded for commit f56e5e41ed3ae81e895b93714281b143084c7f29. Rust formatting and crate checks, Horizon content build/check, native packaging, Linux client compilation, asset validation, and artifact upload all passed for Horizon revision 9f42064c11efe7ef3e5ed2baad7ddc2a3b36eea0 and Minecraft 26.3. The importable client ZIP is /mnt/hdd2tb/arcforge-horizon-builds/arcforge-github-43769113792/arcforge-playable-linux-x86_64-f56e5e41ed3ae81e895b93714281b143084c7f29/arcforge-linux-x86_64.zip (SHA-256 c5c2f72fb81bc82de337eb49a05677b5170aa6991b548862da2a600797179112); its embedded client hash is 6da99762282b8731ee85d030e99ed0b17dd4920fae2b9487a29e0fbd6c007314. The checked content package hash is 88d689174a64eb2276a8cc2ca9fe2602fb953dd1b224d7788126563e880a077b; the native package hash is ebd974da714a466565ece02edf0f9acfd759887b6eb1678a8c3228a90c74e233. Gameplay has not been tested in game.
-
+GitHub Actions run [43780024722](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43780024722) passed both the native/content package job and pinned Horizon Linux client job for commit `bb330aa`. Playable ZIP: `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-github-43780024722/arcforge-playable-linux-x86_64-bb330aa0b74946df172be4d2741b019bc07a0374/arcforge-linux-x86_64.zip` (SHA-256 `7c688ea736e805af9489cf6a19a846380b4cf78f7572014d92b2c59c46ccd559`). The archive and its embedded SHA256SUMS passed integrity checks. The Pumpjack has not been tested in game.
 The active Horizon pin is recorded above;
