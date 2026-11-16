@@ -5,20 +5,21 @@
     "arcforge:pumpjack_controller",
     "arcforge:pumpjack_casing",
     "arcforge:well_head",
-    "arcforge:crude_oil_bucket"
+    "arcforge:crude_oil_bucket",
+    "arcforge:sour_crude_oil_bucket"
   ],
   "pages": [
     {
       "type": "text",
-      "text": "Pumps Crude Oil (or Sour Crude Oil, from a sour deposit) out of the deposit under a Well Head. It can't be built on a gas well.\n# Building\nA skid of Pumpjack Casings 3 wide and 5 long round the Well Head, which is the middle of one end; the Pumpjack Controller in the middle of the other end, facing away from the well; and three more Pumpjack Casings stacked on the middle of the skid as the Samson post. Formed, it becomes a pumpjack: the walking beam nods on its post, the horse head working the well and the cranks turning at the far end."
+      "text": "The Pumpjack extracts Crude Oil or Sour Crude Oil from a surveyed deposit. This alpha uses Arcforge's 3\u00d75 footprint: a Well Head at the center of one end, a casing skid three blocks wide and five long, a controller at the center of the far end, and three casings stacked as the Samson post. Keep every part level with the Well Head."
     },
     {
       "type": "text",
-      "text": "# Pumping\nIt draws from the deposit's whole cavern, not just the blocks under its pipe. It pumps 30 mB/t from a full deposit using 60 FE/t, slowing as the deposit drains to a quarter of that, and rocks as fast as it pumps. A drained deposit still gives 40 mB a second.\n# Ports\nA new pumpjack has no ports: set them with the Wrench in Port mode.\n- Output: Crude Oil (or Sour Crude Oil) out (it pushes it out on its own).\n- Energy: FE in.\nIt also fills buckets put in its bucket slot."
+      "text": "Use a non-gas Well Head above an oil deposit. The Oil Derrick that drills and creates a Well Head is not implemented, so craft and place the Well Head as an alpha stand-in. Forming requires 16 Pumpjack Casings plus the controller in the exact 3\u00d75 layout. The controller can be Wrenched to change its facing; use the Wrench readout to see formation, deposit, tank, and power status."
     },
     {
-      "type": "multiblock",
-      "structure": "pumpjack"
+      "type": "text",
+      "text": "The controller accepts up to 1,000 FE/t from any side and uses 60 FE/t while pumping. Its 16,000 mB output tank can be drained from any side. A full deposit starts at 30 mB/t and slows as it depletes, to 25% of that rate; depleted fields produce a 40 mB/s trickle. The field's remaining amount is shared and saved in the world. The formed structure uses static controller and casing models; Arcforge's animated beam and drilling visuals are not available in Horizon's current content hooks."
     }
   ]
 }

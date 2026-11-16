@@ -14,7 +14,7 @@
     "X": "minecraft:piston"
   },
   "result": {
-    "id": "arcforge:oil_pumpjack",
+    "id": "arcforge:pumpjack_controller",
     "count": 1
   }
 }

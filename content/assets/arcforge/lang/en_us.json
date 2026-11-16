@@ -60,6 +60,10 @@
   "block.arcforge.superheater_array_controller": "Superheater Array Controller",
   "block.arcforge.superheater_array_casing": "Superheater Array Casing",
   "item.arcforge.seismic_survey_tool": "Seismic Survey Tool",
-  "block.arcforge.oil_pumpjack": "Oil Pumpjack",
-  "item.arcforge.oil_pumpjack": "Oil Pumpjack"
+  "block.arcforge.pumpjack_controller": "Pumpjack Controller",
+  "item.arcforge.pumpjack_controller": "Pumpjack Controller",
+  "block.arcforge.pumpjack_casing": "Pumpjack Casing",
+  "item.arcforge.pumpjack_casing": "Pumpjack Casing",
+  "block.arcforge.well_head": "Well Head",
+  "item.arcforge.well_head": "Well Head"
 }

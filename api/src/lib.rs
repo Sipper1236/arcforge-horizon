@@ -99,7 +99,9 @@ const SUPERHEATER_ARRAY_CASING: &str = superheater::CASING;
 const WATER_INTAKE_CONTROLLER: &str = water_intake::CONTROLLER;
 const WATER_INTAKE_CASING: &str = water_intake::CASING;
 const ELECTRIC_PUMP: &str = electric_pump::BLOCK;
-const OIL_PUMPJACK: &str = oil_pumpjack::BLOCK;
+const PUMPJACK_CONTROLLER: &str = oil_pumpjack::CONTROLLER;
+const PUMPJACK_CASING: &str = oil_pumpjack::CASING;
+const WELL_HEAD: &str = oil_pumpjack::WELL_HEAD;
 const STEAM_TURBINE_ARRAY_CASING: &str = steam_turbine::CASING;
 const FUEL_BURNER: &str = "arcforge:fuel_burner";
 const WROUGHT_FLUID_TANK: &str = "arcforge:wrought_fluid_tank";
@@ -345,6 +347,12 @@ impl Hooks for Arcforge {
         ) {
             superheater::notify_placed(host, event.pos);
         }
+        if matches!(
+            event.stack.item.as_ref(),
+            PUMPJACK_CONTROLLER | PUMPJACK_CASING | WELL_HEAD
+        ) {
+            oil_pumpjack::notify_placed(host, event.pos);
+        }
         if host
             .mod_block_entity(event.pos)
             .is_some_and(|entity| entity.id == ARC_CRUSHING_ARRAY_CASING)
@@ -439,6 +447,9 @@ impl Hooks for Arcforge {
             if entity.id == WATER_INTAKE_CONTROLLER {
                 water_intake::unform(host, event.pos, &entity);
             }
+            if entity.id == PUMPJACK_CONTROLLER {
+                oil_pumpjack::unform(host, event.pos, &entity.nbt);
+            }
             if entity.id == SOLAR_ARRAY_CONTROLLER {
                 if let Some(tower) = solar::tower_from_nbt(&entity.nbt) {
                     solar::set_formed(host, tower, false);
@@ -460,6 +471,9 @@ impl Hooks for Arcforge {
         }
         if host.block(event.pos) == SUPERHEATER_ARRAY_CASING {
             superheater::unform_near(host, event.pos);
+        }
+        if matches!(host.block(event.pos).as_str(), PUMPJACK_CASING | WELL_HEAD) {
+            oil_pumpjack::unform_near(host, event.pos);
         }
         if matches!(
             host.block(event.pos).as_str(),
@@ -846,7 +860,7 @@ impl Hooks for Arcforge {
         }
         if host
             .mod_block_entity(event.pos)
-            .is_some_and(|entity| entity.id == OIL_PUMPJACK)
+            .is_some_and(|entity| entity.id == PUMPJACK_CONTROLLER)
         {
             let requested_facing = match event.face {
                 [0, 0, -1] => Some("north"),
@@ -856,7 +870,7 @@ impl Hooks for Arcforge {
                 _ => None,
             };
             if let Some(facing) = requested_facing {
-                host.set_block_property(event.pos, "facing", facing);
+                oil_pumpjack::face(host, event.pos, facing);
             }
             show_oil_pumpjack_status(host, event.pos);
             return Flow::Cancel;
@@ -1243,23 +1257,49 @@ impl Hooks for Arcforge {
             .into_iter()
             .collect();
         }
-        register_content!(&mut event.blocks, id: OIL_PUMPJACK.into(), template: "minecraft:blast_furnace".into());
+        register_content!(&mut event.blocks, id: PUMPJACK_CONTROLLER.into(), template: "minecraft:blast_furnace".into(), item: true);
         if let Some(block) = event
             .blocks
             .iter_mut()
-            .find(|block| block.id == OIL_PUMPJACK)
+            .find(|block| block.id == PUMPJACK_CONTROLLER)
         {
             block.state_properties = serde_json::from_value(serde_json::json!({
                 "facing": { "type": "enum", "values": ["north", "east", "south", "west"] },
+                "formed": { "type": "boolean" },
                 "lit": { "type": "boolean" }
             }))
-            .expect("valid Oil Pumpjack states");
+            .expect("valid Pumpjack controller states");
             block.default_state = [
                 ("facing".to_owned(), "north".to_owned()),
+                ("formed".to_owned(), "false".to_owned()),
                 ("lit".to_owned(), "false".to_owned()),
             ]
             .into_iter()
             .collect();
+        }
+        register_content!(&mut event.blocks, id: PUMPJACK_CASING.into(), template: "minecraft:iron_block".into(), item: true);
+        if let Some(block) = event
+            .blocks
+            .iter_mut()
+            .find(|block| block.id == PUMPJACK_CASING)
+        {
+            block.state_properties = serde_json::from_value(serde_json::json!({
+                "formed": { "type": "boolean" }
+            }))
+            .expect("valid Pumpjack casing states");
+            block.default_state = [("formed".to_owned(), "false".to_owned())]
+                .into_iter()
+                .collect();
+        }
+        register_content!(&mut event.blocks, id: WELL_HEAD.into(), template: "minecraft:iron_block".into(), item: true);
+        if let Some(block) = event.blocks.iter_mut().find(|block| block.id == WELL_HEAD) {
+            block.state_properties = serde_json::from_value(serde_json::json!({
+                "gas": { "type": "boolean" }
+            }))
+            .expect("valid Well Head states");
+            block.default_state = [("gas".to_owned(), "false".to_owned())]
+                .into_iter()
+                .collect();
         }
         register_content!(&mut event.blocks, id: WATER_INTAKE_CONTROLLER.into(), template: "minecraft:blast_furnace".into());
         if let Some(block) = event
@@ -1981,7 +2021,7 @@ impl Hooks for Arcforge {
             || event.block == STEAM_CONDENSER_ARRAY_CONTROLLER
             || event.block == WATER_INTAKE_CONTROLLER
             || event.block == ELECTRIC_PUMP
-            || event.block == OIL_PUMPJACK
+            || event.block == PUMPJACK_CONTROLLER
             || event.block == SOLAR_ARRAY_CONTROLLER
             || event.block == GEOTHERMAL_PLANT
             || event.block == FUEL_BURNER
@@ -2036,7 +2076,7 @@ impl Hooks for Arcforge {
             || event.block == STEAM_CONDENSER_ARRAY_CONTROLLER
             || event.block == WATER_INTAKE_CONTROLLER
             || event.block == ELECTRIC_PUMP
-            || event.block == OIL_PUMPJACK
+            || event.block == PUMPJACK_CONTROLLER
             || event.block == SOLAR_ARRAY_CONTROLLER
             || event.block == GEOTHERMAL_PLANT
             || event.block == FUEL_BURNER
@@ -2665,7 +2705,7 @@ impl Hooks for Arcforge {
             Flow::Cancel
         } else if event.block == ELECTRIC_PUMP && !electric_pump::accepts(event.fluid) {
             Flow::Cancel
-        } else if event.block == OIL_PUMPJACK && !oil_pumpjack::accepts(event.fluid) {
+        } else if event.block == PUMPJACK_CONTROLLER && !oil_pumpjack::accepts(event.fluid) {
             Flow::Cancel
         } else if event.block == GEOTHERMAL_PLANT && event.fluid != "minecraft:lava" {
             Flow::Cancel
@@ -2782,7 +2822,7 @@ impl Hooks for Arcforge {
             Some(water_intake::energy_buffer())
         } else if event.block == ELECTRIC_PUMP {
             Some(electric_pump::energy_buffer())
-        } else if event.block == OIL_PUMPJACK {
+        } else if event.block == PUMPJACK_CONTROLLER {
             Some(oil_pumpjack::energy_buffer())
         } else if event.block == THERMOELECTRIC_PLANT {
             Some(horizon_client::mod_api::ModEnergyBuffer {
@@ -2812,7 +2852,7 @@ impl Hooks for Arcforge {
             Some(water_intake::fluid_tanks())
         } else if event.block == ELECTRIC_PUMP {
             Some(electric_pump::fluid_tanks())
-        } else if event.block == OIL_PUMPJACK {
+        } else if event.block == PUMPJACK_CONTROLLER {
             Some(oil_pumpjack::fluid_tanks())
         } else if event.block == STEAM_BOILER_ARRAY_CONTROLLER {
             Some(horizon_client::mod_api::ModFluidTanks {
@@ -2948,7 +2988,7 @@ impl Hooks for Arcforge {
             SUPERHEATER_ARRAY_CONTROLLER => superheater::tick(host, event.pos, event.entity),
             WATER_INTAKE_CONTROLLER => water_intake::tick(host, event.pos, event.entity),
             ELECTRIC_PUMP => electric_pump::tick(host, event.pos, event.entity),
-            OIL_PUMPJACK => oil_pumpjack::tick(host, event.pos, event.entity),
+            PUMPJACK_CONTROLLER => oil_pumpjack::tick(host, event.pos, event.entity),
             SOLAR_ARRAY_CONTROLLER => tick_solar_array(host, event.pos, event.entity),
             GEOTHERMAL_PLANT => tick_geothermal_plant(host, event.pos, event.entity),
             FUEL_BURNER => tick_fuel_burner(host, event.pos, event.entity),
@@ -5396,7 +5436,7 @@ fn show_oil_pumpjack_status(host: &mut dyn Host, pos: [i32; 3]) {
     let Some(entity) = host.mod_block_entity(pos) else {
         return;
     };
-    if entity.id != OIL_PUMPJACK {
+    if entity.id != PUMPJACK_CONTROLLER {
         return;
     }
     if let Some(player) = host.acting_player() {

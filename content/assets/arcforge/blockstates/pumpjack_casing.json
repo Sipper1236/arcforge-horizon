@@ -4,8 +4,7 @@
       "model": "arcforge:block/oilfield/pumpjack_casing"
     },
     "formed=true": {
-      "type": "arcforge:ported",
-      "model": "arcforge:block/oilfield/hidden"
+      "model": "arcforge:block/oilfield/pumpjack_casing"
     }
   }
 }
