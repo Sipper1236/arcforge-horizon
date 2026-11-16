@@ -1,3 +1,6 @@
+## Oil Pumpjack alpha — GitHub Actions build pending
+Source changes register a powered oil extractor with world-saved shared field depletion and a source-matched depleted-field trickle. CI and runtime verification have not run yet. The last verified build remains the survey alpha documented below.
+
 # Verification record
 ## Oil deposit survey alpha — GitHub Actions build (2026-11-15)
 Commit 06ce84c adds deterministic Overworld regional survey results and the Seismic Survey Tool. GitHub Actions run [43776386544](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43776386544) passed both jobs: Rust crate check, content build/check, native package, and pinned Horizon Linux client build.

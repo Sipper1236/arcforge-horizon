@@ -3,8 +3,8 @@
 
 Current GitHub playable artifact: /mnt/hdd2tb/arcforge-horizon-builds/arcforge-github-43776386544/.
 
-## Oil deposit survey alpha
-The Seismic Survey Tool and seed-based ordinary-region deposit report are implemented. GitHub Actions run 43776386544 passed both jobs. This is prospecting only; oil extraction/depletion is not implemented.
+## Oil deposit survey and Pumpjack alpha
+The Seismic Survey Tool reports deterministic ordinary-region Overworld deposits, including their remaining volume. `api/src/oil_pumpjack.rs` adds power-fed crude extraction, a 16,000 mB output tank, and shared world-saved depletion. The machine uses Arcforge’s default rate, depletion curve, and depleted-field trickle. The Pumpjack is currently a single-block alpha; the source 3×5 structure, derrick/wellhead path, biome modifiers, caverns, and gas extraction remain. The survey implementation passed GitHub Actions run 43776386544. The new Pumpjack source has not yet passed GitHub Actions or in-game testing.
 
 ## Superheater Array alpha
 api/src/superheater.rs adds the 3–7 block cubic multiblock, steam-grade conversion, pressure modes, persisted heat, survival recipes and drops, and thermal-conduit integration. GitHub Actions run 43773403158 passed both jobs; in-game behavior is pending.

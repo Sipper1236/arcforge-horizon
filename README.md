@@ -100,7 +100,7 @@ The target is functional parity with Arcforge's survival gameplay, not a byte-fo
 ### Steam, world resources and refining
 
 - Finite-fluid extraction, bucket slots, Electric Pump upgrades, and Seawater biome conversion; Water Intake biome bonus, loaded-chunk filtering, and gameplay validation; Steam Boiler Array (variable shell sizes and pressure behavior implemented); Steam Turbine Array alpha (variable shell sizing, grade-based FE, RPM ramp, lubricant/vacuum bonuses, and Exhaust Steam); Condenser Array alpha (variable solid box, one-to-one Exhaust Steam condensation, and water/ice cooling bonuses).
-- Oil deposits, Seismic Survey Tool, Oil Derrick, Well Head, Pumpjack and shared deposit depletion.
+- Seed-based oil surveys and persistent Pumpjack extraction are early alpha slices. Oil-rich biome modifiers, Survey Records, Derrick drilling, Well Heads, Arcforge’s 3×5 Pumpjack structure, oil caverns/gas, and the refinery chain remain.
 - Distillation Array and fuels/products; Cracking Unit, Catalytic Reformer, Coker, Lubricant Blender, Hydrotreater, Sulfur Recovery Unit, Steam Cracker, Diesel Generator and Flare Stack.
 - Fluids and gases: water, brine, creosote, crude/sour crude, refinery fractions, steam grades, exhaust steam, hydrogen, oxygen, syngas, acid, chlorine, plastics and byproducts.
 - Data-driven fuel, recipe and worldgen definitions; migration-safe world configuration.
@@ -217,7 +217,7 @@ The implementation phases are ordered by dependency. The alpha's player unlock o
 
 ### Phase 8 — oil extraction and refinery chain
 
-- Implement deterministic regional oil deposits, survey tool, derrick drilling, well heads, pumpjacks and shared deposit depletion.
+- Extend the deterministic oil deposit survey and persistent Pumpjack extraction with Arcforge’s Derrick drilling, Well Heads, 3×5 Pumpjack structure, oil-rich biomes, caverns/gas, and shared depletion.
 - Port Distillation Array and crude/creosote recipes; then Cracking Unit, Reformer, Coker, Blender, Hydrotreater, Sulfur Recovery, Steam Cracker, Diesel Generator and Flare Stack.
 - Add fluids/gases, recipe maps, catalysts, byproducts, sour variants, gas/item transfer, flare behavior and oil-rich biome tags.
 

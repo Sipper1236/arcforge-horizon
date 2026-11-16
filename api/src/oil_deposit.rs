@@ -1,3 +1,10 @@
+use horizon_client::mod_api::Host;
+use std::{
+    collections::HashMap,
+    fs,
+    path::{Path, PathBuf},
+    sync::{LazyLock, Mutex},
+};
 const REGION_SIZE: i32 = 8;
 const CHANCE: f64 = 0.30;
 const SOUR_CHANCE: f64 = 0.30;
@@ -9,6 +16,7 @@ const TRAIT_SALT: u64 = 0x737570686F726761;
 const DIM_SALT: u64 = 0x9E3779B97F4A7C15;
 const X_SALT: u64 = 0xC2B2AE3D27D4EB4F;
 const Z_SALT: u64 = 0x165667B19E3779F9;
+const SAVE_NAME: &str = "arcforge-oil-deposits.tsv";
 #[derive(Clone, Copy)]
 struct Kind {
     name: &'static str,
@@ -52,25 +60,176 @@ const KINDS: [Kind; 4] = [
         weight: 7,
     },
 ];
-pub(crate) fn survey(host: &dyn horizon_client::mod_api::Host, pos: [i32; 3]) -> String {
+#[derive(Clone, Copy, Debug)]
+pub(crate) struct Deposit {
+    pub(crate) region_x: i32,
+    pub(crate) region_z: i32,
+    pub(crate) kind: usize,
+    pub(crate) amount: u64,
+    pub(crate) depth: i32,
+    pub(crate) sour: bool,
+    pub(crate) gas_cap: bool,
+    center_x: i32,
+    center_z: i32,
+    radius: i32,
+}
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+struct DepositKey {
+    seed: i64,
+    region_x: i32,
+    region_z: i32,
+}
+#[derive(Default)]
+struct WorldStore {
+    amounts: HashMap<DepositKey, u64>,
+}
+static STORES: LazyLock<Mutex<HashMap<PathBuf, WorldStore>>> =
+    LazyLock::new(|| Mutex::new(HashMap::new()));
+fn key(seed: i64, deposit: Deposit) -> DepositKey {
+    DepositKey {
+        seed,
+        region_x: deposit.region_x,
+        region_z: deposit.region_z,
+    }
+}
+fn store_file(world_dir: &Path) -> PathBuf {
+    world_dir.join("data").join(SAVE_NAME)
+}
+fn load_store(path: &Path) -> Result<WorldStore, &'static str> {
+    let file = store_file(path);
+    let text = match fs::read_to_string(file) {
+        Ok(text) => text,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+            return Ok(WorldStore::default());
+        }
+        Err(_) => return Err("Unable to read saved oil deposits"),
+    };
+    let mut store = WorldStore::default();
+    for line in text.lines() {
+        let mut fields = line.split('\t');
+        let (Some(seed), Some(x), Some(z), Some(amount)) =
+            (fields.next(), fields.next(), fields.next(), fields.next())
+        else {
+            continue;
+        };
+        let (Ok(seed), Ok(region_x), Ok(region_z), Ok(amount)) =
+            (seed.parse(), x.parse(), z.parse(), amount.parse())
+        else {
+            continue;
+        };
+        store.amounts.insert(
+            DepositKey {
+                seed,
+                region_x,
+                region_z,
+            },
+            amount,
+        );
+    }
+    Ok(store)
+}
+fn save_store(path: &Path, store: &WorldStore) -> Result<(), &'static str> {
+    let file = store_file(path);
+    let parent = file.parent().ok_or("Invalid oil deposit save path")?;
+    fs::create_dir_all(parent).map_err(|_| "Unable to create oil deposit save directory")?;
+    let mut rows: Vec<_> = store.amounts.iter().collect();
+    rows.sort_by_key(|(key, _)| (key.seed, key.region_x, key.region_z));
+    let mut text = String::new();
+    for (key, amount) in rows {
+        use std::fmt::Write as _;
+        writeln!(
+            &mut text,
+            "{}\t{}\t{}\t{}",
+            key.seed, key.region_x, key.region_z, amount
+        )
+        .map_err(|_| "Unable to serialize saved oil deposits")?;
+    }
+    let temporary = file.with_extension("tsv.tmp");
+    fs::write(&temporary, text).map_err(|_| "Unable to write saved oil deposits")?;
+    fs::rename(&temporary, &file).map_err(|_| "Unable to replace saved oil deposits")
+}
+fn remaining_for(host: &dyn Host, deposit: Deposit) -> Result<u64, &'static str> {
+    let Some(path) = host.world_dir() else {
+        return Err("World save path unavailable");
+    };
+    let Some(seed) = host.world_seed() else {
+        return Err("World seed unavailable");
+    };
+    let mut stores = STORES
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    if !stores.contains_key(&path) {
+        stores.insert(path.clone(), load_store(&path)?);
+    }
+    Ok(stores
+        .get(&path)
+        .and_then(|store| store.amounts.get(&key(seed, deposit)).copied())
+        .unwrap_or(deposit.amount))
+}
+pub(crate) fn remaining(
+    host: &dyn Host,
+    pos: [i32; 3],
+) -> Result<Option<(Deposit, u64)>, &'static str> {
+    let Some(deposit) = at(host, pos)? else {
+        return Ok(None);
+    };
+    Ok(Some((deposit, remaining_for(host, deposit)?)))
+}
+pub(crate) fn take(
+    host: &dyn Host,
+    pos: [i32; 3],
+    requested: u64,
+) -> Result<Option<(Deposit, u64, u64)>, &'static str> {
+    let Some(deposit) = at(host, pos)? else {
+        return Ok(None);
+    };
+    let Some(path) = host.world_dir() else {
+        return Err("World save path unavailable");
+    };
+    let Some(seed) = host.world_seed() else {
+        return Err("World seed unavailable");
+    };
+    let mut stores = STORES
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    if !stores.contains_key(&path) {
+        stores.insert(path.clone(), load_store(&path)?);
+    }
+    let store = stores.get_mut(&path).expect("oil store was loaded");
+    let key = key(seed, deposit);
+    let left = store.amounts.get(&key).copied().unwrap_or(deposit.amount);
+    let taken = left.min(requested);
+    let next = left - taken;
+    store.amounts.insert(key, next);
+    if let Err(error) = save_store(&path, store) {
+        store.amounts.insert(key, left);
+        return Err(error);
+    }
+    Ok(Some((deposit, next, taken)))
+}
+fn at(host: &dyn Host, pos: [i32; 3]) -> Result<Option<Deposit>, &'static str> {
     if host.dimension() != "minecraft:overworld" {
-        return "No oil deposits are configured in this dimension.".to_owned();
+        return Ok(None);
     }
     let Some(seed) = host.world_seed() else {
-        return "Seismic Survey unavailable: world seed not available.".to_owned();
+        return Err("World seed unavailable");
     };
     let chunk_x = pos[0].div_euclid(16);
     let chunk_z = pos[2].div_euclid(16);
     let region_x = chunk_x.div_euclid(REGION_SIZE);
     let region_z = chunk_z.div_euclid(REGION_SIZE);
-    let dimension_hash = java_hash(host.dimension()) as u64;
+    let deposit = generate(seed, host.dimension(), region_x, region_z);
+    Ok(deposit.filter(|deposit| covers(*deposit, chunk_x, chunk_z)))
+}
+fn generate(seed: i64, dimension: &str, region_x: i32, region_z: i32) -> Option<Deposit> {
+    let dimension_hash = java_hash(dimension) as u64;
     let mut state = mix(seed as u64 ^ SALT ^ dimension_hash.wrapping_mul(DIM_SALT));
     state = mix(state ^ (region_x as i64 as u64).wrapping_mul(X_SALT));
     state = mix(state ^ (region_z as i64 as u64).wrapping_mul(Z_SALT));
     if next_unit(&mut state) >= CHANCE {
-        return "Seismic survey: no oil deposit in this region.".to_owned();
+        return None;
     }
-    let kind = pick_kind(next_unit(&mut state));
+    let (kind_index, kind) = pick_kind(next_unit(&mut state));
     let share = next_unit(&mut state);
     let buckets =
         kind.min_buckets as f64 + (share * (kind.max_buckets - kind.min_buckets) as f64).round();
@@ -81,32 +240,76 @@ pub(crate) fn survey(host: &dyn horizon_client::mod_api::Host, pos: [i32; 3]) ->
     let span = (REGION_SIZE - 2 * radius).max(1);
     let center_x = region_x * REGION_SIZE + radius + (next_unit(&mut state) * span as f64) as i32;
     let center_z = region_z * REGION_SIZE + radius + (next_unit(&mut state) * span as f64) as i32;
-    if (chunk_x - center_x).pow(2) + (chunk_z - center_z).pow(2) > radius * radius + radius {
-        return "Seismic survey: no oil deposit beneath this chunk.".to_owned();
-    }
-    let y = MIN_Y + (unit(mix(state)) * (MAX_Y - MIN_Y + 1) as f64) as i32;
+    let depth = MIN_Y + (unit(mix(state)) * (MAX_Y - MIN_Y + 1) as f64) as i32;
     let mut traits = mix(seed as u64 ^ TRAIT_SALT ^ dimension_hash.wrapping_mul(DIM_SALT));
     traits = mix(traits ^ (region_x as i64 as u64).wrapping_mul(X_SALT));
     traits = mix(traits ^ (region_z as i64 as u64).wrapping_mul(Z_SALT));
     let sour = next_unit(&mut traits) < SOUR_CHANCE;
     let gas_cap = unit(mix(traits)) < GAS_CAP_CHANCE;
+    Some(Deposit {
+        region_x,
+        region_z,
+        kind: kind_index,
+        amount: buckets as u64 * 1_000,
+        depth,
+        sour,
+        gas_cap,
+        center_x,
+        center_z,
+        radius,
+    })
+}
+fn covers(deposit: Deposit, chunk_x: i32, chunk_z: i32) -> bool {
+    let dx = chunk_x - deposit.center_x;
+    let dz = chunk_z - deposit.center_z;
+    dx * dx + dz * dz <= deposit.radius * deposit.radius + deposit.radius
+}
+pub(crate) fn survey(host: &dyn Host, pos: [i32; 3]) -> String {
+    if host.dimension() != "minecraft:overworld" {
+        return "No oil deposits are configured in this dimension.".to_owned();
+    }
+    let Some(seed) = host.world_seed() else {
+        return "Seismic Survey unavailable: world seed not available.".to_owned();
+    };
+    let chunk_x = pos[0].div_euclid(16);
+    let chunk_z = pos[2].div_euclid(16);
+    let region_x = chunk_x.div_euclid(REGION_SIZE);
+    let region_z = chunk_z.div_euclid(REGION_SIZE);
+    let Some(deposit) = generate(seed, host.dimension(), region_x, region_z) else {
+        return "Seismic survey: no oil deposit in this region.".to_owned();
+    };
+    if !covers(deposit, chunk_x, chunk_z) {
+        return "Seismic survey: no oil deposit beneath this chunk.".to_owned();
+    }
+    let remaining = remaining_for(host, deposit).unwrap_or(deposit.amount);
     format!(
-        "Seismic survey: {} | {} | about {buckets:.0} buckets | depth {y} | {}",
-        kind.name,
-        if sour { "sour crude" } else { "sweet crude" },
-        if gas_cap { "gas cap" } else { "no gas cap" }
+        "Seismic survey: {} | {} | {} of {} buckets remaining | depth {} | {}",
+        KINDS[deposit.kind].name,
+        if deposit.sour {
+            "sour crude"
+        } else {
+            "sweet crude"
+        },
+        remaining.div_ceil(1_000),
+        deposit.amount.div_ceil(1_000),
+        deposit.depth,
+        if deposit.gas_cap {
+            "gas cap"
+        } else {
+            "no gas cap"
+        }
     )
 }
-fn pick_kind(roll: f64) -> Kind {
+fn pick_kind(roll: f64) -> (usize, Kind) {
     let total: u32 = KINDS.iter().map(|kind| kind.weight).sum();
     let mut at = roll * f64::from(total);
-    for kind in KINDS {
+    for (index, kind) in KINDS.into_iter().enumerate() {
         at -= f64::from(kind.weight);
         if at < 0.0 {
-            return kind;
+            return (index, kind);
         }
     }
-    KINDS[3]
+    (KINDS.len() - 1, KINDS[KINDS.len() - 1])
 }
 fn java_hash(value: &str) -> i32 {
     value.encode_utf16().fold(0_i32, |hash, unit| {

@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "PXP",
+    "gYg",
+    "PEP"
+  ],
+  "key": {
+    "Y": "arcforge:steel_block",
+    "g": "#c:gears/copper",
+    "P": "#c:plates/steel",
+    "E": "arcforge:wrought_energy_conduit",
+    "X": "minecraft:piston"
+  },
+  "result": {
+    "id": "arcforge:oil_pumpjack",
+    "count": 1
+  }
+}

@@ -2,12 +2,12 @@
 
 ## Objective
 
-Port the complete survival gameplay scope of the pinned Arcforge release to Horizon as a Rust-native mod, using the pinned Horizon modding API without changing it. The parity target is Arcforge commit `8843cb02cf9132f278f6a8e804b6d78837d3cbcb`; the Horizon target is commit `fdc87aecdbd116bf1e08adcd062fcbaea8c2e2ca` (Nightly 2026-11-08).
+Port the complete survival gameplay scope of the pinned Arcforge release to Horizon as a Rust-native mod, using the pinned Horizon modding API without changing it. The parity target is Arcforge commit `8843cb02cf9132f278f6a8e804b6d78837d3cbcb`; the Horizon target is the latest released nightly, commit `9f42064c11efe7ef3e5ed2baad7ddc2a3b36eea0` (Nightly 2026-11-13).
 
 The current code is an early prototype, not a complete port. Continue implementing real gameplay from the scope in the root [README](../README.md), preserve Arcforge's recognizable mechanics and progression, and update the as-built and remaining-work documents whenever implementation changes.
 
-### Current slice — Oil deposit survey alpha (2026-11-15, GitHub verified)
-api/src/oil_deposit.rs computes deterministic, seed-based survey results for the Overworld using Arcforge's ordinary region chance, weighted deposit kinds, volume ranges, radii, depth range, sour roll, and gas-cap roll. The Seismic Survey Tool reports results in the action bar. GitHub Actions run 43776386544 passed both jobs. Biome modifiers, saved Survey Records, oil caverns, pumping, and depletion remain unimplemented.
+### Current slice — Oil Pumpjack alpha (source in progress; GitHub build pending)
+The survey continues to use Arcforge’s deterministic ordinary-region deposit rolls. `api/src/oil_pumpjack.rs` adds a powered extraction machine using Arcforge defaults: 60 FE/t, up to 30 mB/t at a full field, a 25% minimum share while depleting, 40 mB/s after depletion, a 100,000 FE buffer, and a 16,000 mB output tank. Shared remaining field volume is atomically saved in the world data folder and surfaced by the Seismic Survey Tool. This alpha uses a single block; the Arcforge 3×5 structure, derrick/wellhead drilling, biome modifiers, Survey Records, caverns, and gas extraction remain. GitHub Actions verification is pending; gameplay is unverified.
 
 ### Current slice — Superheater Array alpha (2026-11-15)
 The 3–7 block cubic array processes all three steam grades, scales active heat/flow/tank limits by formed shell volume, accepts thermal-conduit heat, and exposes mode, temperature, tank, and flow status through the Wrench. GitHub Actions run 43773403158 passed; in-game verification is pending.
