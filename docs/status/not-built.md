@@ -26,7 +26,7 @@ The full scope remains the [feature inventory](../../README.md#full-feature-inve
 - Steam Turbine Array alpha compiles and has controller recipe, model, and drop data, but formation, fluid routing, FE generation, and persistence need in-game verification.
 - Steam Boiler Array supports source-sized 3×3–7×7 by 3–16 shells, pressure modes, heat/steam-grade behavior, and venting. Expanded client behavior remains unverified. The alpha has a separate controller and fixed 48,000 mB tanks because fluid capabilities lack target block-entity context; verify formation, pressure cycling, venting, heat transfer, bucket handling, output, and persistence.
 - Condenser Array alpha forms 3–7 solid boxes, returns water from Exhaust Steam at 1:1, and applies source water/ice cooling bonuses. Fixed 203,259 mB tanks and no biome-climate multiplier simplify source per-section capacity and climate behavior. Verify formation, rates, piping, save/reload, and the boiler→turbine→condenser loop in game. Water intake and the Electric Pump remain outstanding; source-block pickup is deferred because Horizon Host hooks lack safe pickup/removal semantics.
-- Oil Derrick drilling, gas extraction, refinery progression beyond the Distillation Array recipes, individual refinery ports and dynamic refinery visuals, fuel production chains, catalysts, and byproducts.
+- Oil Derrick drilling, gas extraction, refinery progression beyond the Coker alpha, individual refinery ports and dynamic refinery visuals, fuel production chains, catalysts, and byproducts.
 - Chemistry, salt/brine/lithium, batteries, agriculture, biofuel, and their complete recipe graphs.
 - Nuclear materials, fuel fabrication, reactors, heat/cooling/safety, spent-fuel cycle, and advanced cores.
 
