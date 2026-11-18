@@ -73,5 +73,8 @@
   "block.arcforge.tray_level_casing": "Tray Level Casing",
   "item.arcforge.tray_level_casing": "Tray Level Casing",
   "block.arcforge.coker": "Coker",
-  "item.arcforge.petroleum_coke": "Petroleum Coke"
+  "item.arcforge.petroleum_coke": "Petroleum Coke",
+  "block.arcforge.cracking_unit_controller": "Cracking Unit Controller",
+  "block.arcforge.cracking_unit_casing": "Cracking Unit Casing",
+  "item.arcforge.cracking_catalyst": "Cracking Catalyst"
 }

@@ -12,15 +12,15 @@
   "pages": [
     {
       "type": "text",
-      "text": "Cracks Heavy Oil with heat into the lighter cuts, in one of two modes.\n# Building\nA solid 3x3 box of Cracking Unit Casings five tall, with the Cracking Unit Controller in the middle of the bottom of one side, facing out. Formed, it becomes a cracker: the regenerator at the back (its sight port glows as hot as the unit is), the reactor on its skirt at the front, the riser and standpipes between them, and the catalyst hopper."
+      "text": "The Cracking Unit processes Heavy Oil in a formed 3×3×5 casing. It requires external heat and supports catalytic cracking and hydrocracking. Its current Horizon alpha implements both source recipes and four fluid output tanks. Use the Wrench on the top face to switch modes; use a side face to set its front."
     },
     {
       "type": "text",
-      "text": "# Modes\nSet in its Mode tab and saved with it; it never changes on its own, whatever is in its tanks.\n- Catalytic: 100 mB Heavy Oil makes 40 mB Naphtha, 40 mB Diesel, 55 mB Refinery Gas and 10 mB Light Oil in 1 second (5 mB/t), using 30 HU/t at 480°C or hotter, over the Cracking Catalyst.\n- Hydrocracking: 100 mB Heavy Oil and 30 mB Hydrogen make 10 mB Naphtha, 50 mB Diesel, 30 mB Kerosene and 10 mB Light Oil in 1 second, using 36 HU/t at 520°C or hotter, with no catalyst.\nCatalytic makes more in all, for the Catalytic Reformer and the Steam Cracker; hydrocracking makes fuel you can burn as it comes."
+      "text": "# Catalytic mode\nCatalytic cracking consumes 100 mB Heavy Oil per batch at 480°C, takes 20 ticks, and uses 30 HU/t. It yields 40 mB Naphtha, 40 mB Diesel, 55 mB Refinery Gas, and 10 mB Light Oil. Insert a Cracking Catalyst in the catalyst slot; one catalyst supports 50 batches. Feed heat through a Thermal Conduit."
     },
     {
       "type": "text",
-      "text": "# Catalyst\nIts catalyst slot takes Cracking Catalyst (clay, sand and Nickel Dust). One lasts 50 catalytic operations, 5,000 mB of Heavy Oil; without it catalytic cracking stops. Hydrocracking leaves it alone.\n# Tanks\nFour product tanks: Naphtha, Diesel, Refinery Gas (Kerosene while hydrocracking) and Light Oil. After a switch it waits for the third tank to empty.\n# Ports\nA new Cracking Unit has no ports: set them with the Wrench in Port mode.\n- Input: Heavy Oil, Hydrogen and catalyst in. Hydrogen: Hydrogen only. Heat: heat in.\n- Output: the liquids out; or a Naphtha, Diesel, Kerosene, Light Oil or Refinery Gas port for just that one.\nSpeed Upgrades make it faster."
+      "text": "# Hydrocracking mode\nHydrocracking consumes 100 mB Heavy Oil and 30 mB Hydrogen per batch at 520°C, takes 20 ticks, and uses 36 HU/t. It yields 10 mB Naphtha, 50 mB Diesel, 30 mB Kerosene, and 10 mB Light Oil. It does not require a catalyst. This alpha exposes fixed-capacity tanks and does not implement the source mod’s automatic product routing or detailed port modes."
     },
     {
       "type": "multiblock",

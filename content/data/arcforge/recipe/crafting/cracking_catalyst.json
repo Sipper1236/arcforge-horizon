@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "CSC",
+    "SNS",
+    "CSC"
+  ],
+  "key": {
+    "C": "minecraft:clay_ball",
+    "S": [
+      "minecraft:sand",
+      "arcforge:silica_gel"
+    ],
+    "N": "#c:dusts/nickel"
+  },
+  "result": {
+    "id": "arcforge:cracking_catalyst",
+    "count": 8
+  }
+}

@@ -33,6 +33,7 @@ fn default_registry_entry<T: Default>(_: &[T]) -> T {
 
 mod area_tool;
 mod coker;
+mod cracking_unit;
 mod crushing_catalog;
 mod distillation_array;
 mod electric_pump;
@@ -109,6 +110,9 @@ const DISTILLATION_CASING: &str = distillation_array::CASING;
 const DISTILLATION_TRAY: &str = distillation_array::TRAY;
 const COKER: &str = coker::BLOCK;
 const PETROLEUM_COKE: &str = coker::PETROLEUM_COKE;
+const CRACKING_CONTROLLER: &str = cracking_unit::CONTROLLER;
+const CRACKING_CASING: &str = cracking_unit::CASING;
+const CRACKING_CATALYST: &str = cracking_unit::CATALYST;
 const STEAM_TURBINE_ARRAY_CASING: &str = steam_turbine::CASING;
 const FUEL_BURNER: &str = "arcforge:fuel_burner";
 const WROUGHT_FLUID_TANK: &str = "arcforge:wrought_fluid_tank";
@@ -366,6 +370,12 @@ impl Hooks for Arcforge {
         ) {
             distillation_array::notify_placed(host, event.pos);
         }
+        if matches!(
+            event.stack.item.as_ref(),
+            CRACKING_CONTROLLER | CRACKING_CASING
+        ) {
+            cracking_unit::notify_placed(host, event.pos);
+        }
         if host
             .mod_block_entity(event.pos)
             .is_some_and(|entity| entity.id == ARC_CRUSHING_ARRAY_CASING)
@@ -466,6 +476,9 @@ impl Hooks for Arcforge {
             if entity.id == DISTILLATION_CONTROLLER {
                 distillation_array::unform(host, event.pos, &entity.nbt);
             }
+            if entity.id == CRACKING_CONTROLLER {
+                cracking_unit::unform(host, event.pos, &entity.nbt);
+            }
             if entity.id == SOLAR_ARRAY_CONTROLLER {
                 if let Some(tower) = solar::tower_from_nbt(&entity.nbt) {
                     solar::set_formed(host, tower, false);
@@ -497,6 +510,9 @@ impl Hooks for Arcforge {
         ) {
             distillation_array::unform_near(host, event.pos);
         }
+        if host.block(event.pos) == CRACKING_CASING {
+            cracking_unit::unform_near(host, event.pos);
+        }
         if matches!(
             host.block(event.pos).as_str(),
             SOLAR_ARRAY_CASING | SOLAR_COLLECTOR
@@ -507,6 +523,17 @@ impl Hooks for Arcforge {
     }
 
     fn container_accepts(&self, host: &dyn Host, event: &mut ContainerAcceptsEvent<'_>) -> Flow {
+        if event.entity.id == CRACKING_CONTROLLER {
+            return if cracking_unit::item_allowed(
+                event.slot,
+                event.stack.item.as_ref(),
+                event.stack.count,
+            ) {
+                Flow::Continue
+            } else {
+                Flow::Cancel
+            };
+        }
         if event.entity.id == COKER {
             return if coker::item_allowed(event.slot, event.stack.item.as_ref(), event.stack.count)
             {
@@ -903,6 +930,13 @@ impl Hooks for Arcforge {
                 host.set_block_property(event.pos, "facing", facing);
             }
             show_electric_pump_status(host, event.pos);
+            return Flow::Cancel;
+        }
+        if host
+            .mod_block_entity(event.pos)
+            .is_some_and(|entity| entity.id == CRACKING_CONTROLLER)
+        {
+            cracking_unit::wrench(host, event.pos, event.face);
             return Flow::Cancel;
         }
         if host
@@ -1412,6 +1446,38 @@ impl Hooks for Arcforge {
             ]
             .into_iter()
             .collect();
+        }
+        register_content!(&mut event.blocks, id: CRACKING_CONTROLLER.into(), template: "minecraft:blast_furnace".into(), item: true);
+        if let Some(block) = event
+            .blocks
+            .iter_mut()
+            .find(|block| block.id == CRACKING_CONTROLLER)
+        {
+            block.state_properties = serde_json::from_value(serde_json::json!({
+                "facing": { "type": "enum", "values": ["north", "east", "south", "west"] },
+                "formed": { "type": "boolean" }, "lit": { "type": "boolean" }
+            }))
+            .expect("valid Cracking Unit controller states");
+            block.default_state = [
+                ("facing".to_owned(), "north".to_owned()),
+                ("formed".to_owned(), "false".to_owned()),
+                ("lit".to_owned(), "false".to_owned()),
+            ]
+            .into_iter()
+            .collect();
+        }
+        register_content!(&mut event.blocks, id: CRACKING_CASING.into(), template: "minecraft:iron_block".into(), item: true);
+        if let Some(block) = event
+            .blocks
+            .iter_mut()
+            .find(|block| block.id == CRACKING_CASING)
+        {
+            block.state_properties =
+                serde_json::from_value(serde_json::json!({ "formed": { "type": "boolean" } }))
+                    .expect("valid Cracking Unit casing states");
+            block.default_state = [("formed".to_owned(), "false".to_owned())]
+                .into_iter()
+                .collect();
         }
         register_content!(&mut event.blocks, id: COKER.into(), template: "minecraft:blast_furnace".into(), item: true);
         if let Some(block) = event.blocks.iter_mut().find(|block| block.id == COKER) {
@@ -2067,6 +2133,7 @@ impl Hooks for Arcforge {
         }
         register_content!(&mut event.items, id: COKE.into(), template: "minecraft:coal".into());
         register_content!(&mut event.items, id: PETROLEUM_COKE.into(), template: "minecraft:coal".into());
+        register_content!(&mut event.items, id: CRACKING_CATALYST.into(), template: "minecraft:clay_ball".into());
         register_content!(&mut event.items, id: SLAG.into(), template: "minecraft:gravel".into());
         register_content!(&mut event.items, id: CARBON_DUST.into(), template: "minecraft:gunpowder".into());
         register_content!(&mut event.items, id: IRON_DUST.into(), template: "minecraft:iron_nugget".into());
@@ -2185,6 +2252,7 @@ impl Hooks for Arcforge {
             || event.block == PUMPJACK_CONTROLLER
             || event.block == DISTILLATION_CONTROLLER
             || event.block == COKER
+            || event.block == CRACKING_CONTROLLER
             || event.block == SOLAR_ARRAY_CONTROLLER
             || event.block == GEOTHERMAL_PLANT
             || event.block == FUEL_BURNER
@@ -2242,6 +2310,7 @@ impl Hooks for Arcforge {
             || event.block == PUMPJACK_CONTROLLER
             || event.block == DISTILLATION_CONTROLLER
             || event.block == COKER
+            || event.block == CRACKING_CONTROLLER
             || event.block == SOLAR_ARRAY_CONTROLLER
             || event.block == GEOTHERMAL_PLANT
             || event.block == FUEL_BURNER
@@ -2271,6 +2340,8 @@ impl Hooks for Arcforge {
     ) -> Option<ModContainer> {
         if event.block == DISTILLATION_CONTROLLER {
             Some(distillation_array::container())
+        } else if event.block == CRACKING_CONTROLLER {
+            Some(cracking_unit::container())
         } else if event.block == COKER {
             Some(coker::container())
         } else if event.block == STEAM_BOILER_ARRAY_CONTROLLER {
@@ -2852,7 +2923,9 @@ impl Hooks for Arcforge {
         _host: &dyn Host,
         event: &mut horizon_client::mod_api::BlockEntityAcceptsFluidEvent<'_>,
     ) -> Flow {
-        if event.block == COKER && !coker::accepts(event.tank, event.fluid) {
+        if event.block == CRACKING_CONTROLLER && !cracking_unit::accepts(event.tank, event.fluid) {
+            Flow::Cancel
+        } else if event.block == COKER && !coker::accepts(event.tank, event.fluid) {
             Flow::Cancel
         } else if event.block == DISTILLATION_CONTROLLER
             && !distillation_array::accepts(event.tank, event.fluid)
@@ -3019,6 +3092,8 @@ impl Hooks for Arcforge {
     ) -> Option<horizon_client::mod_api::ModFluidTanks> {
         if event.block == DISTILLATION_CONTROLLER {
             Some(distillation_array::fluid_tanks())
+        } else if event.block == CRACKING_CONTROLLER {
+            Some(cracking_unit::fluid_tanks())
         } else if event.block == COKER {
             Some(coker::fluid_tanks())
         } else if event.block == STEAM_TURBINE_ARRAY_CONTROLLER {
@@ -3170,6 +3245,7 @@ impl Hooks for Arcforge {
             PUMPJACK_CONTROLLER => oil_pumpjack::tick(host, event.pos, event.entity),
             DISTILLATION_CONTROLLER => distillation_array::tick(host, event.pos, event.entity),
             COKER => coker::tick(host, event.pos, event.entity),
+            CRACKING_CONTROLLER => cracking_unit::tick(host, event.pos, event.entity),
             SOLAR_ARRAY_CONTROLLER => tick_solar_array(host, event.pos, event.entity),
             GEOTHERMAL_PLANT => tick_geothermal_plant(host, event.pos, event.entity),
             FUEL_BURNER => tick_fuel_burner(host, event.pos, event.entity),
@@ -6655,6 +6731,9 @@ fn transfer_supported_heat_to_neighbor(
     }
     if target.id == DISTILLATION_CONTROLLER {
         return distillation_array::accept_heat(host, neighbor, heat, rate);
+    }
+    if target.id == CRACKING_CONTROLLER {
+        return cracking_unit::accept_heat(host, neighbor, heat, rate);
     }
     if target.id == COKER {
         return coker::accept_heat(host, neighbor, heat, rate);
