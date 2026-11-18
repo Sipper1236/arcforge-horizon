@@ -1,4 +1,8 @@
 # Current implementation
+**Current source:** Cracking Unit alpha is in GitHub Actions run [44216407263](https://github.com/Sipper1236/arcforge-horizon/actions/runs/44216407263); build pending. The last verified client is still the Coker from run 44211955195.
+## Cracking Unit alpha — GitHub Actions pending
+Commit `c65e0e8` implements both source cracking modes, the 3×3×5 structure, five recipe/crafting JSON files, four output tanks, catalyst wear, heat input, and Wrench mode switching. Static checks passed; no local compilation, tests, or gameplay trial was run.
+
 **Latest build:** Coker alpha, built by GitHub Actions run [44211955195](https://github.com/Sipper1236/arcforge-horizon/actions/runs/44211955195), commit `81b9018`.
 Playable client ZIP: `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-github-44211955195/arcforge-playable-linux-x86_64-81b9018f277662cb5007cb6be4eaf828ce2af935/arcforge-linux-x86_64.zip`
 SHA-256: `b60c4b45c2447251e3ebe548a9b683d1210a828132dd1f3496cf21a5b2423168`
@@ -31,7 +35,7 @@ Four battery items expose Horizon's native item-energy capability with source ca
 
 ## Recipe data present
 
-The content directory contains 428 recipe JSON files (Arcforge machine recipes and vanilla recipe types):
+The content directory contains 433 recipe JSON files (Arcforge machine recipes and vanilla recipe types):
 
 | Recipe group | Files |
 |---|---:|
@@ -58,6 +62,7 @@ The content directory contains 428 recipe JSON files (Arcforge machine recipes a
 | Superheater Array casing and controller crafting | 2 |
 | Distillation Array distilling recipes | 3 |
 | Coker recipe and crafting | 2 |
+| Cracking recipes and crafting | 5 |
 | Distillation Array controller, casing, and tray crafting | 3 |
 | Seismic Survey Tool crafting | 1 |
 | Water Intake casing and controller crafting | 2 |
@@ -84,7 +89,7 @@ The content directory contains 428 recipe JSON files (Arcforge machine recipes a
 | Induction Furnace Arcforge smelting catalog | 32 |
 | Heat Cell crafting recipes | 4 |
 | Additional recipe files not itemized above | 19 |
-| **Total** | **428** |
+| **Total** | **433** |
 
 Files existing does not by itself prove the complete recipe graph or survival progression works.
 

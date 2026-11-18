@@ -17,6 +17,7 @@ The full scope remains the [feature inventory](../../README.md#full-feature-inve
 - Commit `4a50f19` corrects exact menu sizing and adds slot layouts for the gas cylinders, Grain Dryer, Steelworks prototype, Sifter, Firebox, Firebox Array controller, Geothermal Plant, and Fuel Burner; both GitHub jobs passed, but matching-client and in-game verification are pending. The Fiberizer's two-slot custom menu and status screen passed both GitHub build jobs, but matching-client visual and processing verification are pending. The Infuser's five-slot native screen has matching-client visual verification. Verify Fiberizer processing and Infuser recipe behavior, then add output/input automation, remaining upgrade types, and upstream side behaviors.
 
 ## Steam, resources, and advanced industry
+- Cracking Unit code and both source recipe modes are pushed in commit `c65e0e8`; GitHub build and gameplay verification are pending. Fixed box geometry, Wrench-based mode selection, and no automatic port routing are current alpha simplifications.
 - Coker has a GitHub-verified alpha for Bitumen to Petroleum Coke, Refinery Gas, and Heavy Oil. Reflux, automatic product routing, extra Coker recipes, and gameplay verification remain outstanding.
 
 - Electric Pump alpha now processes infinite source water at source rates; finite-fluid extraction, bucket-slot interaction, speed/energy upgrades, Seawater conversion, and in-game verification remain outstanding.

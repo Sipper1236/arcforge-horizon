@@ -12,6 +12,9 @@ Commit `bb330aa` adds a powered single-block extractor, source-matched rate/depl
 Playable client ZIP: `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-github-43780024722/arcforge-playable-linux-x86_64-bb330aa0b74946df172be4d2741b019bc07a0374/arcforge-linux-x86_64.zip` (SHA-256 `7c688ea736e805af9489cf6a19a846380b4cf78f7572014d92b2c59c46ccd559`). Its embedded `SHA256SUMS` verifies `horizon-client`, `native-mods.json`, `arcforge.hmod`, and `arcforge.hnmod`; package and client ZIP integrity checks passed. HMOD SHA-256 `93804b2f1d735f636b898d303c9f6e082de22b32d6c5775f274924ba6ba2a9b8`; HNMOD SHA-256 `51322279068e619ea53940a16bdb72858bcda38e0178f3982890cfb4624e10fd`. This verifies builds and packaging only; Pumpjack gameplay has not been tested.
 
 # Verification record
+## Cracking Unit alpha — GitHub Actions pending (2026-11-18)
+Commit `c65e0e8` is building in run [44216407263](https://github.com/Sipper1236/arcforge-horizon/actions/runs/44216407263). Before push, `rustfmt --check`, `git diff --check`, and JSON parsing of 11 changed/additional assets passed. No local compilation, tests, artifact verification, or in-world trial was run. The latest verified client remains Coker run 44211955195.
+
 ## Coker alpha — GitHub Actions build (2026-11-18)
 Commit `81b9018` passed both jobs in run [44211955195](https://github.com/Sipper1236/arcforge-horizon/actions/runs/44211955195). The native/content/package job compiled and packaged the Coker. The full Linux client assembled successfully.
 

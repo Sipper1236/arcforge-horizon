@@ -2,6 +2,11 @@
 Build and compile only through GitHub Actions. Do not run hybrid or local compilation. Earlier hybrid artifacts and steps below are historical; use GitHub Actions artifacts for current playtesting.
 Latest successful GitHub build: run 44211955195 for commit 81b9018; its verified client/package artifacts are under `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-github-44211955195/`.
 
+## Current working checkpoint — Cracking Unit alpha (GitHub Actions pending)
+Commit `c65e0e8` adds the source 3×3×5 Cracking Unit shell and both recipes: catalytic Heavy Oil cracking and hydrogen cracking. It has four separate product tanks, Heavy Oil and Hydrogen feed tanks, a Cracking Catalyst slot with 50 batches per catalyst, a speed-upgrade slot, external thermal input, Wrench mode switching on the top face, and visible formed casing/controller blocks. GitHub Actions run [44216407263](https://github.com/Sipper1236/arcforge-horizon/actions/runs/44216407263) is building this exact source revision. Formatting, whitespace, and JSON parsing passed before push; no local compilation or tests were run. The last verified playable remains the Coker artifact from run 44211955195 until this run succeeds.
+
+The current alpha uses fixed 32,000/16,000/16,000 mB tanks and a simplified fixed 3×3×5 box; source port-side modes, automatic output routing, regenerator geometry, and its GUI mode tab are not implemented. The mode can be changed with the Wrench on the top face. Gameplay remains unverified.
+
 ## Current working checkpoint — Coker alpha (GitHub verified; gameplay pending)
 Commit `81b9018` adds a single-block Coker using the source Bitumen recipe: 250 mB Bitumen, 60 ticks, 420°C, and 25 HU/t yields Petroleum Coke, Refinery Gas, and Heavy Oil. It has a speed-upgrade slot, two fluid output tanks, a coke output slot, Wrench temperature/heat/progress status, crafting and loot data, and Petroleum Coke integration with Arcforge coke/fuel paths. GitHub Actions run [44211955195](https://github.com/Sipper1236/arcforge-horizon/actions/runs/44211955195) passed both native/content/package and Linux client jobs.
 
