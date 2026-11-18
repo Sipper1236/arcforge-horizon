@@ -88,7 +88,7 @@ fn get_string(nbt: &Compound, key: &str) -> Option<String> {
         unreachable!()
     };
     match nbt.get(&key) {
-        Some(Tag::String(value)) => Some(value.clone()),
+        Some(Tag::String(value)) => Some(value.to_string_lossy()),
         _ => None,
     }
 }
