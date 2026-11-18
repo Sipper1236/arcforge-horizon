@@ -12,8 +12,13 @@ Commit `bb330aa` adds a powered single-block extractor, source-matched rate/depl
 Playable client ZIP: `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-github-43780024722/arcforge-playable-linux-x86_64-bb330aa0b74946df172be4d2741b019bc07a0374/arcforge-linux-x86_64.zip` (SHA-256 `7c688ea736e805af9489cf6a19a846380b4cf78f7572014d92b2c59c46ccd559`). Its embedded `SHA256SUMS` verifies `horizon-client`, `native-mods.json`, `arcforge.hmod`, and `arcforge.hnmod`; package and client ZIP integrity checks passed. HMOD SHA-256 `93804b2f1d735f636b898d303c9f6e082de22b32d6c5775f274924ba6ba2a9b8`; HNMOD SHA-256 `51322279068e619ea53940a16bdb72858bcda38e0178f3982890cfb4624e10fd`. This verifies builds and packaging only; Pumpjack gameplay has not been tested.
 
 # Verification record
-## Coker alpha — GitHub Actions pending (2026-11-17)
-Commit `81b9018` is being built by run [44211955195](https://github.com/Sipper1236/arcforge-horizon/actions/runs/44211955195). `rustfmt --check`, `git diff --check`, and parsing the six changed JSON assets passed on rx580; these are source/data checks only. No tests, local compilation, artifact verification, or in-world trial was performed. The prior verified build is Distillation Array run 44207116666.
+## Coker alpha — GitHub Actions build (2026-11-18)
+Commit `81b9018` passed both jobs in run [44211955195](https://github.com/Sipper1236/arcforge-horizon/actions/runs/44211955195). The native/content/package job compiled and packaged the Coker. The full Linux client assembled successfully.
+
+Remote client artifact: `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-github-44211955195/arcforge-playable-linux-x86_64-81b9018f277662cb5007cb6be4eaf828ce2af935/arcforge-linux-x86_64.zip` (SHA-256 `b60c4b45c2447251e3ebe548a9b683d1210a828132dd1f3496cf21a5b2423168`). HMOD SHA-256 `997790fa8a1cb13bfc34544979f57c1633d364e7d1563929e58e66f9bd71030c`; HNMOD SHA-256 `881104178411802622e64f15c294e5d850328d6fde7808c753e3ef6dc37da90a`.
+
+Both archives passed `unzip -t`; package `SHA256SUMS` and all four client-embedded hashes verified. `rustfmt --check`, `git diff --check`, and JSON parsing of the six changed JSON assets passed before the GitHub build. No local compilation, tests, or in-world trial was run. The alpha's runtime behavior remains unverified.
+
 ## Distillation Array alpha — GitHub Actions build (2026-11-18)
 Commit 81d12b7 is the Distillation Array alpha. GitHub Actions run [44207116666](https://github.com/Sipper1236/arcforge-horizon/actions/runs/44207116666) passed the native Rust check, Horizon content build/check, HMOD/HNMOD packaging, Linux Horizon client build, and artifact assembly. The Rust check caught and the follow-up commit corrected an invalid repeated Vec array initialization.
 Remote playable client: /mnt/hdd2tb/arcforge-horizon-builds/arcforge-github-44207116666/arcforge-playable-linux-x86_64-81d12b715af163a38af7b4d31084da7ecb1596dd/arcforge-linux-x86_64.zip (47,797,530 bytes; SHA-256 8f144dc6436a1d184a9411dd1871ffbefdc9887463b5131f9615dd569d1a74f1).

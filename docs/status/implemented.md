@@ -1,11 +1,11 @@
 # Current implementation
-**Current source:** Coker alpha is in GitHub Actions run [44211955195](https://github.com/Sipper1236/arcforge-horizon/actions/runs/44211955195); it is pending. The last verified build is still Distillation Array run [44207116666](https://github.com/Sipper1236/arcforge-horizon/actions/runs/44207116666).
-## Coker alpha — GitHub Actions pending
-Commit `81b9018` adds the source Bitumen-to-Petroleum-Coke recipe, 2 fluid byproducts, one speed-upgrade and one item-output slot, fixed tanks, Wrench status, crafting/loot data, and Petroleum Coke fuel/coke integration. Formatting, whitespace, and JSON checks passed. No local compilation, tests, or in-world trial was run. The GitHub build must pass before calling this a playable client.
+**Latest build:** Coker alpha, built by GitHub Actions run [44211955195](https://github.com/Sipper1236/arcforge-horizon/actions/runs/44211955195), commit `81b9018`.
+Playable client ZIP: `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-github-44211955195/arcforge-playable-linux-x86_64-81b9018f277662cb5007cb6be4eaf828ce2af935/arcforge-linux-x86_64.zip`
+SHA-256: `b60c4b45c2447251e3ebe548a9b683d1210a828132dd1f3496cf21a5b2423168`
+HMOD SHA-256: `997790fa8a1cb13bfc34544979f57c1633d364e7d1563929e58e66f9bd71030c`; HNMOD SHA-256: `881104178411802622e64f15c294e5d850328d6fde7808c753e3ef6dc37da90a`.
 
-**Latest build:** Distillation Array alpha, built by GitHub Actions run [44207116666](https://github.com/Sipper1236/arcforge-horizon/actions/runs/44207116666) at commit 81d12b7.
-
-Current GitHub playable artifact: /mnt/hdd2tb/arcforge-horizon-builds/arcforge-github-44207116666/arcforge-playable-linux-x86_64-81d12b715af163a38af7b4d31084da7ecb1596dd/arcforge-linux-x86_64.zip (SHA-256 8f144dc6436a1d184a9411dd1871ffbefdc9887463b5131f9615dd569d1a74f1).
+## Coker alpha — GitHub Actions verified
+Commit `81b9018` adds the source Bitumen-to-Petroleum-Coke recipe, Refinery Gas and Heavy Oil byproducts, one speed-upgrade slot and one item-output slot, fixed tanks, Wrench status, crafting/loot data, and Petroleum Coke fuel/coke integration. Both GitHub jobs passed; package and client ZIP integrity and embedded hashes verified. Gameplay remains unverified. Reflux, automatic product routing, extra Coker recipes, and per-instance capacities are not implemented.
 
 ## Distillation Array alpha — GitHub Actions build (2026-11-18)
 Commits 3b3d201 and 81d12b7 add and integrate the source-shaped Distillation Array. It forms a 2x2 or 3x3 column, 4–16 blocks high, with one controller and optional tray layers. Creosote, Crude Oil, and Sour Crude Oil recipes split into fluids and Pitch using source batch amounts, temperatures, heat costs, height tiers, and steam stripping. Thermal conduits supply HU; Speed and Heat Upgrades occupy the machine inventory; the Wrench reports structure, feed progress, stored heat, and steam. The controller exposes fluid tanks and all-side routing.
