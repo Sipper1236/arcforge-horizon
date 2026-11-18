@@ -1,7 +1,7 @@
 # Current implementation
-**Current source:** Cracking Unit alpha is in GitHub Actions run [44216407263](https://github.com/Sipper1236/arcforge-horizon/actions/runs/44216407263); build pending. The last verified client is still the Coker from run 44211955195.
+**Current source:** Cracking Unit alpha is in GitHub Actions run [44217016120](https://github.com/Sipper1236/arcforge-horizon/actions/runs/44217016120); build pending. The last verified client is still the Coker from run 44211955195.
 ## Cracking Unit alpha — GitHub Actions pending
-Commit `c65e0e8` implements both source cracking modes, the 3×3×5 structure, five recipe/crafting JSON files, four output tanks, catalyst wear, heat input, and Wrench mode switching. Static checks passed; no local compilation, tests, or gameplay trial was run.
+Commits `c65e0e8` and `230b789` implement both source cracking modes, the 3×3×5 structure, five recipe/crafting JSON files, four output tanks, catalyst wear, heat input, and Wrench mode switching. Static checks passed; no local compilation, tests, or gameplay trial was run.
 
 **Latest build:** Coker alpha, built by GitHub Actions run [44211955195](https://github.com/Sipper1236/arcforge-horizon/actions/runs/44211955195), commit `81b9018`.
 Playable client ZIP: `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-github-44211955195/arcforge-playable-linux-x86_64-81b9018f277662cb5007cb6be4eaf828ce2af935/arcforge-linux-x86_64.zip`

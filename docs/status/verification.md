@@ -13,7 +13,7 @@ Playable client ZIP: `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-github-437800
 
 # Verification record
 ## Cracking Unit alpha — GitHub Actions pending (2026-11-18)
-Commit `c65e0e8` is building in run [44216407263](https://github.com/Sipper1236/arcforge-horizon/actions/runs/44216407263). Before push, `rustfmt --check`, `git diff --check`, and JSON parsing of 11 changed/additional assets passed. No local compilation, tests, artifact verification, or in-world trial was run. The latest verified client remains Coker run 44211955195.
+Commits `c65e0e8` and `230b789` are being built in run [44217016120](https://github.com/Sipper1236/arcforge-horizon/actions/runs/44217016120). Before push, `rustfmt --check`, `git diff --check`, and JSON parsing of 11 changed/additional assets passed. No local compilation, tests, artifact verification, or in-world trial was run. The latest verified client remains Coker run 44211955195.
 
 ## Coker alpha — GitHub Actions build (2026-11-18)
 Commit `81b9018` passed both jobs in run [44211955195](https://github.com/Sipper1236/arcforge-horizon/actions/runs/44211955195). The native/content/package job compiled and packaged the Coker. The full Linux client assembled successfully.
