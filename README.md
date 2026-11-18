@@ -24,6 +24,8 @@ The complete feature inventory is version-sensitive. The source audit was made a
 5. **Explicit compatibility.** Pin the Horizon source revision for the native bundle. Record required native-hook API versions, test LAN/client-server parity, and plan a migration for every saved-data schema change.
 
 ## Current state
+**Distillation Array alpha (2026-11-18):** source recipes now process Creosote, Crude Oil, and Sour Crude Oil in a formed 2x2/3x3 column, with heat requirements, height-dependent fractions, Pitch, steam stripping, fluid tanks, upgrades, and Wrench status. GitHub run [44207116666](https://github.com/Sipper1236/arcforge-horizon/actions/runs/44207116666) built the checked packages and Linux client; the verified client ZIP is /mnt/hdd2tb/arcforge-horizon-builds/arcforge-github-44207116666/arcforge-playable-linux-x86_64-81d12b715af163a38af7b4d31084da7ecb1596dd/arcforge-linux-x86_64.zip. In-game behavior is unverified. The alpha uses fixed tank capacities, static formed models, and all-side tank access.
+
 **Electric Pump alpha (2026-11-15):** api/src/electric_pump.rs adds a powered Electric Pump with the source defaults: 10 FE/t, one 1,000 mB bucket every 20 ticks, a 20,000 FE buffer, and a 16,000 mB output tank. It only operates over an infinite water source (two or more horizontal neighboring source blocks), matching Arcforge's default infinite-water behavior; it never removes world blocks. Right-clicking sets its facing and reports source, progress, tank, and energy. Fluid output is available to conduits. Finite-fluid extraction, bucket slots, speed/energy upgrades, and ocean/beach Seawater conversion remain unimplemented because the pinned Host does not expose source-fluid pickup or biome queries. In-game behavior has not been verified.
 
 **Industrial Water Intake alpha (2026-11-15):** api/src/water_intake.rs now adds the fixed Arcforge 3×3×3 intake shell. It needs 400 connected source-water blocks below its center, draws 0.25 FE per mB at up to 8,000 mB/t, and stores up to 128,000 mB. The source water is not consumed. Right-clicking a horizontal face sets controller direction and shows formation, water, flow, tank, and energy status. Fluid output is exposed through Horizon's tank capability. This alpha scans at most 400 water sources every 100 ticks. Biome-based river/ocean bonus and loaded-chunk filtering are deferred because the pinned Host hooks do not expose those queries. Build succeeds; in-game behavior is not yet verified.
@@ -101,7 +103,7 @@ The target is functional parity with Arcforge's survival gameplay, not a byte-fo
 
 - Finite-fluid extraction, bucket slots, Electric Pump upgrades, and Seawater biome conversion; Water Intake biome bonus, loaded-chunk filtering, and gameplay validation; Steam Boiler Array (variable shell sizes and pressure behavior implemented); Steam Turbine Array alpha (variable shell sizing, grade-based FE, RPM ramp, lubricant/vacuum bonuses, and Exhaust Steam); Condenser Array alpha (variable solid box, one-to-one Exhaust Steam condensation, and water/ice cooling bonuses).
 - Seed-based oil surveys and persistent Pumpjack extraction are early alpha slices. Commit af81fc5 implements Arcforge's 3×5 Pumpjack structure; GitHub Actions built a Linux client, but in-game behavior remains unverified.
-- Distillation Array and fuels/products; Cracking Unit, Catalytic Reformer, Coker, Lubricant Blender, Hydrotreater, Sulfur Recovery Unit, Steam Cracker, Diesel Generator and Flare Stack.
+- Further refinery fuels/products and ports; Cracking Unit, Catalytic Reformer, Coker, Lubricant Blender, Hydrotreater, Sulfur Recovery Unit, Steam Cracker, Diesel Generator and Flare Stack.
 - Fluids and gases: water, brine, creosote, crude/sour crude, refinery fractions, steam grades, exhaust steam, hydrogen, oxygen, syngas, acid, chlorine, plastics and byproducts.
 - Data-driven fuel, recipe and worldgen definitions; migration-safe world configuration.
 
@@ -218,7 +220,7 @@ The implementation phases are ordered by dependency. The alpha's player unlock o
 ### Phase 8 — oil extraction and refinery chain
 
 - Extend the deterministic oil deposit survey and persistent Pumpjack extraction with Arcforge’s Derrick drilling, Well Heads, 3×5 Pumpjack structure, oil-rich biomes, caverns/gas, and shared depletion.
-- Port Distillation Array and crude/creosote recipes; then Cracking Unit, Reformer, Coker, Blender, Hydrotreater, Sulfur Recovery, Steam Cracker, Diesel Generator and Flare Stack.
+- Extend Distillation Array parity and crude/creosote gameplay verification; then Cracking Unit, Reformer, Coker, Blender, Hydrotreater, Sulfur Recovery, Steam Cracker, Diesel Generator and Flare Stack.
 - Add fluids/gases, recipe maps, catalysts, byproducts, sour variants, gas/item transfer, flare behavior and oil-rich biome tags.
 
 **Exit:** a complete oil deposit → crude → refinery products → fuel/power chain runs, survives restart and handles drained deposits and full tanks deterministically.

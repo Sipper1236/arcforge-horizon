@@ -1,11 +1,19 @@
 # Current implementation
-**Latest build:** Arcforge 3×5 Pumpjack alpha, built by GitHub Actions run [43783919669](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43783919669).
+**Latest build:** Distillation Array alpha, built by GitHub Actions run [44207116666](https://github.com/Sipper1236/arcforge-horizon/actions/runs/44207116666) at commit 81d12b7.
 
-Current GitHub playable artifact: /mnt/hdd2tb/arcforge-horizon-builds/arcforge-github-43783919669/arcforge-playable-linux-x86_64-af81fc59065c8189445ae0fe945651a7e49ca7d4/arcforge-linux-x86_64.zip.
+Current GitHub playable artifact: /mnt/hdd2tb/arcforge-horizon-builds/arcforge-github-44207116666/arcforge-playable-linux-x86_64-81d12b715af163a38af7b4d31084da7ecb1596dd/arcforge-linux-x86_64.zip (SHA-256 8f144dc6436a1d184a9411dd1871ffbefdc9887463b5131f9615dd569d1a74f1).
+
+## Distillation Array alpha — GitHub Actions build (2026-11-18)
+Commits 3b3d201 and 81d12b7 add and integrate the source-shaped Distillation Array. It forms a 2x2 or 3x3 column, 4–16 blocks high, with one controller and optional tray layers. Creosote, Crude Oil, and Sour Crude Oil recipes split into fluids and Pitch using source batch amounts, temperatures, heat costs, height tiers, and steam stripping. Thermal conduits supply HU; Speed and Heat Upgrades occupy the machine inventory; the Wrench reports structure, feed progress, stored heat, and steam. The controller exposes fluid tanks and all-side routing.
+The alpha uses static visible formed blocks, fixed block-ID tank capacities for all column sizes, and lacks source-style individual product ports and dynamic tower visuals. Horizon's fluid-capability hook does not provide per-instance tank sizing. GitHub Actions run [44207116666](https://github.com/Sipper1236/arcforge-horizon/actions/runs/44207116666) passed both package/content checks and the pinned Linux client build.
+Playable Linux ZIP: /mnt/hdd2tb/arcforge-horizon-builds/arcforge-github-44207116666/arcforge-playable-linux-x86_64-81d12b715af163a38af7b4d31084da7ecb1596dd/arcforge-linux-x86_64.zip (SHA-256 8f144dc6436a1d184a9411dd1871ffbefdc9887463b5131f9615dd569d1a74f1)
+Mod package SHA-256: HMOD 4faffb3042904724be24f3e18b1cf2c673449c3cb787134847965f5f0e95e85f; HNMOD a6c42ed7563f49e7c38b792ffcb6085a73f41fda5c6e441b08d70e6852af2426.
+The workflow verified the client ZIP and embedded hashes. No in-game Distillation Array behavior has been verified.
+
 
 ## Oil deposit survey and Pumpjack alpha
 Commit af81fc5 replaces the earlier single-block Pumpjack with Arcforge's 3×5 structure, recipes and loot, visible formed controller/casing models, and a craftable Well Head stand-in. Run 43783919669 built and packaged the mod and Linux client. In-game structure formation, pumping, and save/reload are not yet verified.
-The Seismic Survey Tool reports deterministic ordinary-region Overworld deposits, including their remaining volume. `api/src/oil_pumpjack.rs` adds power-fed crude extraction, a 16,000 mB output tank, and shared world-saved depletion. The machine uses Arcforge’s default rate, depletion curve, and depleted-field trickle. The Pumpjack is currently a single-block alpha; the source 3×5 structure, derrick/wellhead path, biome modifiers, caverns, and gas extraction remain. GitHub Actions run [43780024722](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43780024722) passed; its playable client is `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-github-43780024722/arcforge-playable-linux-x86_64-bb330aa0b74946df172be4d2741b019bc07a0374/arcforge-linux-x86_64.zip` (SHA-256 `7c688ea736e805af9489cf6a19a846380b4cf78f7572014d92b2c59c46ccd559`). This proves build/package integrity, not gameplay behavior.
+The Seismic Survey Tool reports deterministic ordinary-region Overworld deposits, including their remaining volume. `api/src/oil_pumpjack.rs` adds power-fed crude extraction, a 16,000 mB output tank, and shared world-saved depletion. The machine uses Arcforge’s default rate, depletion curve, and depleted-field trickle. The Pumpjack now uses the source 3×5 structure and a craftable Well Head stand-in. Oil Derrick drilling, biome modifiers, caverns, and gas extraction remain. GitHub Actions run [43780024722](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43780024722) passed; its playable client is `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-github-43780024722/arcforge-playable-linux-x86_64-bb330aa0b74946df172be4d2741b019bc07a0374/arcforge-linux-x86_64.zip` (SHA-256 `7c688ea736e805af9489cf6a19a846380b4cf78f7572014d92b2c59c46ccd559`). This proves build/package integrity, not gameplay behavior.
 ## Superheater Array alpha
 api/src/superheater.rs adds the 3–7 block cubic multiblock, steam-grade conversion, pressure modes, persisted heat, survival recipes and drops, and thermal-conduit integration. GitHub Actions run 43773403158 passed both jobs; in-game behavior is pending.
 
@@ -15,11 +23,11 @@ Four battery items expose Horizon's native item-energy capability with source ca
 
 ## Native crate and registered content
 
-`api/src/lib.rs` registers a Metal Press, Sifter, Arc Crusher, a three-lane Arc Crushing Array controller and its formed casing multiblock, Carbonizer, Induction Furnace, Infuser, Resin Tap, Firebox, Firebox Array controller and casing, Pressure Glass, Solar Thermal Array controller/casing/collectors, Fuel Burner, all four Fluid Tank tiers, four Pressurized Cylinder tiers, Thermoelectric Plant, four Energy Conduit tiers, four Item Conduit tiers, four Fluid Conduit tiers, four thermal conduit tiers, four Energy Cell tiers, four Heat Cell tiers, four portable FE Battery items, a Wrench that rotates supported single-block machines and configures conduit, Solar heat-port, and energy-generator faces, seven Steel tools, four Steel armor pieces, Fiberizer, Vulcanizer, Grain Dryer, Arcforge Furnace port, Steelworks prototype, Combustion Plant, coke block, treated wood, Arcforge furnace bricks, Creosote/Latex buckets, four liquid Canisters and four Gas Cartridges, the tungsten heating coil, and processing materials.
+`api/src/lib.rs` registers a Metal Press, Sifter, Arc Crusher, a three-lane Arc Crushing Array controller and its formed casing multiblock, Carbonizer, Induction Furnace, Infuser, Resin Tap, Firebox, Firebox Array controller and casing, Pressure Glass, Solar Thermal Array controller/casing/collectors, Fuel Burner, all four Fluid Tank tiers, four Pressurized Cylinder tiers, Thermoelectric Plant, four Energy Conduit tiers, four Item Conduit tiers, four Fluid Conduit tiers, four thermal conduit tiers, four Energy Cell tiers, four Heat Cell tiers, four portable FE Battery items, a Wrench that rotates supported single-block machines and configures conduit, Solar heat-port, and energy-generator faces, seven Steel tools, four Steel armor pieces, Fiberizer, Vulcanizer, Grain Dryer, Arcforge Furnace port, Steelworks prototype, Combustion Plant, coke block, treated wood, Arcforge furnace bricks, Creosote/Latex buckets, four liquid Canisters and four Gas Cartridges, the tungsten heating coil, processing materials, the Distillation Array controller/casing/tray, and the 3×5 Pumpjack with a craftable Well Head stand-in.
 
 ## Recipe data present
 
-The content directory contains 417 recipe JSON files (Arcforge machine recipes and vanilla recipe types):
+The content directory contains 426 recipe JSON files (Arcforge machine recipes and vanilla recipe types):
 
 | Recipe group | Files |
 |---|---:|
@@ -44,6 +52,8 @@ The content directory contains 417 recipe JSON files (Arcforge machine recipes a
 | Steam Turbine Array casing, blade-set, and controller crafting | 3 |
 | Condenser Array casing and controller crafting | 2 |
 | Superheater Array casing and controller crafting | 2 |
+| Distillation Array distilling recipes | 3 |
+| Distillation Array controller, casing, and tray crafting | 3 |
 | Seismic Survey Tool crafting | 1 |
 | Water Intake casing and controller crafting | 2 |
 | Electric Pump crafting | 1 |
@@ -68,8 +78,8 @@ The content directory contains 417 recipe JSON files (Arcforge machine recipes a
 | Composite material crafting | 1 |
 | Induction Furnace Arcforge smelting catalog | 32 |
 | Heat Cell crafting recipes | 4 |
-| Additional recipe files not itemized above | 4 |
-| **Total** | **405** |
+| Additional recipe files not itemized above | 19 |
+| **Total** | **426** |
 
 Files existing does not by itself prove the complete recipe graph or survival progression works.
 

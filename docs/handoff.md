@@ -1,9 +1,9 @@
-# Current build policy (updated 2026-11-16)
+## Current build policy (updated 2026-11-18)
 Build and compile only through GitHub Actions. Do not run hybrid or local compilation. Earlier hybrid artifacts and steps below are historical; use GitHub Actions artifacts for current playtesting.
-Latest successful GitHub build: run 43783919669 for commit af81fc5; artifacts are under /mnt/hdd2tb/arcforge-horizon-builds/arcforge-github-43783919669/.
+Latest successful GitHub build: run 44207116666 for commit 81d12b7; artifacts are under /mnt/hdd2tb/arcforge-horizon-builds/arcforge-github-44207116666/.
 
-## Current working checkpoint — Arcforge 3×5 Pumpjack (GitHub verified; gameplay pending)
-Commit af81fc5 replaces the temporary single-block Pumpjack with Arcforge's 3×5 structure, controller/casing/Well Head recipes and loot, visible formed models, and a craftable Well Head stand-in. GitHub Actions run 43783919669 passed both the native/content package job and Linux client build. In-game structure formation and extraction remain unverified. The Derrick cannot drill because Horizon's available hooks cannot replace world block IDs.
+## Current working checkpoint — Distillation Array alpha (GitHub verified; gameplay pending)
+Commits 3b3d201 and 81d12b7 add a source-shaped 2x2/3x3 by 4–16 column, source recipes for Creosote, Crude Oil, and Sour Crude Oil, fraction outputs, Pitch, steam stripping, HU processing, upgrades, tank capabilities, and Wrench status. GitHub Actions run [44207116666](https://github.com/Sipper1236/arcforge-horizon/actions/runs/44207116666) passed both jobs. Playable ZIP: /mnt/hdd2tb/arcforge-horizon-builds/arcforge-github-44207116666/arcforge-playable-linux-x86_64-81d12b715af163a38af7b4d31084da7ecb1596dd/arcforge-linux-x86_64.zip (SHA-256 8f144dc6436a1d184a9411dd1871ffbefdc9887463b5131f9615dd569d1a74f1). The client bundle integrity and all embedded checksums passed. Minecraft behavior is unverified; test structure formation, feed/steam/output routing, heating, batch completion, upgrades, and save/reload. Fixed tank capacities, all-side access, static formed models, and no individual product ports remain alpha limits. Oil Derrick drilling is still deferred because Horizon hooks cannot replace world block IDs.
 ## Historical checkpoint — Superheater Array alpha (GitHub verified; gameplay pending)
 Commit f1f8608 includes the Superheater Array and Horizon host-type fixes. GitHub Actions run 43773403158 passed the native crate check, Horizon content build/check, mod packaging, and Linux client build. The importable client ZIP is /mnt/hdd2tb/arcforge-horizon-builds/arcforge-github-43773403158/arcforge-playable-linux-x86_64-f1f8608b1d6ce52b67cbe38dbbb6ae5ff2dd1cc9/arcforge-linux-x86_64.zip (SHA-256 63654ada508bb66a4501b67aa34a627d10025e21312e6f3ea968a1b7b4e5c813). Embedded checksums and ZIP integrity verified. This proves build/package integrity, not in-game behavior. Next, import the client, craft Superheater Array Controller/Casing, form a 3x3x3 shell, use the Wrench to set facing and pressure mode, connect a thermal conduit, feed Steam, and confirm flow/status; then test High-Pressure and Superheated upgrades and save/reload. Build and compile only through GitHub Actions.
 
@@ -18,7 +18,7 @@ The remote checkout now contains api/src/water_intake.rs, controller/casing regi
 `api/src/steam_condenser.rs` adds a formed 3–7 block Condenser Array that converts Exhaust Steam to water 1:1, adds source-style cooling bonuses from adjacent water/ice, and reports state with the Wrench. The full Linux client and both Arcforge packages were rebuilt on rx580 with the hybrid workflow. Artifact: `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-hybrid-2026-11-15-steam-turbine-rerun/arcforge-linux-x86_64.zip` (SHA-256 `319b87e1e17a250b558b2c98650e9a4c8391d611e5dd721b660e0ac1d9441221`). No GitHub build or in-game test was run.
 
 
-**Snapshot date:** 2026-11-16
+**Historical snapshot date:** 2026-11-16
 ## Historical snapshot — Steam Turbine and Condenser Array alpha
 
 The Condenser Array source, content, and native package build on rx580 alongside the earlier Steam Turbine implementation. `docs/status/verification.md` records exact checksums. The Condenser Array slice is committed locally on `main`; it has not been pushed to GitHub.
@@ -46,7 +46,7 @@ Commit `158d858` adds explicit custom state schemas/defaults to the conduit tier
 
 The working tree is stored at `sftp://rayyan@100.89.43.102/mnt/hdd2tb/arcforge-horizon`. This machine mounts `/mnt/hdd2tb` at `/home/rayyan/mnt/hdd2tb` with the enabled user service `arcforge-hdd2tb.service`; `/home/rayyan/Projects/arcforge-horizon` is a symlink to the remote checkout. GitHub build packages and playable client bundles are archived under `/mnt/hdd2tb/arcforge-horizon-builds/`, with a local compatibility symlink at `/home/rayyan/Projects/arcforge-horizon-builds`. Keep future project edits and build artifacts on that remote disk.
 
-## Latest build artifacts — hybrid remote 2026-11-15
+## Historical build artifacts — hybrid remote 2026-11-15
 - Playable Linux client ZIP: `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-hybrid-2026-11-15-steam-turbine-rerun/arcforge-linux-x86_64.zip` (SHA-256 `319b87e1e17a250b558b2c98650e9a4c8391d611e5dd721b660e0ac1d9441221`).
 - The archive also contains standalone `arcforge.hmod` and `arcforge.hnmod` files, plus a source-only bundle ZIP and checksums. Horizon `native-mods.json` is included beside the client in the client ZIP.
 - Import instructions are in `INSTALL.txt`. This verifies build and packaging, not in-game behavior.
