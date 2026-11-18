@@ -1,3 +1,6 @@
 {
-  "values": ["arcforge:coal_coke"]
+  "values": [
+    "arcforge:coal_coke",
+    "arcforge:petroleum_coke"
+  ]
 }

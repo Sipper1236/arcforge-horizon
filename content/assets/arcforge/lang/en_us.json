@@ -71,5 +71,7 @@
   "block.arcforge.distillation_array_casing": "Distillation Array Casing",
   "item.arcforge.distillation_array_casing": "Distillation Array Casing",
   "block.arcforge.tray_level_casing": "Tray Level Casing",
-  "item.arcforge.tray_level_casing": "Tray Level Casing"
+  "item.arcforge.tray_level_casing": "Tray Level Casing",
+  "block.arcforge.coker": "Coker",
+  "item.arcforge.petroleum_coke": "Petroleum Coke"
 }

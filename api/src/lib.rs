@@ -32,6 +32,7 @@ fn default_registry_entry<T: Default>(_: &[T]) -> T {
 }
 
 mod area_tool;
+mod coker;
 mod crushing_catalog;
 mod distillation_array;
 mod electric_pump;
@@ -106,6 +107,8 @@ const WELL_HEAD: &str = oil_pumpjack::WELL_HEAD;
 const DISTILLATION_CONTROLLER: &str = distillation_array::CONTROLLER;
 const DISTILLATION_CASING: &str = distillation_array::CASING;
 const DISTILLATION_TRAY: &str = distillation_array::TRAY;
+const COKER: &str = coker::BLOCK;
+const PETROLEUM_COKE: &str = coker::PETROLEUM_COKE;
 const STEAM_TURBINE_ARRAY_CASING: &str = steam_turbine::CASING;
 const FUEL_BURNER: &str = "arcforge:fuel_burner";
 const WROUGHT_FLUID_TANK: &str = "arcforge:wrought_fluid_tank";
@@ -504,6 +507,14 @@ impl Hooks for Arcforge {
     }
 
     fn container_accepts(&self, host: &dyn Host, event: &mut ContainerAcceptsEvent<'_>) -> Flow {
+        if event.entity.id == COKER {
+            return if coker::item_allowed(event.slot, event.stack.item.as_ref(), event.stack.count)
+            {
+                Flow::Continue
+            } else {
+                Flow::Cancel
+            };
+        }
         if event.entity.id == DISTILLATION_CONTROLLER {
             return if distillation_array::item_allowed(
                 event.slot,
@@ -534,7 +545,10 @@ impl Hooks for Arcforge {
                     arcforge_furnace_ingredient_accepts(host, event.stack, "additive")
                         || arcforge_furnace_ingredient_accepts(host, event.stack, "additive_2")
                 }
-                3 => matches!(event.stack.item.as_ref(), COKE | COKE_BLOCK),
+                3 => matches!(
+                    event.stack.item.as_ref(),
+                    COKE | PETROLEUM_COKE | COKE_BLOCK
+                ),
                 _ => false,
             };
             return if valid { Flow::Continue } else { Flow::Cancel };
@@ -648,7 +662,10 @@ impl Hooks for Arcforge {
                 .additives
                 .iter()
                 .any(|ingredient| ingredient.test(event.stack)),
-            3 => matches!(event.stack.item.as_ref(), COKE | COKE_BLOCK),
+            3 => matches!(
+                event.stack.item.as_ref(),
+                COKE | PETROLEUM_COKE | COKE_BLOCK
+            ),
             _ => false,
         };
         event.may_place &= accepts;
@@ -886,6 +903,27 @@ impl Hooks for Arcforge {
                 host.set_block_property(event.pos, "facing", facing);
             }
             show_electric_pump_status(host, event.pos);
+            return Flow::Cancel;
+        }
+        if host
+            .mod_block_entity(event.pos)
+            .is_some_and(|entity| entity.id == COKER)
+        {
+            let requested_facing = match event.face {
+                [0, 0, -1] => Some("north"),
+                [1, 0, 0] => Some("east"),
+                [0, 0, 1] => Some("south"),
+                [-1, 0, 0] => Some("west"),
+                _ => None,
+            };
+            if let Some(facing) = requested_facing {
+                coker::face(host, event.pos, facing);
+            }
+            if let Some(entity) = host.mod_block_entity(event.pos) {
+                if let Some(player) = host.acting_player() {
+                    host.action_bar(player.uuid, Text::literal(coker::status(&entity)));
+                }
+            }
             return Flow::Cancel;
         }
         if host
@@ -1370,6 +1408,20 @@ impl Hooks for Arcforge {
             block.default_state = [
                 ("facing".to_owned(), "north".to_owned()),
                 ("formed".to_owned(), "false".to_owned()),
+                ("lit".to_owned(), "false".to_owned()),
+            ]
+            .into_iter()
+            .collect();
+        }
+        register_content!(&mut event.blocks, id: COKER.into(), template: "minecraft:blast_furnace".into(), item: true);
+        if let Some(block) = event.blocks.iter_mut().find(|block| block.id == COKER) {
+            block.state_properties = serde_json::from_value(serde_json::json!({
+                "facing": { "type": "enum", "values": ["north", "east", "south", "west"] },
+                "lit": { "type": "boolean" }
+            }))
+            .expect("valid Coker block states");
+            block.default_state = [
+                ("facing".to_owned(), "north".to_owned()),
                 ("lit".to_owned(), "false".to_owned()),
             ]
             .into_iter()
@@ -2014,6 +2066,7 @@ impl Hooks for Arcforge {
             register_content!(&mut event.items, id: id.into(), template: template.into(), max_stack_size: Some(1), components: components);
         }
         register_content!(&mut event.items, id: COKE.into(), template: "minecraft:coal".into());
+        register_content!(&mut event.items, id: PETROLEUM_COKE.into(), template: "minecraft:coal".into());
         register_content!(&mut event.items, id: SLAG.into(), template: "minecraft:gravel".into());
         register_content!(&mut event.items, id: CARBON_DUST.into(), template: "minecraft:gunpowder".into());
         register_content!(&mut event.items, id: IRON_DUST.into(), template: "minecraft:iron_nugget".into());
@@ -2131,6 +2184,7 @@ impl Hooks for Arcforge {
             || event.block == ELECTRIC_PUMP
             || event.block == PUMPJACK_CONTROLLER
             || event.block == DISTILLATION_CONTROLLER
+            || event.block == COKER
             || event.block == SOLAR_ARRAY_CONTROLLER
             || event.block == GEOTHERMAL_PLANT
             || event.block == FUEL_BURNER
@@ -2187,6 +2241,7 @@ impl Hooks for Arcforge {
             || event.block == ELECTRIC_PUMP
             || event.block == PUMPJACK_CONTROLLER
             || event.block == DISTILLATION_CONTROLLER
+            || event.block == COKER
             || event.block == SOLAR_ARRAY_CONTROLLER
             || event.block == GEOTHERMAL_PLANT
             || event.block == FUEL_BURNER
@@ -2216,6 +2271,8 @@ impl Hooks for Arcforge {
     ) -> Option<ModContainer> {
         if event.block == DISTILLATION_CONTROLLER {
             Some(distillation_array::container())
+        } else if event.block == COKER {
+            Some(coker::container())
         } else if event.block == STEAM_BOILER_ARRAY_CONTROLLER {
             Some(ModContainer {
                 slots: 2,
@@ -2795,7 +2852,9 @@ impl Hooks for Arcforge {
         _host: &dyn Host,
         event: &mut horizon_client::mod_api::BlockEntityAcceptsFluidEvent<'_>,
     ) -> Flow {
-        if event.block == DISTILLATION_CONTROLLER
+        if event.block == COKER && !coker::accepts(event.tank, event.fluid) {
+            Flow::Cancel
+        } else if event.block == DISTILLATION_CONTROLLER
             && !distillation_array::accepts(event.tank, event.fluid)
         {
             Flow::Cancel
@@ -2960,6 +3019,8 @@ impl Hooks for Arcforge {
     ) -> Option<horizon_client::mod_api::ModFluidTanks> {
         if event.block == DISTILLATION_CONTROLLER {
             Some(distillation_array::fluid_tanks())
+        } else if event.block == COKER {
+            Some(coker::fluid_tanks())
         } else if event.block == STEAM_TURBINE_ARRAY_CONTROLLER {
             Some(steam_turbine::fluid_tanks())
         } else if event.block == STEAM_CONDENSER_ARRAY_CONTROLLER {
@@ -3108,6 +3169,7 @@ impl Hooks for Arcforge {
             ELECTRIC_PUMP => electric_pump::tick(host, event.pos, event.entity),
             PUMPJACK_CONTROLLER => oil_pumpjack::tick(host, event.pos, event.entity),
             DISTILLATION_CONTROLLER => distillation_array::tick(host, event.pos, event.entity),
+            COKER => coker::tick(host, event.pos, event.entity),
             SOLAR_ARRAY_CONTROLLER => tick_solar_array(host, event.pos, event.entity),
             GEOTHERMAL_PLANT => tick_geothermal_plant(host, event.pos, event.entity),
             FUEL_BURNER => tick_fuel_burner(host, event.pos, event.entity),
@@ -3997,7 +4059,7 @@ fn unform_firebox_array_near(host: &mut dyn Host, broken: [i32; 3]) {
 }
 
 fn firebox_array_fuel(item: &str) -> Option<(u64, u32)> {
-    if item == COKE || item == COKE_BLOCK {
+    if item == COKE || item == PETROLEUM_COKE || item == COKE_BLOCK {
         let base = u64::from(firebox_burn_duration(if item == COKE_BLOCK {
             "minecraft:coal_block"
         } else {
@@ -6119,7 +6181,11 @@ fn tick_infuser(host: &dyn Host, entity: &mut ModBlockEntity) {
 
 fn firebox_fuel_ticks(item: &str) -> Option<u32> {
     Some(match item {
-        "minecraft:coal" | "minecraft:charcoal" | "arcforge:bio_coal" => 1600,
+        "minecraft:coal"
+        | "minecraft:charcoal"
+        | "arcforge:bio_coal"
+        | "arcforge:coal_coke"
+        | "arcforge:petroleum_coke" => 1600,
         "minecraft:coal_block" | "arcforge:bio_coal_block" => 16_000,
         _ => return None,
     })
@@ -6589,6 +6655,9 @@ fn transfer_supported_heat_to_neighbor(
     }
     if target.id == DISTILLATION_CONTROLLER {
         return distillation_array::accept_heat(host, neighbor, heat, rate);
+    }
+    if target.id == COKER {
+        return coker::accept_heat(host, neighbor, heat, rate);
     }
     let (min_temperature, capacity, max_temperature) = match target.id.as_str() {
         FIBERIZER => (800, 10_000, 1100),
@@ -8320,7 +8389,11 @@ fn push_adjacent_arcforge_energy(
 
 fn combustion_fuel_ticks(item: &str) -> Option<i32> {
     match item {
-        "minecraft:coal" | "minecraft:charcoal" | "arcforge:bio_coal" => Some(1600),
+        "minecraft:coal"
+        | "minecraft:charcoal"
+        | "arcforge:bio_coal"
+        | "arcforge:coal_coke"
+        | "arcforge:petroleum_coke" => Some(1600),
         "minecraft:coal_block" | "arcforge:bio_coal_block" => Some(16_000),
         _ => None,
     }
@@ -8594,7 +8667,7 @@ fn arcforge_furnace_coke_count(entity: &ModBlockEntity) -> u32 {
     };
     loose.saturating_add(if stack.item.as_ref() == COKE_BLOCK {
         stack.count.saturating_mul(9)
-    } else if stack.item.as_ref() == COKE {
+    } else if matches!(stack.item.as_ref(), COKE | PETROLEUM_COKE) {
         stack.count
     } else {
         0
@@ -8617,7 +8690,7 @@ fn arcforge_furnace_take_coke(entity: &mut ModBlockEntity) -> bool {
         }
         set_i32(&mut entity.nbt, "LooseCoke", 8);
         true
-    } else if stack.item.as_ref() == COKE && stack.count > 0 {
+    } else if matches!(stack.item.as_ref(), COKE | PETROLEUM_COKE) && stack.count > 0 {
         stack.count -= 1;
         if stack.count == 0 {
             entity.items[3] = None;
@@ -8756,7 +8829,7 @@ fn consume_fuel(entity: &mut ModBlockEntity) -> bool {
     let Some(fuel) = entity.items[4].as_mut() else {
         return false;
     };
-    if fuel.item.as_ref() != COKE || fuel.count == 0 {
+    if !matches!(fuel.item.as_ref(), COKE | PETROLEUM_COKE) || fuel.count == 0 {
         return false;
     }
     fuel.count -= 1;
