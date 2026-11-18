@@ -1,4 +1,8 @@
 # Current implementation
+**Current source:** Coker alpha is in GitHub Actions run [44211955195](https://github.com/Sipper1236/arcforge-horizon/actions/runs/44211955195); it is pending. The last verified build is still Distillation Array run [44207116666](https://github.com/Sipper1236/arcforge-horizon/actions/runs/44207116666).
+## Coker alpha — GitHub Actions pending
+Commit `81b9018` adds the source Bitumen-to-Petroleum-Coke recipe, 2 fluid byproducts, one speed-upgrade and one item-output slot, fixed tanks, Wrench status, crafting/loot data, and Petroleum Coke fuel/coke integration. Formatting, whitespace, and JSON checks passed. No local compilation, tests, or in-world trial was run. The GitHub build must pass before calling this a playable client.
+
 **Latest build:** Distillation Array alpha, built by GitHub Actions run [44207116666](https://github.com/Sipper1236/arcforge-horizon/actions/runs/44207116666) at commit 81d12b7.
 
 Current GitHub playable artifact: /mnt/hdd2tb/arcforge-horizon-builds/arcforge-github-44207116666/arcforge-playable-linux-x86_64-81d12b715af163a38af7b4d31084da7ecb1596dd/arcforge-linux-x86_64.zip (SHA-256 8f144dc6436a1d184a9411dd1871ffbefdc9887463b5131f9615dd569d1a74f1).
@@ -27,7 +31,7 @@ Four battery items expose Horizon's native item-energy capability with source ca
 
 ## Recipe data present
 
-The content directory contains 426 recipe JSON files (Arcforge machine recipes and vanilla recipe types):
+The content directory contains 428 recipe JSON files (Arcforge machine recipes and vanilla recipe types):
 
 | Recipe group | Files |
 |---|---:|
@@ -53,6 +57,7 @@ The content directory contains 426 recipe JSON files (Arcforge machine recipes a
 | Condenser Array casing and controller crafting | 2 |
 | Superheater Array casing and controller crafting | 2 |
 | Distillation Array distilling recipes | 3 |
+| Coker recipe and crafting | 2 |
 | Distillation Array controller, casing, and tray crafting | 3 |
 | Seismic Survey Tool crafting | 1 |
 | Water Intake casing and controller crafting | 2 |
@@ -79,7 +84,7 @@ The content directory contains 426 recipe JSON files (Arcforge machine recipes a
 | Induction Furnace Arcforge smelting catalog | 32 |
 | Heat Cell crafting recipes | 4 |
 | Additional recipe files not itemized above | 19 |
-| **Total** | **426** |
+| **Total** | **428** |
 
 Files existing does not by itself prove the complete recipe graph or survival progression works.
 
