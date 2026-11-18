@@ -158,28 +158,23 @@ impl Recipe {
 struct Facing {
     name: &'static str,
     vector: [i32; 3],
-    clockwise: [i32; 3],
 }
 const FACINGS: [Facing; 4] = [
     Facing {
         name: "north",
         vector: [0, 0, -1],
-        clockwise: [1, 0, 0],
     },
     Facing {
         name: "east",
         vector: [1, 0, 0],
-        clockwise: [0, 0, 1],
     },
     Facing {
         name: "south",
         vector: [0, 0, 1],
-        clockwise: [-1, 0, 0],
     },
     Facing {
         name: "west",
         vector: [-1, 0, 0],
-        clockwise: [0, 0, -1],
     },
 ];
 fn facing(name: &str) -> Option<Facing> {
@@ -572,7 +567,14 @@ pub(crate) fn fluid_tanks() -> ModFluidTanks {
             OUTPUT_CAPACITY as i32,
             OUTPUT_CAPACITY as i32,
         ],
-        faces: [vec![0, 1, 2, 3, 4, 5, 6, 7, 8]; 6],
+        faces: [
+            vec![0, 1, 2, 3, 4, 5, 6, 7, 8],
+            vec![0, 1, 2, 3, 4, 5, 6, 7, 8],
+            vec![0, 1, 2, 3, 4, 5, 6, 7, 8],
+            vec![0, 1, 2, 3, 4, 5, 6, 7, 8],
+            vec![0, 1, 2, 3, 4, 5, 6, 7, 8],
+            vec![0, 1, 2, 3, 4, 5, 6, 7, 8],
+        ],
         inputs: vec![FEED_TANK, STEAM_TANK],
         outputs: (OUTPUT_TANK_START..=8).collect(),
     }
