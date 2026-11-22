@@ -9974,7 +9974,7 @@ mod tests {
         assert!((thermoelectric_efficiency(1250) - 1.075).abs() < f64::EPSILON);
         assert_eq!(thermoelectric_efficiency(1400), 1.15);
         assert_eq!(thermoelectric_efficiency(1600), 1.15);
-        assert_eq!(thermoelectric_heat_throughput(), 102);
+        assert_eq!(thermoelectric_heat_throughput(1.0), 102);
 
         let mut heat_at_full_efficiency = heat::HeatStore::new(
             THERMOELECTRIC_HEAT_CAPACITY,
@@ -9984,7 +9984,7 @@ mod tests {
         assert_eq!(heat_at_full_efficiency.temperature_c(), 1100);
         let mut energy = energy::EnergyStore::new(THERMOELECTRIC_FE_CAPACITY, 0);
         assert_eq!(
-            thermoelectric_convert(&mut heat_at_full_efficiency, &mut energy, 0, 0),
+            thermoelectric_convert(&mut heat_at_full_efficiency, &mut energy, 0, 0, 1.0),
             (80, 80)
         );
         assert_eq!(energy.stored_fe(), 80);
@@ -9996,7 +9996,7 @@ mod tests {
         );
         let mut nearly_full_energy = energy::EnergyStore::new(THERMOELECTRIC_FE_CAPACITY, 49_999);
         assert_eq!(
-            thermoelectric_convert(&mut full_heat, &mut nearly_full_energy, 0, 0),
+            thermoelectric_convert(&mut full_heat, &mut nearly_full_energy, 0, 0, 1.0),
             (0, 0)
         );
         assert_eq!(full_heat.stored_hu(), THERMOELECTRIC_HEAT_CAPACITY);
