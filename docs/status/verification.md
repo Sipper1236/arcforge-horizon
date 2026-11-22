@@ -12,8 +12,11 @@ Commit `bb330aa` adds a powered single-block extractor, source-matched rate/depl
 Playable client ZIP: `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-github-43780024722/arcforge-playable-linux-x86_64-bb330aa0b74946df172be4d2741b019bc07a0374/arcforge-linux-x86_64.zip` (SHA-256 `7c688ea736e805af9489cf6a19a846380b4cf78f7572014d92b2c59c46ccd559`). Its embedded `SHA256SUMS` verifies `horizon-client`, `native-mods.json`, `arcforge.hmod`, and `arcforge.hnmod`; package and client ZIP integrity checks passed. HMOD SHA-256 `93804b2f1d735f636b898d303c9f6e082de22b32d6c5775f274924ba6ba2a9b8`; HNMOD SHA-256 `51322279068e619ea53940a16bdb72858bcda38e0178f3982890cfb4624e10fd`. This verifies builds and packaging only; Pumpjack gameplay has not been tested.
 
 # Verification record
-## Cracking Unit alpha — GitHub Actions pending (2026-11-18)
-Commits `c65e0e8` and `230b789` are being built in run [44217016120](https://github.com/Sipper1236/arcforge-horizon/actions/runs/44217016120). Before push, `rustfmt --check`, `git diff --check`, and JSON parsing of 11 changed/additional assets passed. No local compilation, tests, artifact verification, or in-world trial was run. The latest verified client remains Coker run 44211955195.
+## Cracking Unit regression coverage — awaiting GitHub Actions (2026-11-22)
+Five Rust tests cover both source recipe definitions, 3×3×5 geometry in all horizontal facings, fluid input declarations, output backpressure, catalyst wear bounds, and speed-upgrade timing. `.github/workflows/build.yml` now runs `cargo test --locked --manifest-path api/Cargo.toml`. The tests have not run because this project requires all Rust compilation and tests to use GitHub Actions; pushing or dispatching this branch is still required. `cargo fmt --check --manifest-path api/Cargo.toml`, `git diff --check`, and a Python JSON/data check of both source recipes passed locally.
+
+## Cracking Unit alpha — GitHub Actions build (2026-11-18)
+Commits `c65e0e8` and `230b789` passed both jobs in run [44217016120](https://github.com/Sipper1236/arcforge-horizon/actions/runs/44217016120), including native/content packaging and the pinned Linux client build. The run produced package and playable-client artifacts, but no local artifact checksum verification or in-world Cracking Unit trial has been recorded. This build predates the regression-test additions on the current branch.
 
 ## Coker alpha — GitHub Actions build (2026-11-18)
 Commit `81b9018` passed both jobs in run [44211955195](https://github.com/Sipper1236/arcforge-horizon/actions/runs/44211955195). The native/content/package job compiled and packaged the Coker. The full Linux client assembled successfully.

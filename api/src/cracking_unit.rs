@@ -630,3 +630,200 @@ pub(crate) fn status(entity: &ModBlockEntity) -> String {
         get_i32(&entity.nbt, "CrackingTotal").max(0)
     )
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::{collections::HashSet, path::Path, sync::Arc};
+
+    fn test_entity() -> ModBlockEntity {
+        ModBlockEntity::from(horizon_client::containers::ModBlockEntityFields {
+            id: CONTROLLER.to_owned(),
+            ..Default::default()
+        })
+    }
+
+    fn source_recipe(filename: &str) -> Recipe {
+        let path = Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../content/data/arcforge/recipe/cracking")
+            .join(filename);
+        let bytes = std::fs::read(&path)
+            .unwrap_or_else(|error| panic!("could not read {}: {error}", path.display()));
+        let json = horizon_client::mod_api::serde_json::from_slice::<Value>(&bytes)
+            .unwrap_or_else(|error| panic!("could not parse {}: {error}", path.display()));
+        recipe_from_json(&json)
+            .unwrap_or_else(|| panic!("invalid cracking recipe {}", path.display()))
+    }
+
+    #[test]
+    fn source_recipes_keep_both_modes_and_their_exact_costs_and_products() {
+        let catalytic = source_recipe("heavy_oil.json");
+        assert_eq!(catalytic.mode, "catalytic");
+        assert_eq!(catalytic.input, HEAVY_OIL);
+        assert_eq!(catalytic.amount, 100);
+        assert_eq!(catalytic.second_input, None);
+        assert_eq!(catalytic.catalyst.as_deref(), Some(CATALYST));
+        assert_eq!(catalytic.catalyst_uses, MAX_CATALYST_USES);
+        assert_eq!(catalytic.ticks, 20);
+        assert_eq!(catalytic.heat_per_tick, 30);
+        assert_eq!(catalytic.min_temp, 480);
+        assert_eq!(
+            catalytic
+                .products
+                .iter()
+                .map(|product| (product.fluid.as_str(), product.amount))
+                .collect::<Vec<_>>(),
+            [
+                ("arcforge:naphtha", 40),
+                ("arcforge:diesel", 40),
+                ("arcforge:refinery_gas", 55),
+                ("arcforge:light_oil", 10),
+            ]
+        );
+
+        let hydrocracking = source_recipe("heavy_oil_hydrocracking.json");
+        assert_eq!(hydrocracking.mode, "hydrocracking");
+        assert_eq!(hydrocracking.input, HEAVY_OIL);
+        assert_eq!(hydrocracking.amount, 100);
+        assert_eq!(hydrocracking.second_input, Some((HYDROGEN.to_owned(), 30)));
+        assert_eq!(hydrocracking.catalyst, None);
+        assert_eq!(hydrocracking.catalyst_uses, 0);
+        assert_eq!(hydrocracking.ticks, 20);
+        assert_eq!(hydrocracking.heat_per_tick, 36);
+        assert_eq!(hydrocracking.min_temp, 520);
+        assert_eq!(
+            hydrocracking
+                .products
+                .iter()
+                .map(|product| (product.fluid.as_str(), product.amount))
+                .collect::<Vec<_>>(),
+            [
+                ("arcforge:naphtha", 10),
+                ("arcforge:diesel", 50),
+                ("arcforge:kerosene", 30),
+                ("arcforge:light_oil", 10),
+            ]
+        );
+    }
+
+    #[test]
+    fn cracking_box_has_45_unique_positions_in_each_horizontal_facing() {
+        let controller = [10, 20, 30];
+        for (name, expected_x, expected_z) in [
+            ("north", (9, 11), (30, 32)),
+            ("east", (8, 10), (29, 31)),
+            ("south", (9, 11), (28, 30)),
+            ("west", (10, 12), (29, 31)),
+        ] {
+            let positions = box_positions(controller, facing(name).expect("valid facing"));
+            let unique = positions.iter().copied().collect::<HashSet<_>>();
+            assert_eq!(positions.len(), 45, "{name}");
+            assert_eq!(unique.len(), 45, "{name}");
+            assert!(unique.contains(&controller), "{name}");
+            assert!(
+                unique.iter().all(|pos| (20..=24).contains(&pos[1])),
+                "{name}"
+            );
+            assert_eq!(
+                (
+                    unique.iter().map(|pos| pos[0]).min(),
+                    unique.iter().map(|pos| pos[0]).max()
+                ),
+                (Some(expected_x.0), Some(expected_x.1)),
+                "{name} x extent"
+            );
+            assert_eq!(
+                (
+                    unique.iter().map(|pos| pos[2]).min(),
+                    unique.iter().map(|pos| pos[2]).max()
+                ),
+                (Some(expected_z.0), Some(expected_z.1)),
+                "{name} z extent"
+            );
+        }
+        assert!(facing("up").is_none());
+    }
+
+    #[test]
+    fn fluid_tanks_accept_only_the_two_recipe_inputs() {
+        assert!(accepts(FEED_TANK, HEAVY_OIL));
+        assert!(accepts(HYDROGEN_TANK, HYDROGEN));
+        assert!(!accepts(FEED_TANK, HYDROGEN));
+        assert!(!accepts(HYDROGEN_TANK, HEAVY_OIL));
+        assert!(!accepts(OUTPUT_START, HEAVY_OIL));
+
+        let tanks = fluid_tanks();
+        assert_eq!(
+            tanks.tanks,
+            vec![32_000, 16_000, 16_000, 16_000, 16_000, 16_000]
+        );
+        assert_eq!(tanks.inputs, vec![FEED_TANK, HYDROGEN_TANK]);
+        assert_eq!(tanks.outputs, vec![2, 3, 4, 5]);
+    }
+
+    #[test]
+    fn product_backpressure_rejects_mixed_or_full_output_tanks() {
+        let recipe = source_recipe("heavy_oil.json");
+        let mut entity = test_entity();
+        assert!(products_fit(&entity, &recipe));
+
+        crate::fluid::insert(
+            &mut entity.nbt,
+            OUTPUT_START,
+            "arcforge:diesel",
+            1,
+            PRODUCT_CAPACITY,
+        );
+        assert!(!products_fit(&entity, &recipe));
+
+        entity.nbt.clear();
+        crate::fluid::insert(
+            &mut entity.nbt,
+            OUTPUT_START,
+            "arcforge:naphtha",
+            PRODUCT_CAPACITY - 40,
+            PRODUCT_CAPACITY,
+        );
+        assert!(products_fit(&entity, &recipe));
+        crate::fluid::insert(
+            &mut entity.nbt,
+            OUTPUT_START,
+            "arcforge:naphtha",
+            1,
+            PRODUCT_CAPACITY + 1,
+        );
+        assert!(!products_fit(&entity, &recipe));
+    }
+
+    #[test]
+    fn catalyst_wear_is_bounded_and_speed_slot_respects_its_eight_card_cap() {
+        let mut entity = test_entity();
+        entity.items.resize(2, None);
+        entity.items[CATALYST_SLOT] = Some(horizon_client::mod_api::ItemStack {
+            item: Arc::from(CATALYST),
+            count: 1,
+            damage: 0,
+            extra: None,
+        });
+        set_i32(&mut entity.nbt, "CrackingCatalystUses", 27);
+        assert_eq!(catalyst_uses(&entity), 27);
+        set_i32(&mut entity.nbt, "CrackingCatalystUses", -1);
+        assert_eq!(catalyst_uses(&entity), 0);
+        set_i32(&mut entity.nbt, "CrackingCatalystUses", 100);
+        assert_eq!(catalyst_uses(&entity), MAX_CATALYST_USES);
+
+        assert!(item_allowed(SPEED_SLOT, SPEED_UPGRADE, 8));
+        assert!(!item_allowed(SPEED_SLOT, SPEED_UPGRADE, 9));
+        assert!(item_allowed(CATALYST_SLOT, CATALYST, 64));
+        assert!(!item_allowed(CATALYST_SLOT, SPEED_UPGRADE, 1));
+        assert!(!item_allowed(SPEED_SLOT, CATALYST, 1));
+
+        entity.items[SPEED_SLOT] = Some(horizon_client::mod_api::ItemStack {
+            item: Arc::from(SPEED_UPGRADE),
+            count: 2,
+            damage: 0,
+            extra: None,
+        });
+        assert_eq!(total_ticks(&source_recipe("heavy_oil.json"), &entity), 10);
+    }
+}

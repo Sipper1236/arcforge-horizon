@@ -50,6 +50,9 @@ jobs:
       - name: Check native mod crate
         run: cargo check --locked --manifest-path api/Cargo.toml
 
+      - name: Test native mod crate
+        run: cargo test --locked --manifest-path api/Cargo.toml
+
       - name: Build Horizon content pack
         working-directory: content
         run: cargo run --locked --manifest-path ../horizon-source/crates/cargo-horizon-mod/Cargo.toml -- build

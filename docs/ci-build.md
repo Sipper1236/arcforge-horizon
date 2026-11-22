@@ -1,5 +1,5 @@
-# Build and compile policy (updated 2026-11-16)
-All Arcforge builds and compile verification run through GitHub Actions. Do not invoke the hybrid remote build script or compile on rx580/local. Previous hybrid results below are historical records only.
+# Build, test, and compile policy (updated 2026-11-22)
+All Arcforge builds, tests, and compile verification run through GitHub Actions. Do not invoke the hybrid remote build script or compile/test on rx580/local. Previous hybrid results below are historical records only.
 
 ## Current build policy
 
@@ -20,7 +20,7 @@ It uses the remote Horizon checkout at `/mnt/hdd2tb/horizon-reference`, download
 
 # GitHub Actions build
 
-`.github/workflows/build.yml` builds and checks the Rust mod, builds and checks the Horizon `.hmod`, packages the native `.hnmod`, and uploads a combined mod bundle. On pushes to `main` and manual dispatches, it also builds a Linux x86_64 Horizon client containing the Arcforge native code.
+`.github/workflows/build.yml` formats, checks, and tests the Rust mod, builds and checks the Horizon `.hmod`, packages the native `.hnmod`, and uploads a combined mod bundle. On pushes to `main` and manual dispatches, it also builds a Linux x86_64 Horizon client containing the Arcforge native code. The Rust test suite includes deterministic machine and content checks; it does not replace in-game verification.
 
 The client job reads Horizon's pinned Minecraft hashes from its checked-out `research-lock.json`, then downloads the matching version JSON, client jar, and Linux library artifacts directly from Mojang. `tools/fetch_mojang_inputs.py` verifies each artifact's SHA-1 and listed size. These files stay on the ephemeral runner; they are not published or packaged in the artifact. Horizon can prepare the client without downloading the optional sound asset store. No Actions secrets or Microsoft account token are required. Horizon's offline launch option removes the account requirement at play time; it does not remove the need for pinned game files during preparation.
 

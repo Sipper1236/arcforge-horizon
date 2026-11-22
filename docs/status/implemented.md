@@ -1,9 +1,9 @@
 # Current implementation
-**Current source:** Cracking Unit alpha is in GitHub Actions run [44217016120](https://github.com/Sipper1236/arcforge-horizon/actions/runs/44217016120); build pending. The last verified client is still the Coker from run 44211955195.
-## Cracking Unit alpha — GitHub Actions pending
-Commits `c65e0e8` and `230b789` implement both source cracking modes, the 3×3×5 structure, five recipe/crafting JSON files, four output tanks, catalyst wear, heat input, and Wrench mode switching. Static checks passed; no local compilation, tests, or gameplay trial was run.
+**Current source:** Cracking Unit alpha built successfully in GitHub Actions run [44217016120](https://github.com/Sipper1236/arcforge-horizon/actions/runs/44217016120); gameplay remains unverified.
+## Cracking Unit alpha — GitHub Actions build verified
+Commits `c65e0e8` and `230b789` implement both source cracking modes, the 3×3×5 structure, five recipe/crafting JSON files, four output tanks, catalyst wear, heat input, and Wrench mode switching. Both package/content and Linux client jobs passed. Five regression tests cover recipe parity, structure geometry, input declarations, output backpressure, catalyst wear, and speed upgrades; CI now runs them, but they await their first Actions run. The matching client has not been tested in game.
 
-**Latest build:** Coker alpha, built by GitHub Actions run [44211955195](https://github.com/Sipper1236/arcforge-horizon/actions/runs/44211955195), commit `81b9018`.
+**Latest client bundle archived on the build volume:** Coker alpha, built by GitHub Actions run [44211955195](https://github.com/Sipper1236/arcforge-horizon/actions/runs/44211955195), commit `81b9018`. The newer Cracking Unit client artifact is available from run [44217016120](https://github.com/Sipper1236/arcforge-horizon/actions/runs/44217016120).
 Playable client ZIP: `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-github-44211955195/arcforge-playable-linux-x86_64-81b9018f277662cb5007cb6be4eaf828ce2af935/arcforge-linux-x86_64.zip`
 SHA-256: `b60c4b45c2447251e3ebe548a9b683d1210a828132dd1f3496cf21a5b2423168`
 HMOD SHA-256: `997790fa8a1cb13bfc34544979f57c1633d364e7d1563929e58e66f9bd71030c`; HNMOD SHA-256: `881104178411802622e64f15c294e5d850328d6fde7808c753e3ef6dc37da90a`.
