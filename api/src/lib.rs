@@ -2684,7 +2684,40 @@ impl Hooks for Arcforge {
                 own_labels: true,
                 own_background: false,
             }),
+            CRACKING_CONTROLLER => Some(cracking_unit::screen()),
             _ => None,
+        }
+    }
+
+    fn screen_click(
+        &self,
+        _host: &dyn Host,
+        event: &mut horizon_client::mod_api::ScreenClickEvent<'_>,
+    ) -> Option<i32> {
+        if event.block == CRACKING_CONTROLLER {
+            cracking_unit::screen_click(event.at, event.right)
+        } else {
+            None
+        }
+    }
+
+    fn screen_tooltip(
+        &self,
+        _host: &dyn Host,
+        event: &mut horizon_client::mod_api::ScreenTooltipEvent<'_>,
+    ) {
+        if event.block == CRACKING_CONTROLLER {
+            cracking_unit::screen_tooltip(event.at, event.lines);
+        }
+    }
+
+    fn menu_button(
+        &self,
+        _host: &mut dyn Host,
+        event: &mut horizon_client::mod_api::MenuButtonEvent<'_>,
+    ) {
+        if event.entity.id == CRACKING_CONTROLLER {
+            cracking_unit::select_mode(event.entity, event.id);
         }
     }
 
@@ -2693,6 +2726,10 @@ impl Hooks for Arcforge {
         host: &dyn Host,
         event: &mut horizon_client::mod_api::ScreenDrawEvent<'_>,
     ) {
+        if event.block == CRACKING_CONTROLLER {
+            cracking_unit::draw_screen(host, event);
+            return;
+        }
         if event.block == FIBERIZER {
             let [ox, oy] = event.origin;
             let data = event.data;
