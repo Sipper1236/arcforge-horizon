@@ -36,6 +36,13 @@ jobs:
           ref: 9f42064c11efe7ef3e5ed2baad7ddc2a3b36eea0
           path: horizon-source
 
+      - name: Limit Cargo to half the runner CPUs
+        run: |
+          cpus="$(nproc)"
+          jobs="$((cpus / 2))"
+          if [ "$jobs" -lt 1 ]; then jobs=1; fi
+          echo "CARGO_BUILD_JOBS=$jobs" >> "$GITHUB_ENV"
+
       - name: Check pinned Horizon Nightly release availability
         id: pinned_client_release
         env:
@@ -174,6 +181,13 @@ jobs:
           sudo apt-get install --yes --no-install-recommends \
             libasound2-dev libudev-dev libxkbcommon-x11-dev libwayland-dev \
             libx11-xcb-dev libfontconfig-dev libvulkan-dev
+
+      - name: Limit Cargo to half the runner CPUs
+        run: |
+          cpus="$(nproc)"
+          jobs="$((cpus / 2))"
+          if [ "$jobs" -lt 1 ]; then jobs=1; fi
+          echo "CARGO_BUILD_JOBS=$jobs" >> "$GITHUB_ENV"
 
       - name: Build Horizon launcher CLI
         run: cargo build --locked --manifest-path horizon-source/launcher/Cargo.toml --bin horizon-launcher
