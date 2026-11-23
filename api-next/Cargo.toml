@@ -1,0 +1,11 @@
+[package]
+name = "mod-arcforge-next"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+horizon-mod-api = { git = "https://github.com/horizon-rust/horizon", rev = "2b77287de099c9316278ba7ac4d83590fdb7ef30" }

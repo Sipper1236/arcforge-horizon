@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - 'api/**'
+      - 'api-next/**'
       - 'content/**'
       - 'tools/**'
       - 'horizon-mixin.toml'
@@ -11,6 +12,7 @@ on:
   pull_request:
     paths:
       - 'api/**'
+      - 'api-next/**'
       - 'content/**'
       - 'tools/**'
       - 'horizon-mixin.toml'
@@ -76,6 +78,9 @@ jobs:
       - name: Check Rust formatting
         run: cargo fmt --check --manifest-path api/Cargo.toml
 
+      - name: Check staged Horizon API formatting
+        run: cargo fmt --check --manifest-path api-next/Cargo.toml
+
       - name: Install Horizon native build dependencies
         run: |
           sudo apt-get update
@@ -83,6 +88,9 @@ jobs:
 
       - name: Check native mod crate
         run: cargo check --locked --manifest-path api/Cargo.toml
+
+      - name: Check staged current Horizon API crate
+        run: cargo check --manifest-path api-next/Cargo.toml
 
       - name: Test native mod crate
         run: cargo test --locked --manifest-path api/Cargo.toml
