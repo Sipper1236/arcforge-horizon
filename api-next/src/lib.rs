@@ -12,6 +12,7 @@ use mod_api::{
 };
 
 mod cracking_unit;
+mod heat_cell;
 
 const CONTROLLER: &str = "arcforge:cracking_unit_controller";
 const CASING: &str = "arcforge:cracking_unit_casing";
@@ -26,6 +27,10 @@ struct Arcforge;
 struct CrackingUnit {
     controller: BlockKey,
     casing: BlockKey,
+}
+
+struct HeatCell {
+    id: &'static str,
 }
 
 #[mod_api::horizon_part]
@@ -67,6 +72,17 @@ impl BlockEntityPart for CrackingUnit {
 
     fn block_entity_tick(&self, host: &mut dyn ServerHost, event: &mut BlockEntityTickEvent<'_>) {
         cracking_unit::tick(host, event, self.controller, self.casing);
+    }
+}
+
+#[mod_api::horizon_part]
+impl BlockEntityPart for HeatCell {
+    fn block_entity_ticks(&self, _: &dyn Host, event: &mut BlockEntityTicksEvent<'_>) {
+        event.ticks = true;
+    }
+
+    fn block_entity_tick(&self, host: &mut dyn ServerHost, event: &mut BlockEntityTickEvent<'_>) {
+        heat_cell::tick(host, event, self.id);
     }
 }
 
@@ -119,10 +135,29 @@ impl Hooks for Arcforge {
         casing.state_properties = [("formed".into(), BlockStateProperty::Boolean)].into();
         casing.default_state = [("formed".into(), "false".into())].into();
         event.blocks.push(casing);
+
+        for id in heat_cell::ids() {
+            let mut cell = Block::new(id, "minecraft:iron_block");
+            cell.state_properties = [(
+                "heat".into(),
+                BlockStateProperty::Enum {
+                    values: ["0", "1", "2", "3", "4"]
+                        .into_iter()
+                        .map(str::to_owned)
+                        .collect(),
+                },
+            )]
+            .into();
+            cell.default_state = [("heat".into(), "0".into())].into();
+            event.blocks.push(cell);
+        }
     }
 
     fn items(&self, _: &RegistrationContext, event: &mut mod_api::ItemsEvent<'_>) {
         event.items.push(Item::new(CATALYST, "minecraft:clay_ball"));
+        event
+            .items
+            .push(Item::new(SPEED_UPGRADE, "minecraft:sugar"));
         let mut wrench = Item::new(WRENCH, "minecraft:iron_pickaxe");
         wrench.max_stack_size = Some(1);
         event.items.push(wrench);
@@ -181,6 +216,17 @@ impl Hooks for Arcforge {
         registrar
             .block_entity_part(&cracking_unit, CrackingUnit { controller, casing })
             .expect("Arcforge's Cracking Unit block-entity Part should register");
+
+        for id in heat_cell::ids() {
+            let block_path = id.strip_prefix("arcforge:").unwrap_or(id);
+            let heat_cell = registrar
+                .block_entity_type(block_path)
+                .blocks(&[block_path])
+                .build();
+            registrar
+                .block_entity_part(&heat_cell, HeatCell { id })
+                .expect("Arcforge heat-cell block-entity Part should register");
+        }
 
         registrar.block_container(
             &controller,

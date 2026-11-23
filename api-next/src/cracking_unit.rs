@@ -995,3 +995,49 @@ pub(crate) fn tick(
         *event.reply = BlockEntityTickReply::Changed;
     }
 }
+
+pub(crate) fn accept_heat(
+    host: &mut dyn ServerHost,
+    level: LevelRef,
+    pos: [i32; 3],
+    source: &mut super::heat_cell::HeatStore,
+    rate: u64,
+) -> u64 {
+    if level
+        .block(host, pos)
+        .is_none_or(|block| block.id(host) != super::CONTROLLER)
+    {
+        return 0;
+    }
+    let Some(entity) = host.block_entity(level, pos) else {
+        return 0;
+    };
+    let Some(nbt) = entity.data(&*host) else {
+        return 0;
+    };
+    if get_i32(&nbt, "CrackingFormed") == 0 {
+        return 0;
+    }
+
+    let mut sink = super::heat_cell::HeatStore::new(
+        HEAT_CAPACITY,
+        MAX_TEMP_C,
+        get_i32(&nbt, "HeatHU").max(0) as u64,
+    );
+    let moved = source.transfer_to(&mut sink, rate);
+    if moved > 0 {
+        let mut updates = Compound::new();
+        set_i32(
+            &mut updates,
+            "HeatHU",
+            sink.stored_hu().min(i32::MAX as u64) as i32,
+        );
+        set_i32(
+            &mut updates,
+            "TemperatureC",
+            sink.temperature_c().min(i32::MAX as u32) as i32,
+        );
+        let _ = entity.merge_data(host, updates);
+    }
+    moved
+}
