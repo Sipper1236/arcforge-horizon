@@ -47,6 +47,16 @@ impl HeatStore {
         self.stored
     }
 
+    pub(crate) fn set_source_temperature(&mut self, temperature_c: u32) {
+        self.source_temperature = temperature_c.max(20);
+    }
+
+    pub(crate) fn add_hu(&mut self, amount: u64) -> u64 {
+        let accepted = amount.min(self.capacity - self.stored);
+        self.stored += accepted;
+        accepted
+    }
+
     pub(crate) fn temperature_c(self) -> u32 {
         self.source_temperature.max(
             20 + ((self.stored as u128 * u128::from(self.max_temperature - 20))
@@ -91,6 +101,60 @@ impl HeatStore {
 
 pub(crate) fn ids() -> [&'static str; 4] {
     [WROUGHT, TEMPERED, HARDENED, ARCFORGED]
+}
+
+pub(crate) fn accept_heat(
+    host: &mut dyn ServerHost,
+    level: mod_api::LevelRef,
+    pos: [i32; 3],
+    source: &mut HeatStore,
+    rate: u64,
+) -> u64 {
+    let block_id = level
+        .block(host, pos)
+        .map(|block| block.id(host).to_owned());
+    let Some(block_id) = block_id else {
+        return 0;
+    };
+    let Some(spec) = spec(&block_id) else {
+        return 0;
+    };
+    let Some(entity) = host.block_entity(level, pos) else {
+        return 0;
+    };
+    let Some(nbt) = entity.data(&*host) else {
+        return 0;
+    };
+
+    let mut sink = HeatStore::new(
+        spec.capacity,
+        spec.max_temperature,
+        get_i32(&nbt, "HeatHU").max(0) as u64,
+    );
+    let moved = source.transfer_to(&mut sink, rate.min(spec.rate));
+    if moved > 0 {
+        let mut updates = Compound::new();
+        set_i32(
+            &mut updates,
+            "HeatHU",
+            sink.stored_hu().min(i32::MAX as u64) as i32,
+        );
+        set_i32(
+            &mut updates,
+            "TemperatureC",
+            sink.temperature_c().min(i32::MAX as u32) as i32,
+        );
+        let _ = entity.merge_data(host, updates);
+        let heat_state = match sink.temperature_c() {
+            1_000.. => "4",
+            850.. => "3",
+            650.. => "2",
+            300.. => "1",
+            _ => "0",
+        };
+        host.set_block_property(pos, "heat", heat_state);
+    }
+    moved
 }
 
 fn spec(id: &str) -> Option<Spec> {

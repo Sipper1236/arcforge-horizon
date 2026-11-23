@@ -12,6 +12,7 @@ use mod_api::{
 };
 
 mod cracking_unit;
+mod firebox;
 mod heat_cell;
 
 const CONTROLLER: &str = "arcforge:cracking_unit_controller";
@@ -20,6 +21,11 @@ const CATALYST: &str = "arcforge:cracking_catalyst";
 const SPEED_UPGRADE: &str = "arcforge:speed_upgrade";
 const WRENCH: &str = "arcforge:wrench";
 const MACHINE_MENU: &str = "arcforge:cracking_unit";
+const FIREBOX: &str = "arcforge:firebox";
+const FIREBOX_MENU: &str = "arcforge:firebox";
+const BIO_COAL: &str = "arcforge:bio_coal";
+const BIO_COAL_BLOCK: &str = "arcforge:bio_coal_block";
+const WOOD_ASH: &str = "arcforge:wood_ash";
 
 #[derive(Default)]
 struct Arcforge;
@@ -33,8 +39,13 @@ struct HeatCell {
     id: &'static str,
 }
 
+struct Firebox;
+
 #[mod_api::horizon_part]
 impl BlockPart for HeatCell {}
+
+#[mod_api::horizon_part]
+impl BlockPart for Firebox {}
 
 #[mod_api::horizon_part]
 impl BlockPart for CrackingUnit {}
@@ -90,6 +101,17 @@ impl BlockEntityPart for HeatCell {
 }
 
 #[mod_api::horizon_part]
+impl BlockEntityPart for Firebox {
+    fn block_entity_ticks(&self, _: &dyn Host, event: &mut BlockEntityTicksEvent<'_>) {
+        event.ticks = true;
+    }
+
+    fn block_entity_tick(&self, host: &mut dyn ServerHost, event: &mut BlockEntityTickEvent<'_>) {
+        firebox::tick(host, event);
+    }
+}
+
+#[mod_api::horizon_part]
 impl MenuPart for CrackingUnit {
     fn menu_slot_rules(&self, host: &dyn Host, event: &mut MenuSlotRulesEvent<'_>) {
         if event.container != MenuContainer::Main {
@@ -105,6 +127,17 @@ impl MenuPart for CrackingUnit {
             _ => return,
         };
         event.may_place &= event.stack.item().id(host) == expected_item;
+    }
+}
+
+#[mod_api::horizon_part]
+impl MenuPart for Firebox {
+    fn menu_slot_rules(&self, host: &dyn Host, event: &mut MenuSlotRulesEvent<'_>) {
+        if event.container != MenuContainer::Main {
+            return;
+        }
+        let item = event.stack.item().id(host);
+        event.may_place &= event.slot == 0 && firebox::accepts_fuel(&item);
     }
 }
 
@@ -139,6 +172,30 @@ impl Hooks for Arcforge {
         casing.default_state = [("formed".into(), "false".into())].into();
         event.blocks.push(casing);
 
+        let mut firebox = Block::new(FIREBOX, "minecraft:blast_furnace");
+        firebox.state_properties = [
+            (
+                "facing".into(),
+                BlockStateProperty::Enum {
+                    values: ["north", "east", "south", "west"]
+                        .into_iter()
+                        .map(str::to_owned)
+                        .collect(),
+                },
+            ),
+            ("lit".into(), BlockStateProperty::Boolean),
+        ]
+        .into();
+        firebox.default_state = [
+            ("facing".into(), "north".into()),
+            ("lit".into(), "false".into()),
+        ]
+        .into();
+        event.blocks.push(firebox);
+        event
+            .blocks
+            .push(Block::new(BIO_COAL_BLOCK, "minecraft:coal_block"));
+
         for id in heat_cell::ids() {
             let mut cell = Block::new(id, "minecraft:iron_block");
             cell.state_properties = [(
@@ -158,6 +215,8 @@ impl Hooks for Arcforge {
 
     fn items(&self, _: &RegistrationContext, event: &mut mod_api::ItemsEvent<'_>) {
         event.items.push(Item::new(CATALYST, "minecraft:clay_ball"));
+        event.items.push(Item::new(BIO_COAL, "minecraft:coal"));
+        event.items.push(Item::new(WOOD_ASH, "minecraft:bone_meal"));
         event
             .items
             .push(Item::new(SPEED_UPGRADE, "minecraft:sugar"));
@@ -231,6 +290,14 @@ impl Hooks for Arcforge {
                 .expect("Arcforge heat-cell block-entity Part should register");
         }
 
+        let firebox = registrar
+            .block_entity_type("firebox")
+            .blocks(&["firebox"])
+            .build();
+        registrar
+            .block_entity_part(&firebox, Firebox)
+            .expect("Arcforge's Firebox block-entity Part should register");
+
         registrar.block_container(
             &controller,
             ModContainer {
@@ -255,5 +322,18 @@ impl Hooks for Arcforge {
         fluids.outputs = vec![2, 3, 4, 5];
         registrar.block_fluids(&controller, fluids);
         registrar.menu_part(MACHINE_MENU, CrackingUnit { controller, casing });
+
+        let firebox_key = registrar.block_key(FIREBOX);
+        registrar.block_container(
+            &firebox_key,
+            ModContainer {
+                slots: 2,
+                faces: [vec![1], vec![0], vec![0], vec![0], vec![0], vec![0]],
+                inputs: vec![0],
+                outputs: vec![1],
+                menu: Some(FIREBOX_MENU.into()),
+            },
+        );
+        registrar.menu_part(FIREBOX_MENU, Firebox);
     }
 }
