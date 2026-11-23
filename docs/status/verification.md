@@ -12,6 +12,9 @@ Commit `bb330aa` adds a powered single-block extractor, source-matched rate/depl
 Playable client ZIP: `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-github-43780024722/arcforge-playable-linux-x86_64-bb330aa0b74946df172be4d2741b019bc07a0374/arcforge-linux-x86_64.zip` (SHA-256 `7c688ea736e805af9489cf6a19a846380b4cf78f7572014d92b2c59c46ccd559`). Its embedded `SHA256SUMS` verifies `horizon-client`, `native-mods.json`, `arcforge.hmod`, and `arcforge.hnmod`; package and client ZIP integrity checks passed. HMOD SHA-256 `93804b2f1d735f636b898d303c9f6e082de22b32d6c5775f274924ba6ba2a9b8`; HNMOD SHA-256 `51322279068e619ea53940a16bdb72858bcda38e0178f3982890cfb4624e10fd`. This verifies builds and packaging only; Pumpjack gameplay has not been tested.
 
 # Verification record
+## Current-API Heat Cell transfer — GitHub Actions (2026-11-23)
+Run [45112249765](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45112249765) for commit `c2ae6e0` passed formatting and the legacy native crate check, then failed the staged current-API check because the new `HeatCell` Part lacked its required `BlockPart` implementation. The existing tests, content checks, and packaging were skipped after that failure. The follow-up adds the missing implementation; CI is pending. No gameplay behavior was checked.
+
 ## Cracking Unit regression suite and package — GitHub Actions (2026-11-23)
 Run [45091963492](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45091963492) for commit `0870450eff9fec163916a7e5bbee230f9341ce11` passed formatting, native crate check, all 98 tests, Horizon content build/check, and HMOD/HNMOD package creation. The Linux client job was skipped after the workflow confirmed upstream no longer publishes `nightly-2026-11-13` at the pinned Horizon revision. The current upstream Nightly 2026-11-22 changed the mod API; the attempted pin update is reverted, and migration is not part of this slice.
 

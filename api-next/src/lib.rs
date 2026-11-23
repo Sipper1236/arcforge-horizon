@@ -34,6 +34,9 @@ struct HeatCell {
 }
 
 #[mod_api::horizon_part]
+impl BlockPart for HeatCell {}
+
+#[mod_api::horizon_part]
 impl BlockPart for CrackingUnit {}
 
 #[mod_api::horizon_part]

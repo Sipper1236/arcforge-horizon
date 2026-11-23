@@ -1,6 +1,6 @@
 //! Current-API heat cells and the first heat-network consumer path.
 
-use mod_api::{BlockEntityTickEvent, BlockEntityTickReply, Compound, Host, ServerHost, Tag};
+use mod_api::{BlockEntityTickEvent, BlockEntityTickReply, Compound, ServerHost, Tag};
 
 const WROUGHT: &str = "arcforge:wrought_heat_cell";
 const TEMPERED: &str = "arcforge:tempered_heat_cell";
