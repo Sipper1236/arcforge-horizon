@@ -639,6 +639,7 @@ fn transfer_heat_ports(
             }
             let moved = super::heat_cell::accept_heat(host, level, neighbor, heat, rate)
                 + super::cracking_unit::accept_heat(host, level, neighbor, heat, rate)
+                + super::thermal::accept_heat(host, level, neighbor, port, heat, rate)
                 + super::thermoelectric::accept_heat(
                     host,
                     level,

@@ -233,6 +233,7 @@ pub(crate) fn tick(host: &mut dyn ServerHost, event: &mut BlockEntityTickEvent<'
         ];
         let before = heat.stored_hu();
         let moved = super::cracking_unit::accept_heat(host, level, neighbor, &mut heat, budget)
+            + super::thermal::accept_heat(host, level, neighbor, event.pos, &mut heat, budget)
             + super::thermoelectric::accept_heat(
                 host,
                 level,

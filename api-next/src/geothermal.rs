@@ -551,6 +551,7 @@ fn transfer_heat(
         let limit = budget.min(OUTPUT_PER_TARGET);
         let moved = super::heat_cell::accept_heat(host, level, neighbor, heat, limit)
             + super::cracking_unit::accept_heat(host, level, neighbor, heat, limit)
+            + super::thermal::accept_heat(host, level, neighbor, pos, heat, limit)
             + super::thermoelectric::accept_heat(
                 host,
                 level,

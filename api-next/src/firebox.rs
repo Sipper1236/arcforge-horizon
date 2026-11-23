@@ -283,6 +283,7 @@ fn transfer_heat(
         let rate = OUTPUT_PER_TARGET.min(output_left);
         let moved = super::heat_cell::accept_heat(host, level, neighbor, heat, rate)
             + super::cracking_unit::accept_heat(host, level, neighbor, heat, rate)
+            + super::thermal::accept_heat(host, level, neighbor, pos, heat, rate)
             + super::thermoelectric::accept_heat(
                 host,
                 level,

@@ -17,6 +17,7 @@ mod firebox;
 mod geothermal;
 mod heat_cell;
 mod solar;
+mod thermal;
 mod thermoelectric;
 
 const CONTROLLER: &str = "arcforge:cracking_unit_controller";
@@ -59,6 +60,10 @@ struct GeothermalPlant;
 
 struct SolarThermalArray;
 
+struct ThermalConduit {
+    id: &'static str,
+}
+
 struct ThermoelectricPlant;
 
 #[mod_api::horizon_part]
@@ -72,6 +77,9 @@ impl BlockPart for GeothermalPlant {}
 
 #[mod_api::horizon_part]
 impl BlockPart for SolarThermalArray {}
+
+#[mod_api::horizon_part]
+impl BlockPart for ThermalConduit {}
 
 #[mod_api::horizon_part]
 impl BlockPart for ThermoelectricPlant {}
@@ -126,6 +134,17 @@ impl BlockEntityPart for HeatCell {
 
     fn block_entity_tick(&self, host: &mut dyn ServerHost, event: &mut BlockEntityTickEvent<'_>) {
         heat_cell::tick(host, event, self.id);
+    }
+}
+
+#[mod_api::horizon_part]
+impl BlockEntityPart for ThermalConduit {
+    fn block_entity_ticks(&self, _: &dyn Host, event: &mut BlockEntityTicksEvent<'_>) {
+        event.ticks = true;
+    }
+
+    fn block_entity_tick(&self, host: &mut dyn ServerHost, event: &mut BlockEntityTickEvent<'_>) {
+        thermal::tick(host, event, self.id);
     }
 }
 
@@ -422,6 +441,81 @@ impl Hooks for Arcforge {
         .into();
         event.blocks.push(thermoelectric);
 
+        for id in thermal::ids() {
+            let properties: BTreeMap<String, BlockStateProperty> = [
+                (
+                    "up".into(),
+                    BlockStateProperty::Enum {
+                        values: ["none", "pipe", "input", "output"]
+                            .into_iter()
+                            .map(str::to_owned)
+                            .collect(),
+                    },
+                ),
+                (
+                    "down".into(),
+                    BlockStateProperty::Enum {
+                        values: ["none", "pipe", "input", "output"]
+                            .into_iter()
+                            .map(str::to_owned)
+                            .collect(),
+                    },
+                ),
+                (
+                    "north".into(),
+                    BlockStateProperty::Enum {
+                        values: ["none", "pipe", "input", "output"]
+                            .into_iter()
+                            .map(str::to_owned)
+                            .collect(),
+                    },
+                ),
+                (
+                    "south".into(),
+                    BlockStateProperty::Enum {
+                        values: ["none", "pipe", "input", "output"]
+                            .into_iter()
+                            .map(str::to_owned)
+                            .collect(),
+                    },
+                ),
+                (
+                    "west".into(),
+                    BlockStateProperty::Enum {
+                        values: ["none", "pipe", "input", "output"]
+                            .into_iter()
+                            .map(str::to_owned)
+                            .collect(),
+                    },
+                ),
+                (
+                    "east".into(),
+                    BlockStateProperty::Enum {
+                        values: ["none", "pipe", "input", "output"]
+                            .into_iter()
+                            .map(str::to_owned)
+                            .collect(),
+                    },
+                ),
+                ("active".into(), BlockStateProperty::Boolean),
+            ]
+            .into();
+            let defaults: BTreeMap<String, String> = [
+                ("up".into(), "none".into()),
+                ("down".into(), "none".into()),
+                ("north".into(), "none".into()),
+                ("south".into(), "none".into()),
+                ("west".into(), "none".into()),
+                ("east".into(), "none".into()),
+                ("active".into(), "false".into()),
+            ]
+            .into();
+            let mut conduit = Block::new(id, "minecraft:copper_block");
+            conduit.state_properties = properties;
+            conduit.default_state = defaults;
+            event.blocks.push(conduit);
+        }
+
         let faces = ["up", "down", "north", "south", "west", "east"];
         let mut solar_controller = Block::new(SOLAR_CONTROLLER, "minecraft:blast_furnace");
         let mut controller_properties: BTreeMap<String, BlockStateProperty> = [
@@ -561,6 +655,7 @@ impl Hooks for Arcforge {
                 || id == FIREBOX
                 || id == GEOTHERMAL_PLANT
                 || id == THERMOELECTRIC_PLANT
+                || thermal::spec(id).is_some()
                 || id == SOLAR_CONTROLLER
                 || id == SOLAR_CASING
                 || id == SOLAR_COLLECTOR
@@ -593,6 +688,13 @@ impl Hooks for Arcforge {
                         event.click.player,
                     ),
                     Some(THERMOELECTRIC_PLANT) => thermoelectric::wrench(
+                        host,
+                        level,
+                        event.click.pos,
+                        event.click.hit.face,
+                        event.click.player,
+                    ),
+                    Some(id) if thermal::spec(id).is_some() => thermal::wrench(
                         host,
                         level,
                         event.click.pos,
@@ -653,6 +755,17 @@ impl Hooks for Arcforge {
             registrar
                 .block_entity_part(&heat_cell, HeatCell { id })
                 .expect("Arcforge heat-cell block-entity Part should register");
+        }
+
+        for id in thermal::ids() {
+            let block_path = id.strip_prefix("arcforge:").unwrap_or(id);
+            let conduit = registrar
+                .block_entity_type(block_path)
+                .blocks(&[block_path])
+                .build();
+            registrar
+                .block_entity_part(&conduit, ThermalConduit { id })
+                .expect("Arcforge thermal-conduit block-entity Part should register");
         }
 
         let firebox = registrar
