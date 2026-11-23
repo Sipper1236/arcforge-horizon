@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "wIw",
+    "H H",
+    "wIw"
+  ],
+  "key": {
+    "I": "#c:plates/invar",
+    "H": "arcforge:hardened_alloy",
+    "w": "arcforge:rock_wool"
+  },
+  "result": {
+    "id": "arcforge:hardened_heat_cell_upgrade_kit",
+    "count": 1
+  }
+}

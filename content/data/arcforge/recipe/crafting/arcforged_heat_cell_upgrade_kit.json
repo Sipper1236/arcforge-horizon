@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "wCw",
+    "A A",
+    "wAw"
+  ],
+  "key": {
+    "A": "arcforge:arcforged_alloy",
+    "C": "#c:gems/arcite",
+    "w": "arcforge:rock_wool"
+  },
+  "result": {
+    "id": "arcforge:arcforged_heat_cell_upgrade_kit",
+    "count": 1
+  }
+}

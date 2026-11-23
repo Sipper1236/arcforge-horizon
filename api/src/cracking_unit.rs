@@ -1,7 +1,7 @@
 //! Arcforge Cracking Unit: a 3x3x5 refinery box for catalytic and hydrogen cracking.
 use horizon_client::{
     containers::{ModBlockEntity, ModContainer},
-    mod_api::{Compound, Host, ModFluidTanks, Tag, serde_json::Value},
+    mod_api::{Compound, Host, ModFluidTanks, NativeScreen, Tag, serde_json::Value},
 };
 
 pub(crate) const CONTROLLER: &str = "arcforge:cracking_unit_controller";
@@ -24,6 +24,16 @@ const CATALYST_SLOT: usize = 1;
 const FEED_TANK: usize = 0;
 const HYDROGEN_TANK: usize = 1;
 const OUTPUT_START: usize = 2;
+const MODE_BUTTON_CATALYTIC: i32 = 420;
+const MODE_BUTTON_HYDROCRACKING: i32 = 421;
+const MODE_BUTTONS: [(i32, &'static str, f32); 2] = [
+    (MODE_BUTTON_CATALYTIC, "catalytic", 40.0),
+    (MODE_BUTTON_HYDROCRACKING, "hydrocracking", 64.0),
+];
+const MODE_BUTTON_Y: f32 = 17.0;
+const MODE_BUTTON_SIZE: f32 = 20.0;
+const SCREEN_HEIGHT: f32 = 254.0;
+const SCREEN_INVENTORY_Y: f32 = 168.0;
 
 #[derive(Clone, Copy)]
 struct Facing {
@@ -103,6 +113,239 @@ fn mode(entity: &ModBlockEntity) -> &'static str {
         Some("hydrocracking") => "hydrocracking",
         _ => "catalytic",
     }
+}
+fn mode_button_at(at: [f32; 2]) -> Option<i32> {
+    MODE_BUTTONS
+        .iter()
+        .find(|(_, _, x)| {
+            at[0] >= *x
+                && at[0] < *x + MODE_BUTTON_SIZE
+                && at[1] >= MODE_BUTTON_Y
+                && at[1] < MODE_BUTTON_Y + MODE_BUTTON_SIZE
+        })
+        .map(|(id, _, _)| *id)
+}
+pub(crate) fn screen_click(at: [f32; 2], right: bool) -> Option<i32> {
+    if right { None } else { mode_button_at(at) }
+}
+pub(crate) fn screen_tooltip(at: [f32; 2], lines: &mut Vec<String>) {
+    match mode_button_at(at) {
+        Some(MODE_BUTTON_CATALYTIC) => {
+            lines.push("Catalytic cracking".to_owned());
+            lines.push("Consumes Cracking Catalyst; no Hydrogen input".to_owned());
+        }
+        Some(MODE_BUTTON_HYDROCRACKING) => {
+            lines.push("Hydrocracking".to_owned());
+            lines.push("Consumes Hydrogen; no catalyst required".to_owned());
+        }
+        _ => {}
+    }
+}
+pub(crate) fn select_mode(entity: &mut ModBlockEntity, button: i32) {
+    if entity.id != CONTROLLER {
+        return;
+    }
+    let Some((_, selected, _)) = MODE_BUTTONS.iter().find(|(id, _, _)| *id == button) else {
+        return;
+    };
+    if mode(entity) != *selected {
+        set_string(&mut entity.nbt, "CrackingMode", selected);
+        set_i32(&mut entity.nbt, "CrackingProgress", 0);
+        set_i32(&mut entity.nbt, "CrackingTotal", 0);
+    }
+}
+pub(crate) fn screen() -> NativeScreen {
+    NativeScreen {
+        width: 176.0,
+        height: SCREEN_HEIGHT,
+        slots: vec![Some([16.0, 52.0]), Some([40.0, 52.0])],
+        inventory_y: SCREEN_INVENTORY_Y,
+        inventory_x: 8.0,
+        own_labels: true,
+        own_background: false,
+    }
+}
+fn screen_status(status: i32) -> &'static str {
+    match status {
+        1 => "Structure incomplete",
+        2 => "No recipe for selected mode",
+        3 => "Waiting for recipe inputs",
+        4 => "Needs Cracking Catalyst",
+        5 => "Product tanks full",
+        6 => "Heating / needs more heat",
+        _ => "Processing",
+    }
+}
+pub(crate) fn draw_screen(
+    host: &dyn Host,
+    event: &mut horizon_client::mod_api::ScreenDrawEvent<'_>,
+) {
+    let [ox, oy] = event.origin;
+    let data = event.data;
+    let mode_index = data.first().copied().unwrap_or_default();
+    let progress = data.get(1).copied().unwrap_or_default().max(0);
+    let duration = data.get(2).copied().unwrap_or_default().max(0);
+    let temperature = data.get(3).copied().unwrap_or_default().max(0);
+    let heat_tens = data.get(4).copied().unwrap_or_default().max(0);
+    let status = data.get(5).copied().unwrap_or(1);
+    let minimum_temperature = data.get(6).copied().unwrap_or_default().max(0);
+    let feed = data.get(7).copied().unwrap_or_default().max(0);
+    let hydrogen = data.get(8).copied().unwrap_or_default().max(0);
+    let naphtha = data.get(9).copied().unwrap_or_default().max(0);
+    let diesel = data.get(10).copied().unwrap_or_default().max(0);
+    let third_product = data.get(11).copied().unwrap_or_default().max(0);
+    let light_oil = data.get(12).copied().unwrap_or_default().max(0);
+    let batch = &mut *event.batch;
+    macro_rules! text {
+        ($label:expr, $x:expr, $y:expr, $color:expr $(,)?) => {
+            host.text(batch, $label, [ox + $x, oy + $y], $color, true)
+        };
+    }
+    macro_rules! fill {
+        ($rect:expr, $color:expr) => {
+            host.fill(
+                batch,
+                [ox + ($rect)[0], oy + ($rect)[1], ($rect)[2], ($rect)[3]],
+                $color,
+            )
+        };
+    }
+
+    text!("Cracking Unit", 8.0, 6.0, 0xFFFFFFFF);
+    text!("Mode", 8.0, 20.0, 0xFFBBBBBB);
+    let selected_mode = if mode_index == 1 {
+        "hydrocracking"
+    } else {
+        "catalytic"
+    };
+    for (_, button_mode, x) in MODE_BUTTONS {
+        let selected = button_mode == selected_mode;
+        let button_sprite = if selected {
+            "arcforge:gui/sprites/widget/arcforge/button_pressed"
+        } else {
+            "arcforge:gui/sprites/widget/arcforge/button"
+        };
+        let _ = host.sprite(
+            batch,
+            button_sprite,
+            [0.0, 0.0, MODE_BUTTON_SIZE, MODE_BUTTON_SIZE],
+            [
+                ox + x,
+                oy + MODE_BUTTON_Y,
+                MODE_BUTTON_SIZE,
+                MODE_BUTTON_SIZE,
+            ],
+        );
+        let icon = if button_mode == "hydrocracking" {
+            "arcforge:gui/sprites/widget/arcforge/cracking_hydrocracking"
+        } else {
+            "arcforge:gui/sprites/widget/arcforge/cracking_catalytic"
+        };
+        let offset = if selected { 3.0 } else { 2.0 };
+        let _ = host.sprite(
+            batch,
+            icon,
+            [0.0, 0.0, 16.0, 16.0],
+            [ox + x + offset, oy + MODE_BUTTON_Y + offset, 16.0, 16.0],
+        );
+        if selected {
+            fill!(
+                [x - 1.0, MODE_BUTTON_Y - 1.0, MODE_BUTTON_SIZE + 2.0, 1.0],
+                0xFF62B64F
+            );
+            fill!(
+                [
+                    x - 1.0,
+                    MODE_BUTTON_Y + MODE_BUTTON_SIZE,
+                    MODE_BUTTON_SIZE + 2.0,
+                    1.0
+                ],
+                0xFF62B64F
+            );
+            fill!([x - 1.0, MODE_BUTTON_Y, 1.0, MODE_BUTTON_SIZE], 0xFF62B64F);
+            fill!(
+                [x + MODE_BUTTON_SIZE, MODE_BUTTON_Y, 1.0, MODE_BUTTON_SIZE],
+                0xFF62B64F
+            );
+        }
+    }
+    text!(
+        if selected_mode == "hydrocracking" {
+            "Hydrocracking"
+        } else {
+            "Catalytic"
+        },
+        90.0,
+        22.0,
+        0xFFE0E0E0,
+    );
+    text!("Speed", 8.0, 41.0, 0xFFBBBBBB);
+    text!("Catalyst", 40.0, 41.0, 0xFFBBBBBB);
+    text!(screen_status(status), 8.0, 70.0, 0xFFE0E0E0);
+    text!(&format!("Oil {feed}/32k mB"), 8.0, 82.0, 0xFFE0E0E0);
+    text!(&format!("H2 {hydrogen}/16k mB"), 90.0, 82.0, 0xFFE0E0E0,);
+    text!(
+        &format!("Naphtha {:.1}k", naphtha as f32 / 1_000.0),
+        8.0,
+        94.0,
+        0xFFE0E0E0,
+    );
+    text!(
+        &format!("Diesel {:.1}k", diesel as f32 / 1_000.0),
+        90.0,
+        94.0,
+        0xFFE0E0E0,
+    );
+    text!(
+        &format!(
+            "{} {:.1}k",
+            if selected_mode == "hydrocracking" {
+                "Kerosene"
+            } else {
+                "Refinery Gas"
+            },
+            third_product as f32 / 1_000.0
+        ),
+        8.0,
+        105.0,
+        0xFFE0E0E0,
+    );
+    text!(
+        &format!("Light Oil {:.1}k", light_oil as f32 / 1_000.0),
+        90.0,
+        105.0,
+        0xFFE0E0E0,
+    );
+    text!(
+        &format!("Temp {temperature} C / {minimum_temperature} C"),
+        8.0,
+        116.0,
+        0xFFE0E0E0,
+    );
+    text!(
+        &format!(
+            "Heat {:.1}/{:.0} kHU",
+            heat_tens as f32 / 100.0,
+            HEAT_CAPACITY as f32 / 1_000.0
+        ),
+        8.0,
+        127.0,
+        0xFFE0E0E0,
+    );
+    if duration > 0 {
+        text!(
+            &format!("Progress {progress}/{duration} t"),
+            8.0,
+            138.0,
+            0xFFE0E0E0,
+        );
+        fill!([8.0, 149.0, 160.0, 5.0], 0xFF383838);
+        let fraction = (progress as f32 / duration as f32).clamp(0.0, 1.0);
+        fill!([8.0, 149.0, 160.0 * fraction, 5.0], 0xFF62B64F);
+    } else {
+        text!("Progress 0/0 t", 8.0, 138.0, 0xFFAAAAAA);
+    }
+    text!("Inventory", 8.0, 157.0, 0xFFFFFFFF);
 }
 fn set_bool(host: &mut dyn Host, pos: [i32; 3], key: &str, value: bool) {
     let value = if value { "true" } else { "false" };
@@ -341,7 +584,7 @@ pub(crate) fn unform_near(host: &mut dyn Host, broken: [i32; 3]) {
         }
     }
 }
-pub(crate) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity) {
+fn tick_machine(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity) {
     entity.items.resize(2, None);
     if entity
         .items
@@ -476,6 +719,41 @@ pub(crate) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
         set_bool(host, pos, "lit", false);
     }
 }
+fn screen_number(value: i32) -> i32 {
+    value.clamp(0, i16::MAX as i32)
+}
+fn sync_screen_data(host: &dyn Host, entity: &mut ModBlockEntity) {
+    let heat = crate::heat::HeatStore::new(
+        HEAT_CAPACITY,
+        MAX_TEMP_C,
+        get_i32(&entity.nbt, "HeatHU").max(0) as u64,
+    );
+    let temperature = heat.temperature_c();
+    let stored = heat.stored_hu();
+    let minimum_temperature = find_recipe(host, mode(entity)).map_or(0, |recipe| recipe.min_temp);
+    entity.data.resize(13, 0);
+    entity.data[0] = if mode(entity) == "hydrocracking" {
+        1
+    } else {
+        0
+    };
+    entity.data[1] = screen_number(get_i32(&entity.nbt, "CrackingProgress"));
+    entity.data[2] = screen_number(get_i32(&entity.nbt, "CrackingTotal"));
+    entity.data[3] = screen_number(temperature as i32);
+    entity.data[4] = screen_number((stored / 10).min(i32::MAX as u64) as i32);
+    entity.data[5] = screen_number(get_i32(&entity.nbt, "CrackingStatus"));
+    entity.data[6] = screen_number(minimum_temperature.min(i32::MAX as u32) as i32);
+    entity.data[7] = screen_number(crate::fluid::amount(&entity.nbt, FEED_TANK) as i32);
+    entity.data[8] = screen_number(crate::fluid::amount(&entity.nbt, HYDROGEN_TANK) as i32);
+    for index in 0..4 {
+        entity.data[9 + index] =
+            screen_number(crate::fluid::amount(&entity.nbt, OUTPUT_START + index) as i32);
+    }
+}
+pub(crate) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity) {
+    tick_machine(host, pos, entity);
+    sync_screen_data(host, entity);
+}
 pub(crate) fn accepts(tank: usize, fluid: &str) -> bool {
     matches!(
         (tank, fluid),
@@ -517,7 +795,7 @@ pub(crate) fn container() -> ModContainer {
         ],
         inputs: vec![SPEED_SLOT, CATALYST_SLOT],
         outputs: vec![],
-        menu: Some("arcforge:machine_2_slot".into()),
+        menu: Some("arcforge:cracking_unit".into()),
     }
 }
 pub(crate) fn item_allowed(slot: usize, item: &str, count: u32) -> bool {
@@ -629,4 +907,260 @@ pub(crate) fn status(entity: &ModBlockEntity) -> String {
         get_i32(&entity.nbt, "CrackingProgress").max(0),
         get_i32(&entity.nbt, "CrackingTotal").max(0)
     )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::{collections::HashSet, path::Path, sync::Arc};
+
+    fn test_entity() -> ModBlockEntity {
+        ModBlockEntity::from(horizon_client::containers::ModBlockEntityFields {
+            id: CONTROLLER.to_owned(),
+            ..Default::default()
+        })
+    }
+
+    fn source_recipe(filename: &str) -> Recipe {
+        let path = Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../content/data/arcforge/recipe/cracking")
+            .join(filename);
+        let bytes = std::fs::read(&path)
+            .unwrap_or_else(|error| panic!("could not read {}: {error}", path.display()));
+        let json = horizon_client::mod_api::serde_json::from_slice::<Value>(&bytes)
+            .unwrap_or_else(|error| panic!("could not parse {}: {error}", path.display()));
+        recipe_from_json(&json)
+            .unwrap_or_else(|| panic!("invalid cracking recipe {}", path.display()))
+    }
+
+    #[test]
+    fn source_recipes_keep_both_modes_and_their_exact_costs_and_products() {
+        let catalytic = source_recipe("heavy_oil.json");
+        assert_eq!(catalytic.mode, "catalytic");
+        assert_eq!(catalytic.input, HEAVY_OIL);
+        assert_eq!(catalytic.amount, 100);
+        assert_eq!(catalytic.second_input, None);
+        assert_eq!(catalytic.catalyst.as_deref(), Some(CATALYST));
+        assert_eq!(catalytic.catalyst_uses, MAX_CATALYST_USES);
+        assert_eq!(catalytic.ticks, 20);
+        assert_eq!(catalytic.heat_per_tick, 30);
+        assert_eq!(catalytic.min_temp, 480);
+        assert_eq!(
+            catalytic
+                .products
+                .iter()
+                .map(|product| (product.fluid.as_str(), product.amount))
+                .collect::<Vec<_>>(),
+            [
+                ("arcforge:naphtha", 40),
+                ("arcforge:diesel", 40),
+                ("arcforge:refinery_gas", 55),
+                ("arcforge:light_oil", 10),
+            ]
+        );
+
+        let hydrocracking = source_recipe("heavy_oil_hydrocracking.json");
+        assert_eq!(hydrocracking.mode, "hydrocracking");
+        assert_eq!(hydrocracking.input, HEAVY_OIL);
+        assert_eq!(hydrocracking.amount, 100);
+        assert_eq!(hydrocracking.second_input, Some((HYDROGEN.to_owned(), 30)));
+        assert_eq!(hydrocracking.catalyst, None);
+        assert_eq!(hydrocracking.catalyst_uses, 0);
+        assert_eq!(hydrocracking.ticks, 20);
+        assert_eq!(hydrocracking.heat_per_tick, 36);
+        assert_eq!(hydrocracking.min_temp, 520);
+        assert_eq!(
+            hydrocracking
+                .products
+                .iter()
+                .map(|product| (product.fluid.as_str(), product.amount))
+                .collect::<Vec<_>>(),
+            [
+                ("arcforge:naphtha", 10),
+                ("arcforge:diesel", 50),
+                ("arcforge:kerosene", 30),
+                ("arcforge:light_oil", 10),
+            ]
+        );
+    }
+
+    #[test]
+    fn cracking_box_has_45_unique_positions_in_each_horizontal_facing() {
+        let controller = [10, 20, 30];
+        for (name, expected_x, expected_z) in [
+            ("north", (9, 11), (30, 32)),
+            ("east", (8, 10), (29, 31)),
+            ("south", (9, 11), (28, 30)),
+            ("west", (10, 12), (29, 31)),
+        ] {
+            let positions = box_positions(controller, facing(name).expect("valid facing"));
+            let unique = positions.iter().copied().collect::<HashSet<_>>();
+            assert_eq!(positions.len(), 45, "{name}");
+            assert_eq!(unique.len(), 45, "{name}");
+            assert!(unique.contains(&controller), "{name}");
+            assert!(
+                unique.iter().all(|pos| (20..=24).contains(&pos[1])),
+                "{name}"
+            );
+            assert_eq!(
+                (
+                    unique.iter().map(|pos| pos[0]).min(),
+                    unique.iter().map(|pos| pos[0]).max()
+                ),
+                (Some(expected_x.0), Some(expected_x.1)),
+                "{name} x extent"
+            );
+            assert_eq!(
+                (
+                    unique.iter().map(|pos| pos[2]).min(),
+                    unique.iter().map(|pos| pos[2]).max()
+                ),
+                (Some(expected_z.0), Some(expected_z.1)),
+                "{name} z extent"
+            );
+        }
+        assert!(facing("up").is_none());
+    }
+
+    #[test]
+    fn fluid_tanks_accept_only_the_two_recipe_inputs() {
+        assert!(accepts(FEED_TANK, HEAVY_OIL));
+        assert!(accepts(HYDROGEN_TANK, HYDROGEN));
+        assert!(!accepts(FEED_TANK, HYDROGEN));
+        assert!(!accepts(HYDROGEN_TANK, HEAVY_OIL));
+        assert!(!accepts(OUTPUT_START, HEAVY_OIL));
+
+        let tanks = fluid_tanks();
+        assert_eq!(
+            tanks.tanks,
+            vec![32_000, 16_000, 16_000, 16_000, 16_000, 16_000]
+        );
+        assert_eq!(tanks.inputs, vec![FEED_TANK, HYDROGEN_TANK]);
+        assert_eq!(tanks.outputs, vec![2, 3, 4, 5]);
+    }
+
+    #[test]
+    fn product_backpressure_rejects_mixed_or_full_output_tanks() {
+        let recipe = source_recipe("heavy_oil.json");
+        let mut entity = test_entity();
+        assert!(products_fit(&entity, &recipe));
+
+        crate::fluid::insert(
+            &mut entity.nbt,
+            OUTPUT_START,
+            "arcforge:diesel",
+            1,
+            PRODUCT_CAPACITY,
+        );
+        assert!(!products_fit(&entity, &recipe));
+
+        entity.nbt.clear();
+        crate::fluid::insert(
+            &mut entity.nbt,
+            OUTPUT_START,
+            "arcforge:naphtha",
+            PRODUCT_CAPACITY - 40,
+            PRODUCT_CAPACITY,
+        );
+        assert!(products_fit(&entity, &recipe));
+        crate::fluid::insert(
+            &mut entity.nbt,
+            OUTPUT_START,
+            "arcforge:naphtha",
+            1,
+            PRODUCT_CAPACITY + 1,
+        );
+        assert!(!products_fit(&entity, &recipe));
+    }
+
+    #[test]
+    fn catalyst_wear_is_bounded_and_speed_slot_respects_its_eight_card_cap() {
+        let mut entity = test_entity();
+        entity.items.resize(2, None);
+        entity.items[CATALYST_SLOT] = Some(horizon_client::mod_api::ItemStack {
+            item: Arc::from(CATALYST),
+            count: 1,
+            damage: 0,
+            extra: None,
+        });
+        set_i32(&mut entity.nbt, "CrackingCatalystUses", 27);
+        assert_eq!(catalyst_uses(&entity), 27);
+        set_i32(&mut entity.nbt, "CrackingCatalystUses", -1);
+        assert_eq!(catalyst_uses(&entity), 0);
+        set_i32(&mut entity.nbt, "CrackingCatalystUses", 100);
+        assert_eq!(catalyst_uses(&entity), MAX_CATALYST_USES);
+
+        assert!(item_allowed(SPEED_SLOT, SPEED_UPGRADE, 8));
+        assert!(!item_allowed(SPEED_SLOT, SPEED_UPGRADE, 9));
+        assert!(item_allowed(CATALYST_SLOT, CATALYST, 64));
+        assert!(!item_allowed(CATALYST_SLOT, SPEED_UPGRADE, 1));
+        assert!(!item_allowed(SPEED_SLOT, CATALYST, 1));
+
+        entity.items[SPEED_SLOT] = Some(horizon_client::mod_api::ItemStack {
+            item: Arc::from(SPEED_UPGRADE),
+            count: 2,
+            damage: 0,
+            extra: None,
+        });
+        assert_eq!(total_ticks(&source_recipe("heavy_oil.json"), &entity), 10);
+    }
+
+    #[test]
+    fn native_screen_reserves_two_upgrade_slots_and_inventory_space() {
+        let screen = screen();
+        assert_eq!(screen.width, 176.0);
+        assert_eq!(screen.height, SCREEN_HEIGHT);
+        assert_eq!(screen.slots, vec![Some([16.0, 52.0]), Some([40.0, 52.0])]);
+        assert_eq!(screen.inventory_y, SCREEN_INVENTORY_Y);
+        assert!(screen.own_labels);
+        assert!(!screen.own_background);
+    }
+
+    #[test]
+    fn mode_buttons_accept_left_clicks_only_inside_their_bounds() {
+        assert_eq!(
+            screen_click([40.0, MODE_BUTTON_Y], false),
+            Some(MODE_BUTTON_CATALYTIC)
+        );
+        assert_eq!(
+            screen_click([83.99, MODE_BUTTON_Y + 19.99], false),
+            Some(MODE_BUTTON_HYDROCRACKING)
+        );
+        assert_eq!(screen_click([60.0, MODE_BUTTON_Y], false), None);
+        assert_eq!(screen_click([39.99, MODE_BUTTON_Y], false), None);
+        assert_eq!(screen_click([40.0, MODE_BUTTON_Y], true), None);
+    }
+
+    #[test]
+    fn mode_button_selection_changes_mode_and_resets_only_changed_recipe_progress() {
+        let mut entity = test_entity();
+        set_string(&mut entity.nbt, "CrackingMode", "hydrocracking");
+        set_i32(&mut entity.nbt, "CrackingProgress", 12);
+        set_i32(&mut entity.nbt, "CrackingTotal", 20);
+
+        select_mode(&mut entity, MODE_BUTTON_CATALYTIC);
+        assert_eq!(mode(&entity), "catalytic");
+        assert_eq!(get_i32(&entity.nbt, "CrackingProgress"), 0);
+        assert_eq!(get_i32(&entity.nbt, "CrackingTotal"), 0);
+
+        set_i32(&mut entity.nbt, "CrackingProgress", 7);
+        select_mode(&mut entity, MODE_BUTTON_CATALYTIC);
+        assert_eq!(get_i32(&entity.nbt, "CrackingProgress"), 7);
+
+        select_mode(&mut entity, MODE_BUTTON_HYDROCRACKING);
+        assert_eq!(mode(&entity), "hydrocracking");
+        assert_eq!(get_i32(&entity.nbt, "CrackingProgress"), 0);
+
+        set_i32(&mut entity.nbt, "CrackingProgress", 9);
+        select_mode(&mut entity, -1);
+        assert_eq!(mode(&entity), "hydrocracking");
+        assert_eq!(get_i32(&entity.nbt, "CrackingProgress"), 9);
+    }
+
+    #[test]
+    fn screen_data_values_fit_horizons_signed_sixteen_bit_transport() {
+        assert_eq!(screen_number(-1), 0);
+        assert_eq!(screen_number(32_000), 32_000);
+        assert_eq!(screen_number(90_000), i16::MAX as i32);
+    }
 }

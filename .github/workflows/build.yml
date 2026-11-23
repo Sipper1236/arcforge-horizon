@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - 'api/**'
+      - 'api-next/**'
       - 'content/**'
       - 'tools/**'
       - 'horizon-mixin.toml'
@@ -11,6 +12,7 @@ on:
   pull_request:
     paths:
       - 'api/**'
+      - 'api-next/**'
       - 'content/**'
       - 'tools/**'
       - 'horizon-mixin.toml'
@@ -23,6 +25,8 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-24.04
+    outputs:
+      pinned_client_release_available: ${{ steps.pinned_client_release.outputs.available }}
     steps:
       - name: Check out Arcforge
         uses: actions/checkout@v7
@@ -34,6 +38,38 @@ jobs:
           ref: 9f42064c11efe7ef3e5ed2baad7ddc2a3b36eea0
           path: horizon-source
 
+      - name: Limit Cargo to half the runner CPUs
+        run: |
+          cpus="$(nproc)"
+          jobs="$((cpus / 2))"
+          if [ "$jobs" -lt 1 ]; then jobs=1; fi
+          echo "CARGO_BUILD_JOBS=$jobs" >> "$GITHUB_ENV"
+
+      - name: Check pinned Horizon Nightly release availability
+        id: pinned_client_release
+        env:
+          HORIZON_VERSION: nightly-2026-11-13
+          HORIZON_REVISION: 9f42064c11efe7ef3e5ed2baad7ddc2a3b36eea0
+        run: |
+          set -euo pipefail
+          response="$RUNNER_TEMP/horizon-release.json"
+          status="$(curl --silent --show-error --output "$response" --write-out '%{http_code}' \
+            "https://api.github.com/repos/horizon-rust/horizon/releases/tags/$HORIZON_VERSION")"
+          if [ "$status" = 200 ] && python3 - "$response" "$HORIZON_REVISION" <<'PY'
+          import json
+          from pathlib import Path
+          from sys import argv
+
+          release = json.loads(Path(argv[1]).read_text())
+          raise SystemExit(0 if release.get("target_commitish") == argv[2] else 1)
+          PY
+          then
+            echo 'available=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'available=false' >> "$GITHUB_OUTPUT"
+            echo "::warning::Horizon $HORIZON_VERSION ($HORIZON_REVISION) is no longer published; the Linux client build will be skipped."
+          fi
+
       - name: Install stable Rust
         run: |
           rustup toolchain install stable --profile minimal --component rustfmt
@@ -42,6 +78,9 @@ jobs:
       - name: Check Rust formatting
         run: cargo fmt --check --manifest-path api/Cargo.toml
 
+      - name: Check staged Horizon API formatting
+        run: cargo fmt --check --manifest-path api-next/Cargo.toml
+
       - name: Install Horizon native build dependencies
         run: |
           sudo apt-get update
@@ -49,6 +88,12 @@ jobs:
 
       - name: Check native mod crate
         run: cargo check --locked --manifest-path api/Cargo.toml
+
+      - name: Check staged current Horizon API crate
+        run: cargo check --manifest-path api-next/Cargo.toml
+
+      - name: Test native mod crate
+        run: cargo test --locked --manifest-path api/Cargo.toml
 
       - name: Build Horizon content pack
         working-directory: content
@@ -106,11 +151,17 @@ jobs:
             echo '- `arcforge.hnmod`: native Rust source bundle, built against the pinned Horizon commit.'
             echo '- `arcforge-horizon-bundle.zip`: both installable mod files plus installation notes and checksums.'
             echo ''
-            echo 'A second job compiles a Linux x86_64 Horizon client with the native mod and uploads it separately.'
+            if [[ "$PINNED_CLIENT_RELEASE_AVAILABLE" == 'true' ]]; then
+              echo 'A second job compiles a Linux x86_64 Horizon client with the native mod and uploads it separately.'
+            else
+              echo 'The Linux client job was skipped because the pinned Horizon Nightly is no longer published. The latest Horizon Nightly uses an incompatible mod API; update the Arcforge API port before changing the Horizon pin.'
+            fi
           } >> "$GITHUB_STEP_SUMMARY"
+        env:
+          PINNED_CLIENT_RELEASE_AVAILABLE: ${{ steps.pinned_client_release.outputs.available }}
 
   build-linux-client:
-    if: github.event_name != 'pull_request'
+    if: github.event_name != 'pull_request' && needs.build.outputs.pinned_client_release_available == 'true'
     needs: build
     runs-on: ubuntu-24.04
     timeout-minutes: 120
@@ -139,15 +190,22 @@ jobs:
             libasound2-dev libudev-dev libxkbcommon-x11-dev libwayland-dev \
             libx11-xcb-dev libfontconfig-dev libvulkan-dev
 
+      - name: Limit Cargo to half the runner CPUs
+        run: |
+          cpus="$(nproc)"
+          jobs="$((cpus / 2))"
+          if [ "$jobs" -lt 1 ]; then jobs=1; fi
+          echo "CARGO_BUILD_JOBS=$jobs" >> "$GITHUB_ENV"
+
       - name: Build Horizon launcher CLI
         run: cargo build --locked --manifest-path horizon-source/launcher/Cargo.toml --bin horizon-launcher
 
       - name: Install pinned Horizon Nightly and create a CI instance
         run: |
           launcher="$PWD/horizon-source/launcher/target/debug/horizon-launcher"
-          "$launcher" install nightly-2026-11-13-9f42064
+          "$launcher" install nightly-2026-11-13
           "$launcher" instance create arcforge-ci
-          "$launcher" instance version arcforge-ci nightly-2026-11-13-9f42064
+          "$launcher" instance version arcforge-ci nightly-2026-11-13
 
       - name: Fetch the pinned Minecraft 26.3 inputs from Mojang
         run: |
@@ -160,7 +218,7 @@ jobs:
         run: |
           horizon-source/launcher/target/debug/horizon-launcher prepare \
             --minecraft "$PWD/ci-minecraft" \
-            --version nightly-2026-11-13-9f42064
+            --version nightly-2026-11-13
 
       - name: Stage the native mod source for Horizon's symlink-safe packer
         run: |
@@ -172,7 +230,7 @@ jobs:
         run: |
           horizon-source/launcher/target/debug/horizon-launcher native-build "$PWD/target/native-build/arcforge" \
             --instance arcforge-ci \
-            --version nightly-2026-11-13-9f42064 \
+            --version nightly-2026-11-13 \
             --profile performance \
             --trust-native-code
 
@@ -205,7 +263,7 @@ jobs:
           then import this client with:
 
             Horizon.AppImage import-build ./horizon-client \
-              --version nightly-2026-11-13-9f42064 --trust-unsigned
+              --version nightly-2026-11-13 --trust-unsigned
 
           Use the imported version for an instance, and install arcforge.hmod in that instance
           for recipes, loot, tags, and other content. The imported executable also needs its

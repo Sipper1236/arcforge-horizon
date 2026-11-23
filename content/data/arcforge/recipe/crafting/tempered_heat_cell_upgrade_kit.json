@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "wTw",
+    "T T",
+    "wTw"
+  ],
+  "key": {
+    "T": "arcforge:tempered_alloy",
+    "w": "arcforge:slag_wool"
+  },
+  "result": {
+    "id": "arcforge:tempered_heat_cell_upgrade_kit",
+    "count": 1
+  }
+}

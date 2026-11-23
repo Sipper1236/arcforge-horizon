@@ -1661,10 +1661,8 @@ impl Hooks for Arcforge {
         register_content!(&mut event.blocks, id: THERMOELECTRIC_PLANT.into(), template: "minecraft:blast_furnace".into(), item: true);
         register_content!(&mut event.blocks, id: RESIN_TAP.into(), template: "minecraft:tripwire_hook".into(), item: true);
         if let Some(block) = event.blocks.iter_mut().find(|block| block.id == RESIN_TAP) {
-            block.state_properties = serde_json::from_value(serde_json::json!({
-                "content": { "type": "enum", "values": ["empty", "latex", "resin"] }
-            }))
-            .expect("valid Resin Tap block states");
+            block.state_properties = serde_json::from_value(resin_tap_block_state_properties())
+                .expect("valid Resin Tap block states");
             block.default_state = [("content".to_owned(), "empty".to_owned())]
                 .into_iter()
                 .collect();
@@ -2684,7 +2682,40 @@ impl Hooks for Arcforge {
                 own_labels: true,
                 own_background: false,
             }),
+            CRACKING_CONTROLLER => Some(cracking_unit::screen()),
             _ => None,
+        }
+    }
+
+    fn screen_click(
+        &self,
+        _host: &dyn Host,
+        event: &mut horizon_client::mod_api::ScreenClickEvent<'_>,
+    ) -> Option<i32> {
+        if event.block == CRACKING_CONTROLLER {
+            cracking_unit::screen_click(event.at, event.right)
+        } else {
+            None
+        }
+    }
+
+    fn screen_tooltip(
+        &self,
+        _host: &dyn Host,
+        event: &mut horizon_client::mod_api::ScreenTooltipEvent<'_>,
+    ) {
+        if event.block == CRACKING_CONTROLLER {
+            cracking_unit::screen_tooltip(event.at, event.lines);
+        }
+    }
+
+    fn menu_button(
+        &self,
+        _host: &mut dyn Host,
+        event: &mut horizon_client::mod_api::MenuButtonEvent<'_>,
+    ) {
+        if event.entity.id == CRACKING_CONTROLLER {
+            cracking_unit::select_mode(event.entity, event.id);
         }
     }
 
@@ -2693,6 +2724,10 @@ impl Hooks for Arcforge {
         host: &dyn Host,
         event: &mut horizon_client::mod_api::ScreenDrawEvent<'_>,
     ) {
+        if event.block == CRACKING_CONTROLLER {
+            cracking_unit::draw_screen(host, event);
+            return;
+        }
         if event.block == FIBERIZER {
             let [ox, oy] = event.origin;
             let data = event.data;
@@ -4527,6 +4562,12 @@ enum ResinTapSource {
     Other,
 }
 
+fn resin_tap_block_state_properties() -> serde_json::Value {
+    serde_json::json!({
+        "content": { "type": "enum", "values": ["empty", "latex", "resin"] }
+    })
+}
+
 fn resin_tap_source(host: &dyn Host, log_pos: [i32; 3]) -> Option<ResinTapSource> {
     let level = host.level(host.dimension())?;
     let log = level.block(host, log_pos)?;
@@ -6257,11 +6298,7 @@ fn tick_infuser(host: &dyn Host, entity: &mut ModBlockEntity) {
 
 fn firebox_fuel_ticks(item: &str) -> Option<u32> {
     Some(match item {
-        "minecraft:coal"
-        | "minecraft:charcoal"
-        | "arcforge:bio_coal"
-        | "arcforge:coal_coke"
-        | "arcforge:petroleum_coke" => 1600,
+        "minecraft:coal" | "minecraft:charcoal" | "arcforge:bio_coal" => 1600,
         "minecraft:coal_block" | "arcforge:bio_coal_block" => 16_000,
         _ => return None,
     })
@@ -6291,12 +6328,23 @@ fn tick_fuel_burner(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnt
     let speed_upgrades =
         get_i32(&entity.nbt, "SpeedUpgrades").clamp(0, SPEED_MAX_UPGRADES as i32) as u32;
     let speed = speed_upgrade_multiplier(speed_upgrades);
-    let fuel_id = fluid::name(&entity.nbt, 0);
+    let mut fuel_taken_milli = get_i32(&entity.nbt, "FuelTakenMilli").clamp(0, 16_000) as u32;
+    let tank_fuel_id = fluid::name(&entity.nbt, 0);
+    let saved_fuel_id = get_string(&entity.nbt, "FuelTakenFluid");
+    let fuel_id = if fuel_taken_milli > 0 {
+        saved_fuel_id
+            .filter(|id| fuel_burner::fuel(id).is_some())
+            .or_else(|| tank_fuel_id.clone())
+    } else {
+        tank_fuel_id.clone()
+    };
+    if fuel_taken_milli > 0 && fuel_id.is_none() {
+        fuel_taken_milli = 0;
+    }
     let fuel = fuel_id.as_deref().and_then(fuel_burner::fuel);
     let burn_milli = fuel
         .map(|fuel| (fuel.burn_millimb_per_tick as f64 * speed).round() as u32)
         .unwrap_or(0);
-    let mut fuel_taken_milli = get_i32(&entity.nbt, "FuelTakenMilli").clamp(0, 16_000) as u32;
     let burn_temperature = fuel
         .map(|fuel| fuel.burn_temperature_c.min(FUEL_BURNER_MAX_TEMPERATURE))
         .unwrap_or(FUEL_BURNER_MAX_TEMPERATURE);
@@ -6309,7 +6357,7 @@ fn tick_fuel_burner(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnt
     if let Some(fuel) = fuel
         && heat.stored_hu() < at_fuel_temperature
     {
-        if fuel_taken_milli < burn_milli {
+        if fuel_taken_milli < burn_milli && tank_fuel_id.as_deref() == fuel_id.as_deref() {
             let need_milli = burn_milli - fuel_taken_milli;
             let need_mb = need_milli.div_ceil(1000);
             let taken = fluid::extract(
@@ -6339,6 +6387,11 @@ fn tick_fuel_burner(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnt
         20
     });
     set_i32(&mut entity.nbt, "FuelTakenMilli", fuel_taken_milli as i32);
+    if fuel_taken_milli == 0 {
+        entity.nbt.remove(&"FuelTakenFluid".into());
+    } else if let Some(fuel_id) = fuel_id.as_deref() {
+        set_string(&mut entity.nbt, "FuelTakenFluid", fuel_id);
+    }
     set_i32(
         &mut entity.nbt,
         "HeatHU",
@@ -9090,12 +9143,25 @@ mod tests {
     }
 
     struct EnergyPushTestHost {
+        test_world_id: i64,
         random: horizon_client::mod_api::LegacyRandom,
         adjacent_pos: [i32; 3],
         adjacent: ModBlockEntity,
     }
 
     impl Host for EnergyPushTestHost {
+        fn world_dir(&self) -> Option<std::path::PathBuf> {
+            None
+        }
+
+        fn world_seed(&self) -> Option<i64> {
+            Some(self.test_world_id)
+        }
+
+        fn level(&self, _dimension: &str) -> Option<horizon_client::mod_api::LevelRef> {
+            None
+        }
+
         fn dimension(&self) -> &'static str {
             "minecraft:overworld"
         }
@@ -9122,6 +9188,12 @@ mod tests {
             change(&mut self.adjacent);
             true
         }
+
+        fn block_property(&self, _pos: [i32; 3], _key: &str) -> Option<String> {
+            None
+        }
+
+        fn block_entity_sync(&mut self, _pos: [i32; 3]) {}
 
         fn set_block_property(&mut self, _pos: [i32; 3], _key: &str, _value: &str) -> bool {
             true
@@ -9655,6 +9727,7 @@ mod tests {
         let source_pos = [0, 64, 0];
         let adjacent_pos = [1, 64, 0];
         let mut host = EnergyPushTestHost {
+            test_world_id: 1,
             random: horizon_client::mod_api::LegacyRandom::new(0),
             adjacent_pos,
             adjacent: ModBlockEntity::from(horizon_client::containers::ModBlockEntityFields {
@@ -9686,6 +9759,7 @@ mod tests {
     #[test]
     fn wrought_conduit_relays_energy_at_machine_rate_and_respects_backpressure() {
         let mut host = EnergyPushTestHost {
+            test_world_id: 2,
             random: horizon_client::mod_api::LegacyRandom::new(0),
             adjacent_pos: [1, 0, 0],
             adjacent: ModBlockEntity::from(horizon_client::containers::ModBlockEntityFields {
@@ -9789,6 +9863,7 @@ mod tests {
     #[test]
     fn source_output_obeys_configured_conduit_face_mode() {
         let mut host = EnergyPushTestHost {
+            test_world_id: 3,
             random: horizon_client::mod_api::LegacyRandom::new(0),
             adjacent_pos: [1, 0, 0],
             adjacent: ModBlockEntity::from(horizon_client::containers::ModBlockEntityFields {
@@ -9807,7 +9882,7 @@ mod tests {
         assert_eq!(source.stored_fe(), 500);
         assert_eq!(get_i32(&host.adjacent.nbt, "energy"), 0);
 
-        set_string(&mut host.adjacent.nbt, "setting_west", "output");
+        set_string(&mut host.adjacent.nbt, "setting_west", "input");
         push_adjacent_arcforge_energy(&mut host, [0, 0, 0], &mut source, 200, false);
         assert_eq!(source.stored_fe(), 300);
         assert_eq!(get_i32(&host.adjacent.nbt, "energy"), 200);
@@ -9816,6 +9891,7 @@ mod tests {
     #[test]
     fn firebox_transfers_burning_source_heat_to_a_thermoelectric_plant() {
         let mut host = EnergyPushTestHost {
+            test_world_id: 4,
             random: horizon_client::mod_api::LegacyRandom::new(0),
             adjacent_pos: [1, 0, 0],
             adjacent: ModBlockEntity::from(horizon_client::containers::ModBlockEntityFields {
@@ -9847,6 +9923,7 @@ mod tests {
     #[test]
     fn fuel_burner_matches_creosote_rate_and_retains_half_millibucket_tick() {
         let mut host = EnergyPushTestHost {
+            test_world_id: 5,
             random: horizon_client::mod_api::LegacyRandom::new(0),
             adjacent_pos: [1, 0, 0],
             adjacent: ModBlockEntity::from(horizon_client::containers::ModBlockEntityFields {
@@ -9937,7 +10014,7 @@ mod tests {
         assert!((thermoelectric_efficiency(1250) - 1.075).abs() < f64::EPSILON);
         assert_eq!(thermoelectric_efficiency(1400), 1.15);
         assert_eq!(thermoelectric_efficiency(1600), 1.15);
-        assert_eq!(thermoelectric_heat_throughput(), 102);
+        assert_eq!(thermoelectric_heat_throughput(1.0), 102);
 
         let mut heat_at_full_efficiency = heat::HeatStore::new(
             THERMOELECTRIC_HEAT_CAPACITY,
@@ -9947,7 +10024,7 @@ mod tests {
         assert_eq!(heat_at_full_efficiency.temperature_c(), 1100);
         let mut energy = energy::EnergyStore::new(THERMOELECTRIC_FE_CAPACITY, 0);
         assert_eq!(
-            thermoelectric_convert(&mut heat_at_full_efficiency, &mut energy, 0, 0),
+            thermoelectric_convert(&mut heat_at_full_efficiency, &mut energy, 0, 0, 1.0),
             (80, 80)
         );
         assert_eq!(energy.stored_fe(), 80);
@@ -9959,7 +10036,7 @@ mod tests {
         );
         let mut nearly_full_energy = energy::EnergyStore::new(THERMOELECTRIC_FE_CAPACITY, 49_999);
         assert_eq!(
-            thermoelectric_convert(&mut full_heat, &mut nearly_full_energy, 0, 0),
+            thermoelectric_convert(&mut full_heat, &mut nearly_full_energy, 0, 0, 1.0),
             (0, 0)
         );
         assert_eq!(full_heat.stored_hu(), THERMOELECTRIC_HEAT_CAPACITY);
@@ -10302,14 +10379,11 @@ mod tests {
     fn resin_tap_data_and_recipe_match_the_pinned_source() {
         let data =
             std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../content/data/arcforge");
-        let block: serde_json::Value = serde_json::from_slice(
-            &std::fs::read(data.join("horizon/block/resin_tap.json")).expect("tap block data"),
-        )
-        .expect("valid tap block data");
-        assert_eq!(block["template"], "minecraft:tripwire_hook");
-        assert_eq!(block["state_properties"]["content"]["values"][0], "empty");
-        assert_eq!(block["state_properties"]["content"]["values"][1], "latex");
-        assert_eq!(block["state_properties"]["content"]["values"][2], "resin");
+        let block = resin_tap_block_state_properties();
+        assert_eq!(block["content"]["type"], "enum");
+        assert_eq!(block["content"]["values"][0], "empty");
+        assert_eq!(block["content"]["values"][1], "latex");
+        assert_eq!(block["content"]["values"][2], "resin");
 
         let recipe: serde_json::Value = serde_json::from_slice(
             &std::fs::read(data.join("recipe/crafting/resin_tap.json")).expect("tap recipe"),
@@ -10879,7 +10953,11 @@ mod tests {
             .chain(crushing_catalog::ITEMS)
             .map(|(id, _)| (*id).to_owned())
             .collect();
-        registered.extend([STEEL, COKE, SLAG].into_iter().map(str::to_owned));
+        registered.extend(
+            [STEEL, COKE, SLAG, "arcforge:carbon_fiber"]
+                .into_iter()
+                .map(str::to_owned),
+        );
         let mut steel_recipe = None;
         for path in files {
             let value: serde_json::Value =
