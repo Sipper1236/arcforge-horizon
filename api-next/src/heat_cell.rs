@@ -21,6 +21,7 @@ const INSULATION_SLOT: usize = 2;
 const MAX_INSULATION: u32 = 8;
 const INPUT_TICK_KEY: &str = "HeatCellInputTick";
 const INPUT_USED_KEY: &str = "HeatCellInputUsed";
+const CAPSULE_LEAK_REMAINDER_KEY: &str = "horizon_heat_leak_remainder";
 
 const DIRECTIONS: [[i32; 3]; 6] = [
     [0, 1, 0],
@@ -222,6 +223,80 @@ fn set_item_heat(stack: &mut ItemStack, amount: u64) -> bool {
         data.insert(key, Tag::Int(amount.min(i32::MAX as u64) as i32));
     }
     stack.set(&HEAT_ITEM_DATA, data).is_ok()
+}
+
+fn item_leak_remainder(stack: &ItemStack) -> f64 {
+    stack
+        .get(&HEAT_ITEM_DATA)
+        .and_then(|data| data.get(&CAPSULE_LEAK_REMAINDER_KEY.into()).cloned())
+        .and_then(|tag| match tag {
+            Tag::Double(bits) => Some(f64::from_bits(bits)),
+            _ => None,
+        })
+        .filter(|remainder| remainder.is_finite() && (0.0..1.0).contains(remainder))
+        .unwrap_or_default()
+}
+
+fn set_item_heat_and_remainder(stack: &mut ItemStack, amount: u64, remainder: f64) -> bool {
+    let mut data = stack.get(&HEAT_ITEM_DATA).unwrap_or_default();
+    let heat_key = "horizon_heat".into();
+    let remainder_key = CAPSULE_LEAK_REMAINDER_KEY.into();
+    if amount == 0 {
+        data.remove(&heat_key);
+    } else {
+        data.insert(heat_key, Tag::Int(amount.min(i32::MAX as u64) as i32));
+    }
+    if amount > 0 && remainder.is_finite() && remainder > 0.0 {
+        data.insert(remainder_key, Tag::Double(remainder.to_bits()));
+    } else {
+        data.remove(&remainder_key);
+    }
+    if data.is_empty() {
+        stack.remove(&HEAT_ITEM_DATA);
+        true
+    } else {
+        stack.set(&HEAT_ITEM_DATA, data).is_ok()
+    }
+}
+
+pub(crate) fn inventory_tick_capsule(
+    host: &mut dyn ServerHost,
+    event: &mut mod_api::InventoryTickEvent<'_>,
+) {
+    let item_id = event.stack.item().id(host).to_owned();
+    let Some(spec) = capsule_spec(&item_id) else {
+        return;
+    };
+    let Some(level) = host.level(host.dimension()) else {
+        return;
+    };
+    if level.game_time(host).unwrap_or_default().rem_euclid(20) != 0 {
+        return;
+    }
+    let held = item_heat(&event.stack, spec);
+    if held == 0 {
+        return;
+    }
+
+    // Carried capsules use the matching Heat Cell tier's per-second loss. Keep the
+    // fractional HU in custom data so small capsules still lose heat over time.
+    let per_second = held as f64 * spec.leak_percent_per_minute / 6_000.0;
+    let total = per_second + item_leak_remainder(&event.stack);
+    let lost = total.floor().min(held as f64) as u64;
+    let remainder = if held <= lost { 0.0 } else { total - lost as f64 };
+    let place = mod_api::ItemPlace::PlayerSlot {
+        player: event.player,
+        slot: event.slot,
+    };
+    let _ = host.transaction(|host, tx| {
+        if place.edit(host, tx, |stack| {
+            let _ = set_item_heat_and_remainder(stack, held - lost, remainder);
+        }) {
+            Ok(())
+        } else {
+            Err(())
+        }
+    });
 }
 
 fn insulation_count(host: &dyn Host, items: &[Option<ItemStack>]) -> u32 {

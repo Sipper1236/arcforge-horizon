@@ -6,9 +6,9 @@
 
 use mod_api::{
     Block, BlockEntityPart, BlockEntityTickEvent, BlockEntityTicksEvent, BlockKey, BlockPart,
-    BlockStateProperty, Flow, Hooks, Host, HostSide, InteractionResult, Item, MenuContainer,
-    MenuPart, MenuSlotRulesEvent, ModContainer, ModEnergyBuffer, ModFluidTanks, Registrar,
-    RegistrationContext, ServerHost,
+    BlockStateProperty, Flow, Hooks, Host, HostSide, InteractionResult, Item, ItemPart,
+    MenuContainer, MenuPart, MenuSlotRulesEvent, ModContainer, ModEnergyBuffer, ModFluidTanks,
+    Registrar, RegistrationContext, ServerHost,
 };
 use std::collections::BTreeMap;
 
@@ -67,6 +67,8 @@ struct ThermalConduit {
 
 struct ThermoelectricPlant;
 
+struct ThermalCapsule;
+
 #[mod_api::horizon_part]
 impl BlockPart for HeatCell {}
 
@@ -102,6 +104,17 @@ impl BlockPart for ThermalConduit {}
 
 #[mod_api::horizon_part]
 impl BlockPart for ThermoelectricPlant {}
+
+#[mod_api::horizon_part]
+impl ItemPart for ThermalCapsule {
+    fn inventory_tick(
+        &self,
+        host: &mut dyn ServerHost,
+        event: &mut mod_api::InventoryTickEvent<'_>,
+    ) {
+        heat_cell::inventory_tick_capsule(host, event);
+    }
+}
 
 #[mod_api::horizon_part]
 impl BlockPart for CrackingUnit {}
@@ -829,6 +842,13 @@ impl Hooks for Arcforge {
     fn register(&self, registrar: &mut dyn Registrar, _: &RegistrationContext) {
         registrar.register_recipe_type("arcforge:cracking");
         registrar.register_raw_recipe_serializer("arcforge:cracking", "arcforge:cracking");
+
+        for id in heat_cell::capsule_ids() {
+            let capsule = registrar.item_key(id);
+            registrar
+                .item_part(&capsule, ThermalCapsule)
+                .expect("Arcforge thermal-capsule item Part should register");
+        }
 
         let controller = registrar.block_key(CONTROLLER);
         let casing = registrar.block_key(CASING);
