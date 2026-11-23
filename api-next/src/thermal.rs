@@ -1,8 +1,7 @@
 //! Current-API thermal conduit pools with bounded, directed face transfer.
 
 use mod_api::{
-    BlockEntityTickEvent, BlockEntityTickReply, Compound, Host, HostBlockStates, LevelRef,
-    ServerHost, Tag, Text,
+    BlockEntityTickEvent, BlockEntityTickReply, Compound, Host, LevelRef, ServerHost, Tag, Text,
 };
 use std::{
     collections::{HashMap, HashSet, VecDeque},
@@ -69,6 +68,7 @@ struct Network {
     capacity: u64,
     stored: u64,
     temperature: u32,
+    member_heat: HashMap<[i32; 3], (u64, i32)>,
     last_moved_tick: Option<i64>,
     neighbors: HashMap<[i32; 3], Vec<NeighborState>>,
     input_tick: Option<i64>,
@@ -188,7 +188,13 @@ fn network_for(
         if let Some(world) = cache.levels.get_mut(&level) {
             if let Some(leader) = world.by_pos.get(&start).copied() {
                 if let Some(network) = world.networks.get(&leader) {
-                    if network.neighbors.get(&start) == Some(&current_neighbors) {
+                    if network.neighbors.get(&start) == Some(&current_neighbors)
+                        && network.member_heat.get(&start)
+                            == Some(&(
+                                get_i32(&first.nbt, "HeatHU").max(0) as u64,
+                                get_i32(&first.nbt, "TemperatureC"),
+                            ))
+                    {
                         cached = Some(network.clone());
                     }
                 }
@@ -210,9 +216,17 @@ fn network_for(
             }
         }
     }
-    if let Some(network) = cached {
-        if presence_check.is_none_or(|pos| node_at(host, level, pos, current).is_some()) {
-            return Some(network);
+    if let Some(network) = cached.as_ref() {
+        if presence_check.is_none_or(|pos| {
+            node_at(host, level, pos, current).is_some_and(|node| {
+                network.member_heat.get(&pos)
+                    == Some(&(
+                        get_i32(&node.nbt, "HeatHU").max(0) as u64,
+                        get_i32(&node.nbt, "TemperatureC"),
+                    ))
+            })
+        }) {
+            return Some(network.clone());
         }
         NETWORK_CACHE
             .lock()
@@ -266,14 +280,17 @@ fn discover_network(
         .min(i32::MAX as u64);
     let mut stored = 0_u64;
     let mut temperature = 20_u32;
+    let mut member_heat = HashMap::new();
     for pos in &members {
         let Some(node) = node_at(host, level, *pos, current) else {
             continue;
         };
         let node_stored = get_i32(&node.nbt, "HeatHU").max(0) as u64;
+        let node_temperature = get_i32(&node.nbt, "TemperatureC");
+        member_heat.insert(*pos, (node_stored, node_temperature));
         stored = stored.saturating_add(node_stored);
         if node_stored > 0 {
-            temperature = temperature.max(get_i32(&node.nbt, "TemperatureC").max(20) as u32);
+            temperature = temperature.max(node_temperature.max(20) as u32);
         }
     }
     Some(Network {
@@ -283,6 +300,7 @@ fn discover_network(
         capacity,
         stored: stored.min(capacity),
         temperature: if stored == 0 { 20 } else { temperature },
+        member_heat,
         last_moved_tick: None,
         neighbors,
         input_tick: None,
@@ -421,10 +439,25 @@ fn update_cached_pool(
         entry.stored = stored.min(entry.capacity);
         entry.temperature = if entry.stored == 0 { 20 } else { temperature };
         entry.last_moved_tick = last_moved_tick;
+        let count = entry.members.len() as u64;
+        let each = if count == 0 { 0 } else { entry.stored / count };
+        let remainder = if count == 0 { 0 } else { entry.stored % count };
+        let member_positions = entry.members.clone();
+        for (index, pos) in member_positions.into_iter().enumerate() {
+            let member_stored = each + u64::from((index as u64) < remainder);
+            let member_temperature = if member_stored == 0 {
+                20
+            } else {
+                entry.temperature as i32
+            };
+            entry
+                .member_heat
+                .insert(pos, (member_stored, member_temperature));
+        }
     }
 }
 
-fn invalidate_level(level: LevelRef) {
+pub(crate) fn invalidate_level(level: LevelRef) {
     NETWORK_CACHE
         .lock()
         .unwrap_or_else(std::sync::PoisonError::into_inner)
@@ -682,7 +715,7 @@ fn transfer_to_neighbor(
     if spec(&target_id).is_some() {
         return accept_heat(host, level, target_pos, source_pos, heat, rate);
     }
-    if super::heat_cell::spec(&target_id).is_some() {
+    if super::heat_cell::ids().contains(&target_id.as_str()) {
         return super::heat_cell::accept_heat(host, level, target_pos, heat, rate);
     }
     if target_id == super::THERMOELECTRIC_PLANT {
@@ -788,7 +821,7 @@ fn is_heat_source(id: &str) -> bool {
 }
 
 fn is_heat_target(id: &str) -> bool {
-    super::heat_cell::spec(id).is_some()
+    super::heat_cell::ids().contains(&id)
         || matches!(id, super::THERMOELECTRIC_PLANT | super::CONTROLLER)
 }
 

@@ -725,6 +725,9 @@ impl Hooks for Arcforge {
         let Some(level) = host.level(host.dimension()) else {
             return;
         };
+        if thermal::ids().iter().any(|id| block.starts_with(id)) {
+            thermal::invalidate_level(level);
+        }
         if block.starts_with(SOLAR_CONTROLLER) {
             solar::unform_broken_controller(host, level, event.pos);
         } else if block.starts_with(SOLAR_CASING) || block.starts_with(SOLAR_COLLECTOR) {
