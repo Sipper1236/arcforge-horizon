@@ -10,11 +10,13 @@ use mod_api::{
     MenuPart, MenuSlotRulesEvent, ModContainer, ModFluidTanks, Registrar, RegistrationContext,
     ServerHost,
 };
+use std::collections::HashMap;
 
 mod cracking_unit;
 mod firebox;
 mod geothermal;
 mod heat_cell;
+mod solar;
 
 const CONTROLLER: &str = "arcforge:cracking_unit_controller";
 const CASING: &str = "arcforge:cracking_unit_casing";
@@ -27,6 +29,10 @@ const FIREBOX: &str = "arcforge:firebox";
 const FIREBOX_MENU: &str = "arcforge:firebox";
 const GEOTHERMAL_PLANT: &str = "arcforge:geothermal_plant";
 const GEOTHERMAL_MENU: &str = "arcforge:geothermal_plant";
+const SOLAR_CONTROLLER: &str = solar::CONTROLLER;
+const SOLAR_CASING: &str = solar::CASING;
+const SOLAR_COLLECTOR: &str = solar::COLLECTOR;
+const SOLAR_MENU: &str = "arcforge:solar_thermal_array";
 const BIO_COAL: &str = "arcforge:bio_coal";
 const BIO_COAL_BLOCK: &str = "arcforge:bio_coal_block";
 const WOOD_ASH: &str = "arcforge:wood_ash";
@@ -47,6 +53,8 @@ struct Firebox;
 
 struct GeothermalPlant;
 
+struct SolarThermalArray;
+
 #[mod_api::horizon_part]
 impl BlockPart for HeatCell {}
 
@@ -55,6 +63,9 @@ impl BlockPart for Firebox {}
 
 #[mod_api::horizon_part]
 impl BlockPart for GeothermalPlant {}
+
+#[mod_api::horizon_part]
+impl BlockPart for SolarThermalArray {}
 
 #[mod_api::horizon_part]
 impl BlockPart for CrackingUnit {}
@@ -164,6 +175,33 @@ impl BlockEntityPart for GeothermalPlant {
 }
 
 #[mod_api::horizon_part]
+impl BlockEntityPart for SolarThermalArray {
+    fn screen(&self, _: &dyn Host, _: &mut mod_api::ScreenEvent<'_>) -> Option<mod_api::Screen> {
+        Some(solar::screen())
+    }
+
+    fn screen_draw(&self, _: &dyn mod_api::ClientHost, event: &mut mod_api::ScreenDrawEvent<'_>) {
+        solar::draw_screen(event);
+    }
+
+    fn screen_tooltip(
+        &self,
+        _: &dyn mod_api::ClientHost,
+        event: &mut mod_api::ScreenTooltipEvent<'_>,
+    ) {
+        solar::screen_tooltip(event.at, event.lines);
+    }
+
+    fn block_entity_ticks(&self, _: &dyn Host, event: &mut BlockEntityTicksEvent<'_>) {
+        event.ticks = true;
+    }
+
+    fn block_entity_tick(&self, host: &mut dyn ServerHost, event: &mut BlockEntityTickEvent<'_>) {
+        solar::tick(host, event);
+    }
+}
+
+#[mod_api::horizon_part]
 impl MenuPart for CrackingUnit {
     fn menu_slot_rules(&self, host: &dyn Host, event: &mut MenuSlotRulesEvent<'_>) {
         if event.container != MenuContainer::Main {
@@ -227,6 +265,9 @@ impl MenuPart for GeothermalPlant {
         }
     }
 }
+
+#[mod_api::horizon_part]
+impl MenuPart for SolarThermalArray {}
 
 #[mod_api::horizon_mod]
 impl Hooks for Arcforge {
@@ -299,6 +340,79 @@ impl Hooks for Arcforge {
         ]
         .into();
         event.blocks.push(geothermal);
+
+        let faces = ["up", "down", "north", "south", "west", "east"];
+        let mut solar_controller = Block::new(SOLAR_CONTROLLER, "minecraft:blast_furnace");
+        let mut controller_properties: HashMap<String, BlockStateProperty> = [
+            (
+                "facing".into(),
+                BlockStateProperty::Enum {
+                    values: ["north", "east", "south", "west"]
+                        .into_iter()
+                        .map(str::to_owned)
+                        .collect(),
+                },
+            ),
+            ("lit".into(), BlockStateProperty::Boolean),
+            ("formed".into(), BlockStateProperty::Boolean),
+            ("base".into(), BlockStateProperty::Boolean),
+        ]
+        .into();
+        let mut controller_defaults: HashMap<String, String> = [
+            ("facing".into(), "north".into()),
+            ("lit".into(), "false".into()),
+            ("formed".into(), "false".into()),
+            ("base".into(), "false".into()),
+        ]
+        .into();
+        for face in faces {
+            controller_properties.insert(format!("port_{face}"), BlockStateProperty::Boolean);
+            controller_defaults.insert(format!("port_{face}"), "false".into());
+        }
+        solar_controller.state_properties = controller_properties;
+        solar_controller.default_state = controller_defaults;
+        event.blocks.push(solar_controller);
+
+        let mut solar_casing = Block::new(SOLAR_CASING, "minecraft:stone");
+        let mut casing_properties: HashMap<String, BlockStateProperty> = [
+            ("formed".into(), BlockStateProperty::Boolean),
+            (
+                "part".into(),
+                BlockStateProperty::Enum {
+                    values: ["none", "other", "base", "upper_ew", "upper_ns"]
+                        .into_iter()
+                        .map(str::to_owned)
+                        .collect(),
+                },
+            ),
+        ]
+        .into();
+        let mut casing_defaults: HashMap<String, String> = [
+            ("formed".into(), "false".into()),
+            ("part".into(), "none".into()),
+        ]
+        .into();
+        for face in faces {
+            casing_properties.insert(format!("port_{face}"), BlockStateProperty::Boolean);
+            casing_defaults.insert(format!("port_{face}"), "false".into());
+        }
+        solar_casing.state_properties = casing_properties;
+        solar_casing.default_state = casing_defaults;
+        event.blocks.push(solar_casing);
+
+        let mut solar_collector = Block::new(SOLAR_COLLECTOR, "minecraft:glass");
+        let mut collector_properties: HashMap<String, BlockStateProperty> =
+            [("formed".into(), BlockStateProperty::Boolean)].into();
+        let mut collector_defaults: HashMap<String, String> =
+            [("formed".into(), "false".into())].into();
+        for face in faces {
+            collector_properties.insert(format!("port_{face}"), BlockStateProperty::Boolean);
+            collector_defaults.insert(format!("port_{face}"), "false".into());
+        }
+        solar_collector.state_properties = collector_properties;
+        solar_collector.default_state = collector_defaults;
+        event.blocks.push(solar_collector);
+
         event
             .blocks
             .push(Block::new(BIO_COAL_BLOCK, "minecraft:coal_block"));
@@ -358,10 +472,14 @@ impl Hooks for Arcforge {
             }
         };
 
-        if !wrench_target
-            .as_deref()
-            .is_some_and(|id| id == CONTROLLER || id == FIREBOX || id == GEOTHERMAL_PLANT)
-        {
+        if !wrench_target.as_deref().is_some_and(|id| {
+            id == CONTROLLER
+                || id == FIREBOX
+                || id == GEOTHERMAL_PLANT
+                || id == SOLAR_CONTROLLER
+                || id == SOLAR_CASING
+                || id == SOLAR_COLLECTOR
+        }) {
             return Flow::Continue;
         }
 
@@ -389,12 +507,35 @@ impl Hooks for Arcforge {
                         event.click.hit.face,
                         event.click.player,
                     ),
+                    Some(SOLAR_CONTROLLER | SOLAR_CASING | SOLAR_COLLECTOR) => solar::wrench(
+                        host,
+                        level,
+                        event.click.pos,
+                        event.click.hit.face,
+                        event.click.player,
+                    ),
                     _ => {}
                 }
             }
         }
         *event.cancellation_result = InteractionResult::Success;
         Flow::Cancel
+    }
+
+    fn player_destroyed_block(
+        &self,
+        host: &mut dyn ServerHost,
+        event: &mut mod_api::PlayerDestroyedBlockEvent,
+    ) {
+        let block = host.block_state_string(event.state).unwrap_or_default();
+        let Some(level) = host.level(host.dimension()) else {
+            return;
+        };
+        if block.starts_with(SOLAR_CONTROLLER) {
+            solar::unform_broken_controller(host, level, event.pos);
+        } else if block.starts_with(SOLAR_CASING) || block.starts_with(SOLAR_COLLECTOR) {
+            solar::unform_near(host, level, event.pos);
+        }
     }
 
     fn register(&self, registrar: &mut dyn Registrar, _: &RegistrationContext) {
@@ -519,5 +660,25 @@ impl Hooks for Arcforge {
                 as Box<dyn mod_api::ResourceHandler<mod_api::ItemResource>>)
         });
         registrar.menu_part(GEOTHERMAL_MENU, GeothermalPlant);
+
+        let solar_key = registrar.block_key(SOLAR_CONTROLLER);
+        let solar_controller = registrar
+            .block_entity_type("solar_thermal_array_controller")
+            .blocks(&["solar_thermal_array_controller"])
+            .build();
+        registrar
+            .block_entity_part(&solar_controller, SolarThermalArray)
+            .expect("Arcforge's Solar Thermal Array Part should register");
+        registrar.block_container(
+            &solar_key,
+            ModContainer {
+                slots: 0,
+                faces: std::array::from_fn(|_| Vec::new()),
+                inputs: vec![],
+                outputs: vec![],
+                menu: Some(SOLAR_MENU.into()),
+            },
+        );
+        registrar.menu_part(SOLAR_MENU, SolarThermalArray);
     }
 }
