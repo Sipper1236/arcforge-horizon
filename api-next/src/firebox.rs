@@ -1,8 +1,8 @@
 //! Current-API Firebox: solid fuel, stored heat, and bounded adjacent output.
 
 use mod_api::{
-    BlockEntityTickEvent, BlockEntityTickReply, Compound, Host, Identifier, ItemStack, ServerHost,
-    Tag,
+    BlockEntityTickEvent, BlockEntityTickReply, Compound, Host, Identifier, ItemStack,
+    RandomSource, ServerHost, Tag,
 };
 
 const CAPACITY: u64 = 40_000;
