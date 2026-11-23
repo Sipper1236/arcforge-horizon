@@ -6,8 +6,14 @@
 
 use mod_api::{
     Block, BlockEntityPart, BlockEntityTicksEvent, BlockPart, BlockStateProperty, Hooks, Host,
-    Item, Registrar, RegistrationContext,
+    Item, MenuContainer, MenuPart, MenuSlotRulesEvent, ModContainer, ModFluidTanks, Registrar,
+    RegistrationContext,
 };
+
+const CONTROLLER: &str = "arcforge:cracking_unit_controller";
+const CATALYST: &str = "arcforge:cracking_catalyst";
+const SPEED_UPGRADE: &str = "arcforge:speed_upgrade";
+const MACHINE_MENU: &str = "arcforge:machine_2_slot";
 
 #[derive(Default)]
 struct Arcforge;
@@ -24,9 +30,25 @@ impl BlockEntityPart for CrackingUnit {
     }
 }
 
+#[mod_api::horizon_part]
+impl MenuPart for CrackingUnit {
+    fn menu_slot_rules(&self, host: &dyn Host, event: &mut MenuSlotRulesEvent<'_>) {
+        if event.container != MenuContainer::Main {
+            return;
+        }
+
+        let expected_item = match event.slot {
+            0 => SPEED_UPGRADE,
+            1 => CATALYST,
+            _ => return,
+        };
+        event.may_place &= event.stack.item().id(host) == expected_item;
+    }
+}
+
 #[mod_api::horizon_mod]
 impl Hooks for Arcforge {
-    fn blocks(&self, _: &RegistrationContext, blocks: &mut Vec<Block>) {
+    fn blocks(&self, _: &RegistrationContext, event: &mut mod_api::BlocksEvent<'_>) {
         let mut controller = Block::new(
             "arcforge:cracking_unit_controller",
             "minecraft:blast_furnace",
@@ -48,19 +70,16 @@ impl Hooks for Arcforge {
             ("lit".into(), "false".into()),
         ]
         .into();
-        blocks.push(controller);
+        event.blocks.push(controller);
 
         let mut casing = Block::new("arcforge:cracking_unit_casing", "minecraft:iron_block");
         casing.state_properties = [("formed".into(), BlockStateProperty::Boolean)].into();
         casing.default_state = [("formed".into(), "false".into())].into();
-        blocks.push(casing);
+        event.blocks.push(casing);
     }
 
-    fn items(&self, _: &RegistrationContext, items: &mut Vec<Item>) {
-        items.push(Item::new(
-            "arcforge:cracking_catalyst",
-            "minecraft:clay_ball",
-        ));
+    fn items(&self, _: &RegistrationContext, event: &mut mod_api::ItemsEvent<'_>) {
+        event.items.push(Item::new(CATALYST, "minecraft:clay_ball"));
     }
 
     fn register(&self, registrar: &mut dyn Registrar, _: &RegistrationContext) {
@@ -71,5 +90,35 @@ impl Hooks for Arcforge {
         registrar
             .block_entity_part(&cracking_unit, CrackingUnit)
             .expect("Arcforge's Cracking Unit block-entity Part should register");
+
+        let controller = registrar.block_key(CONTROLLER);
+        registrar.block_container(
+            &controller,
+            ModContainer {
+                slots: 2,
+                faces: [
+                    vec![0, 1],
+                    vec![0, 1],
+                    vec![0, 1],
+                    vec![0, 1],
+                    vec![0, 1],
+                    vec![0, 1],
+                ],
+                inputs: vec![0, 1],
+                outputs: vec![],
+                menu: Some(MACHINE_MENU.into()),
+            },
+        );
+        registrar.block_fluids(
+            &controller,
+            ModFluidTanks {
+                tanks: vec![32_000, 16_000, 16_000, 16_000, 16_000, 16_000],
+                faces: std::array::from_fn(|_| vec![0, 1, 2, 3, 4, 5]),
+                inputs: vec![0, 1],
+                outputs: vec![2, 3, 4, 5],
+                ..Default::default()
+            },
+        );
+        registrar.menu_part(MACHINE_MENU, CrackingUnit);
     }
 }
