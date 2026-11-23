@@ -9143,6 +9143,7 @@ mod tests {
     }
 
     struct EnergyPushTestHost {
+        test_world_id: i64,
         random: horizon_client::mod_api::LegacyRandom,
         adjacent_pos: [i32; 3],
         adjacent: ModBlockEntity,
@@ -9151,6 +9152,10 @@ mod tests {
     impl Host for EnergyPushTestHost {
         fn world_dir(&self) -> Option<std::path::PathBuf> {
             None
+        }
+
+        fn world_seed(&self) -> Option<i64> {
+            Some(self.test_world_id)
         }
 
         fn dimension(&self) -> &'static str {
@@ -9712,6 +9717,7 @@ mod tests {
         let source_pos = [0, 64, 0];
         let adjacent_pos = [1, 64, 0];
         let mut host = EnergyPushTestHost {
+            test_world_id: 1,
             random: horizon_client::mod_api::LegacyRandom::new(0),
             adjacent_pos,
             adjacent: ModBlockEntity::from(horizon_client::containers::ModBlockEntityFields {
@@ -9743,6 +9749,7 @@ mod tests {
     #[test]
     fn wrought_conduit_relays_energy_at_machine_rate_and_respects_backpressure() {
         let mut host = EnergyPushTestHost {
+            test_world_id: 2,
             random: horizon_client::mod_api::LegacyRandom::new(0),
             adjacent_pos: [1, 0, 0],
             adjacent: ModBlockEntity::from(horizon_client::containers::ModBlockEntityFields {
@@ -9846,6 +9853,7 @@ mod tests {
     #[test]
     fn source_output_obeys_configured_conduit_face_mode() {
         let mut host = EnergyPushTestHost {
+            test_world_id: 3,
             random: horizon_client::mod_api::LegacyRandom::new(0),
             adjacent_pos: [1, 0, 0],
             adjacent: ModBlockEntity::from(horizon_client::containers::ModBlockEntityFields {
@@ -9873,6 +9881,7 @@ mod tests {
     #[test]
     fn firebox_transfers_burning_source_heat_to_a_thermoelectric_plant() {
         let mut host = EnergyPushTestHost {
+            test_world_id: 4,
             random: horizon_client::mod_api::LegacyRandom::new(0),
             adjacent_pos: [1, 0, 0],
             adjacent: ModBlockEntity::from(horizon_client::containers::ModBlockEntityFields {
@@ -9904,6 +9913,7 @@ mod tests {
     #[test]
     fn fuel_burner_matches_creosote_rate_and_retains_half_millibucket_tick() {
         let mut host = EnergyPushTestHost {
+            test_world_id: 5,
             random: horizon_client::mod_api::LegacyRandom::new(0),
             adjacent_pos: [1, 0, 0],
             adjacent: ModBlockEntity::from(horizon_client::containers::ModBlockEntityFields {
