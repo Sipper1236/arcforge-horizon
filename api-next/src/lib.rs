@@ -48,7 +48,10 @@ impl MenuPart for CrackingUnit {
         }
 
         let expected_item = match event.slot {
-            0 => SPEED_UPGRADE,
+            0 => {
+                event.max_stack = 8;
+                SPEED_UPGRADE
+            }
             1 => CATALYST,
             _ => return,
         };
