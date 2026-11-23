@@ -143,6 +143,7 @@ pub(crate) fn tick(host: &mut dyn ServerHost, event: &mut BlockEntityTickEvent<'
         HEAT_UPGRADE,
     );
     let speed = speed_upgrade_multiplier(speed_upgrades);
+    let level = host.level(host.dimension());
 
     if burn == 0 && heat.stored_hu() < CAPACITY {
         let fuel = event.entity.items[0].as_ref().and_then(|stack| {
@@ -188,7 +189,7 @@ pub(crate) fn tick(host: &mut dyn ServerHost, event: &mut BlockEntityTickEvent<'
     });
 
     if produced > 0 {
-        if has_port_mode(&event.entity.nbt, PortMode::FlueGas) {
+        if has_port_mode(host, level, event.pos, &event.entity.nbt, PortMode::FlueGas) {
             changed |= add_flue_gas(&mut event.entity.nbt, produced);
         } else {
             changed |= set_i32(&mut event.entity.nbt, "FlueMilli", 0);
@@ -213,7 +214,6 @@ pub(crate) fn tick(host: &mut dyn ServerHost, event: &mut BlockEntityTickEvent<'
     let lit = burn > 0;
     changed |= host.set_block_property(event.pos, "lit", if lit { "true" } else { "false" });
 
-    let level = host.level(host.dimension());
     if let Some(level) = level {
         changed |= transfer_flue_gas(host, level, event.pos, &mut event.entity.nbt);
         transfer_heat(host, level, event.pos, &event.entity.nbt, &mut heat);
@@ -243,12 +243,12 @@ pub(crate) fn tick(host: &mut dyn ServerHost, event: &mut BlockEntityTickEvent<'
         fluid_amount(&event.entity.nbt, FLUE_TANK).min(i16::MAX as u32) as i32,
         fluid_amount(&event.entity.nbt, OXYGEN_TANK).min(i16::MAX as u32) as i32,
         if oxygen_active { 1 } else { 0 },
-        port_mode_value(&event.entity.nbt, 0),
-        port_mode_value(&event.entity.nbt, 1),
-        port_mode_value(&event.entity.nbt, 2),
-        port_mode_value(&event.entity.nbt, 3),
-        port_mode_value(&event.entity.nbt, 4),
-        port_mode_value(&event.entity.nbt, 5),
+        port_mode_value(host, level, event.pos, &event.entity.nbt, 0),
+        port_mode_value(host, level, event.pos, &event.entity.nbt, 1),
+        port_mode_value(host, level, event.pos, &event.entity.nbt, 2),
+        port_mode_value(host, level, event.pos, &event.entity.nbt, 3),
+        port_mode_value(host, level, event.pos, &event.entity.nbt, 4),
+        port_mode_value(host, level, event.pos, &event.entity.nbt, 5),
     ];
     if event.entity.data.as_slice() != data.as_slice() {
         event.entity.data = data.into();
@@ -272,7 +272,7 @@ fn transfer_heat(
         if heat.temperature_c() <= 20 || output_left == 0 {
             break;
         }
-        if port_mode(nbt, index) != PortMode::Heat {
+        if port_mode(host, Some(level), pos, nbt, index) != PortMode::Heat {
             continue;
         }
         let neighbor = [
@@ -304,7 +304,7 @@ fn transfer_flue_gas(
         if budget == 0 || fluid_amount(nbt, FLUE_TANK) == 0 {
             break;
         }
-        if port_mode(nbt, index) != PortMode::FlueGas {
+        if port_mode(host, Some(level), pos, nbt, index) != PortMode::FlueGas {
             continue;
         }
         let direction = direction_at(index);
@@ -631,7 +631,7 @@ pub(crate) fn wrench(
     let Some(nbt) = entity.data(&*host) else {
         return;
     };
-    let current = port_mode(&nbt, index);
+    let current = port_mode(host, Some(level), pos, &nbt, index);
     let next = PortMode::from_value((current as i32 + 1) % 6);
     let mut updates = Compound::new();
     set_i32(&mut updates, PORT_KEYS[index], next as i32);
@@ -648,26 +648,60 @@ pub(crate) fn wrench(
     }
 }
 
-fn port_mode(nbt: &Compound, index: usize) -> PortMode {
+fn port_mode(
+    host: &dyn Host,
+    level: Option<mod_api::LevelRef>,
+    pos: [i32; 3],
+    nbt: &Compound,
+    index: usize,
+) -> PortMode {
     let Some(key) = PORT_KEYS.get(index) else {
         return PortMode::None;
     };
     if let Some(value) = get_i32_option(nbt, key) {
         return PortMode::from_value(value);
     }
-    match index {
-        0 => PortMode::Input,
-        3 => PortMode::Heat,
-        _ => PortMode::None,
+    if index == 0 {
+        return PortMode::Input;
+    }
+    let default_heat_face = level
+        .and_then(|level| {
+            let state = level.block_state(host, pos)?;
+            let metadata = host.block_states();
+            match state.property(&metadata, "facing").ok().flatten()? {
+                "north" => Some(3),
+                "south" => Some(2),
+                "east" => Some(4),
+                "west" => Some(5),
+                _ => None,
+            }
+        })
+        .unwrap_or(3);
+    if index == default_heat_face {
+        PortMode::Heat
+    } else {
+        PortMode::None
     }
 }
 
-fn port_mode_value(nbt: &Compound, index: usize) -> i32 {
-    port_mode(nbt, index) as i32
+fn port_mode_value(
+    host: &dyn Host,
+    level: Option<mod_api::LevelRef>,
+    pos: [i32; 3],
+    nbt: &Compound,
+    index: usize,
+) -> i32 {
+    port_mode(host, level, pos, nbt, index) as i32
 }
 
-fn has_port_mode(nbt: &Compound, mode: PortMode) -> bool {
-    (0..PORT_KEYS.len()).any(|index| port_mode(nbt, index) == mode)
+fn has_port_mode(
+    host: &dyn Host,
+    level: Option<mod_api::LevelRef>,
+    pos: [i32; 3],
+    nbt: &Compound,
+    mode: PortMode,
+) -> bool {
+    (0..PORT_KEYS.len()).any(|index| port_mode(host, level, pos, nbt, index) == mode)
 }
 
 fn direction_index(direction: Option<Direction>) -> Option<usize> {
@@ -700,7 +734,7 @@ impl FireboxItems {
         let index = direction_index(self.0.side)?;
         let entity = host.block_entity(self.0.level, self.0.pos)?;
         let nbt = entity.data(&*host)?;
-        Some(port_mode(&nbt, index))
+        Some(port_mode(host, Some(self.0.level), self.0.pos, &nbt, index))
     }
 
     fn route(&self, host: &mut dyn ServerHost, index: usize) -> Option<(usize, PortMode)> {
@@ -825,7 +859,7 @@ impl FireboxFluids {
         let mode = if let Some(side) = direction_index(self.0.side) {
             let entity = host.block_entity(self.0.level, self.0.pos)?;
             let nbt = entity.data(&*host)?;
-            port_mode(&nbt, side)
+            port_mode(host, Some(self.0.level), self.0.pos, &nbt, side)
         } else {
             PortMode::Oxygen
         };
