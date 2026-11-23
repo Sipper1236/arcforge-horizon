@@ -278,7 +278,7 @@ The implementation phases are ordered by dependency. The alpha's player unlock o
 
 ## Build the current prototype
 
-Build and compile Arcforge only through GitHub Actions. A push to `main` starts the public workflow, which checks Rust and content, packages the mod, and builds an importable Linux client against the pinned Horizon Nightly 2026-11-13 (`9f42064c11efe7ef3e5ed2baad7ddc2a3b36eea0`). Download artifacts from the Actions run; the latest verified playable client is run [43780024722](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43780024722).
+Build and compile Arcforge only through GitHub Actions. A push to `main` starts the public workflow, which checks Rust and content, packages the mod, and builds an importable Linux client against the pinned Horizon Nightly 2026-11-22 (`2b77287de099c9316278ba7ac4d83590fdb7ef30`). Download artifacts from the Actions run; the latest verified playable client is run [43780024722](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43780024722).
 
 ## Latest verification
 GitHub Actions run [43783919669](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43783919669) passed Rust formatting and crate checks, Horizon content build/check, HMOD/HNMOD packaging, and Linux client packaging for the Arcforge 3×5 Pumpjack structure. The client ZIP is stored remotely under /mnt/hdd2tb/arcforge-horizon-builds/arcforge-github-43783919669/; the build record and SHA-256 are in docs/status/verification.md. In-game structure formation and extraction are not yet verified.
