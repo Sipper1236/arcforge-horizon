@@ -2,8 +2,8 @@
 
 use mod_api::{
     BlockEntityTickEvent, BlockEntityTickReply, BlockSide, Compound, Direction, FluidResource,
-    FluidStack, Host, HostBlockStates, HostTransaction, Identifier, ItemResource, ItemStack,
-    ResourceHandler, ServerHost, Tag, Text, Transaction,
+    Host, HostBlockStates, Identifier, ItemResource, ItemStack, ResourceHandler, ServerHost, Tag,
+    Text, Transaction,
 };
 
 const PLANT: &str = "arcforge:geothermal_plant";
@@ -14,7 +14,7 @@ const SPEED_UPGRADE: &str = "arcforge:speed_upgrade";
 const HEAT_UPGRADE: &str = "arcforge:heat_upgrade";
 const CAPACITY: u64 = 60_000;
 const MAX_TEMPERATURE_C: u32 = 1_400;
-const LAVA_TANK_CAPACITY: u32 = 8_000;
+pub(crate) const LAVA_TANK_CAPACITY: u32 = 8_000;
 const LAVA_HEAT_HU_PER_MB: u32 = 80;
 const LAVA_PER_BURN: u32 = 100;
 const LAVA_SOURCE_HEAT_HU_PER_TICK: u32 = 40;
@@ -304,7 +304,9 @@ pub(crate) fn tick(host: &mut dyn ServerHost, event: &mut BlockEntityTickEvent<'
     if changed {
         event.entity.items.resize(4, None);
     }
-    changed |= tick_lava_bucket(host, &mut event.entity.nbt, &mut event.entity.items);
+    let mut items = std::mem::take(&mut event.entity.items);
+    changed |= tick_lava_bucket(host, &mut event.entity.nbt, &mut items);
+    event.entity.items = items;
 
     let Some(level) = host.level(host.dimension()) else {
         if changed {
@@ -511,7 +513,8 @@ fn geothermal_surroundings(host: &dyn Host, level: mod_api::LevelRef, pos: [i32;
         let Some(block) = level.block(host, neighbor) else {
             continue;
         };
-        match block.id(host) {
+        let id = block.id(host);
+        match id.as_str() {
             "minecraft:lava" => {
                 let Some(state) = level.block_state(host, neighbor) else {
                     continue;
