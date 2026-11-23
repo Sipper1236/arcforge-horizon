@@ -1,5 +1,5 @@
 # Arcforge Horizon project docs
-**Current Horizon client pin:** Nightly 2026-11-13, revision `9f42064c11efe7ef3e5ed2baad7ddc2a3b36eea0` (GitHub build [43738891125](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43738891125)). Older revision references in historical verification notes remain historical.
+**Current Horizon API pin:** Nightly 2026-11-13, revision `9f42064c11efe7ef3e5ed2baad7ddc2a3b36eea0` (the upstream release is no longer published). Current Nightly 2026-11-22 removed `horizon_client::mod_api`; see [handoff](handoff.md) before changing the pin. Older revision references in historical verification notes remain historical.
 
 This directory separates the plan from the as-built record. The root [README](../README.md) remains the main feature inventory and project overview. Start with the active [goal](goal.md) and [handoff](handoff.md) for the completion criteria and current project snapshot.
 

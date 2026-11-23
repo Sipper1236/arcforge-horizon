@@ -278,8 +278,8 @@ The implementation phases are ordered by dependency. The alpha's player unlock o
 
 ## Build the current prototype
 
-Build and compile Arcforge only through GitHub Actions. A push to `main` starts the public workflow, which checks Rust and content, packages the mod, and builds an importable Linux client against the pinned Horizon Nightly 2026-11-13 (`9f42064c11efe7ef3e5ed2baad7ddc2a3b36eea0`). Download artifacts from the Actions run; the latest verified playable client is run [43780024722](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43780024722).
+Build and compile Arcforge only through GitHub Actions. The workflow checks Rust and content and packages the mod against Horizon revision `9f42064c11efe7ef3e5ed2baad7ddc2a3b36eea0`. Its matching Nightly release is no longer published, so the workflow skips the Linux client job until a compatible runtime or API migration is available.
 
 ## Latest verification
-GitHub Actions run [43783919669](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43783919669) passed Rust formatting and crate checks, Horizon content build/check, HMOD/HNMOD packaging, and Linux client packaging for the Arcforge 3×5 Pumpjack structure. The client ZIP is stored remotely under /mnt/hdd2tb/arcforge-horizon-builds/arcforge-github-43783919669/; the build record and SHA-256 are in docs/status/verification.md. In-game structure formation and extraction are not yet verified.
+GitHub Actions run [45091963492](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45091963492) passed formatting, native crate check and all 98 tests, content build/check, and HMOD/HNMOD packaging for the Cracking Unit branch. The package ZIP is `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-github-45091963492/arcforge-horizon-bundle.zip` (SHA-256 `319e5db281ff72cd67cadedb48d27f3475f5e55e72491bc24f89bfb2e6a192bb`). The Linux client job was skipped because the pinned Horizon Nightly is no longer published. In-game behavior remains unverified.
 The active Horizon pin is recorded above;
