@@ -1,7 +1,8 @@
 //! Current-API Thermoelectric Plant: converts stored HU to FE and routes both resources by face.
 
 use mod_api::{
-    BlockEntityTickEvent, BlockEntityTickReply, Compound, Direction, Host, ServerHost, Tag, Text,
+    BlockEntityTickEvent, BlockEntityTickReply, Compound, Direction, Host, HostBlockStates,
+    HostTransaction, ServerHost, Tag, Text,
 };
 
 const PLANT: &str = "arcforge:thermoelectric_plant";
