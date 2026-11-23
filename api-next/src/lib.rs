@@ -71,6 +71,9 @@ struct ThermoelectricPlant;
 impl BlockPart for HeatCell {}
 
 #[mod_api::horizon_part]
+impl MenuPart for HeatCell {}
+
+#[mod_api::horizon_part]
 impl BlockPart for Firebox {}
 
 #[mod_api::horizon_part]
