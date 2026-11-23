@@ -1,7 +1,7 @@
 //! Current-Horizon structure detection for the Cracking Unit.
 use mod_api::{
     BlockEntityTickEvent, BlockEntityTickReply, BlockKey, Compound, Host, HostBlockStates,
-    LevelRef, ServerHost, Tag,
+    LevelRef, ServerHost, Tag, Text,
 };
 
 const WIDTH: i32 = 3;
@@ -108,6 +108,56 @@ fn set_string(nbt: &mut Compound, name: &str, value: &str) -> bool {
     };
     nbt.insert(key, Tag::String(value.into()));
     true
+}
+
+pub(crate) fn wrench(
+    host: &mut dyn ServerHost,
+    level: LevelRef,
+    pos: [i32; 3],
+    face: [i32; 3],
+    player_uuid: u128,
+) {
+    let Some(entity) = host.block_entity(level, pos) else {
+        return;
+    };
+    let Some(nbt) = entity.data(&*host) else {
+        return;
+    };
+
+    let mut updates = Compound::new();
+    let mode = if get_string(&nbt, "CrackingMode").as_deref() == Some("hydrocracking") {
+        "hydrocracking"
+    } else {
+        "catalytic"
+    };
+    let message = if face == [0, 1, 0] {
+        let next_mode = if mode == "catalytic" {
+            "hydrocracking"
+        } else {
+            "catalytic"
+        };
+        set_string(&mut updates, "CrackingMode", next_mode);
+        set_i32(&mut updates, "CrackingProgress", 0);
+        format!("Cracking Unit mode: {next_mode}")
+    } else if let Some(facing) = match face {
+        [0, 0, -1] => Some("north"),
+        [1, 0, 0] => Some("east"),
+        [0, 0, 1] => Some("south"),
+        [-1, 0, 0] => Some("west"),
+        _ => None,
+    } {
+        host.set_block_property(pos, "facing", facing);
+        set_i32(&mut updates, "CrackingScan", 0);
+        set_i32(&mut updates, "CrackingProgress", 0);
+        format!("Cracking Unit facing: {facing}")
+    } else {
+        format!("Cracking Unit mode: {mode}")
+    };
+
+    let _ = entity.merge_data(host, updates);
+    if let Some(player) = host.player(player_uuid) {
+        let _ = host.player_action_bar(player, Text::literal(message));
+    }
 }
 
 fn set_property(

@@ -6,8 +6,9 @@
 
 use mod_api::{
     Block, BlockEntityPart, BlockEntityTickEvent, BlockEntityTicksEvent, BlockKey, BlockPart,
-    BlockStateProperty, Hooks, Host, Item, MenuContainer, MenuPart, MenuSlotRulesEvent,
-    ModContainer, ModFluidTanks, Registrar, RegistrationContext, ServerHost,
+    BlockStateProperty, Flow, Hooks, Host, HostSide, InteractionResult, Item, MenuContainer,
+    MenuPart, MenuSlotRulesEvent, ModContainer, ModFluidTanks, Registrar, RegistrationContext,
+    ServerHost,
 };
 
 mod cracking_unit;
@@ -16,6 +17,7 @@ const CONTROLLER: &str = "arcforge:cracking_unit_controller";
 const CASING: &str = "arcforge:cracking_unit_casing";
 const CATALYST: &str = "arcforge:cracking_catalyst";
 const SPEED_UPGRADE: &str = "arcforge:speed_upgrade";
+const WRENCH: &str = "arcforge:wrench";
 const MACHINE_MENU: &str = "arcforge:machine_2_slot";
 
 #[derive(Default)]
@@ -93,6 +95,47 @@ impl Hooks for Arcforge {
 
     fn items(&self, _: &RegistrationContext, event: &mut mod_api::ItemsEvent<'_>) {
         event.items.push(Item::new(CATALYST, "minecraft:clay_ball"));
+        let mut wrench = Item::new(WRENCH, "minecraft:iron_pickaxe");
+        wrench.max_stack_size = Some(1);
+        event.items.push(wrench);
+    }
+
+    fn right_click_block(
+        &self,
+        host: HostSide<'_>,
+        event: &mut mod_api::RightClickBlockEvent<'_>,
+    ) -> Flow {
+        let is_wrench_on_controller = {
+            let host: &dyn Host = match &host {
+                HostSide::Server(host) => &**host,
+                HostSide::Client(host) => &**host,
+            };
+            let held_wrench = event
+                .click
+                .stack
+                .is_some_and(|stack| stack.item().id(host) == WRENCH);
+            held_wrench
+                && host
+                    .level(event.click.dimension)
+                    .and_then(|level| level.block(host, event.click.pos))
+                    .is_some_and(|block| block.id(host) == CONTROLLER)
+        };
+
+        if !is_wrench_on_controller {
+            return Flow::Continue;
+        }
+
+        if let HostSide::Server(host) = host {
+            cracking_unit::wrench(
+                host,
+                event.click.dimension,
+                event.click.pos,
+                event.click.hit.face,
+                event.click.player,
+            );
+        }
+        *event.cancellation_result = InteractionResult::Success;
+        Flow::Cancel
     }
 
     fn register(&self, registrar: &mut dyn Registrar, _: &RegistrationContext) {
