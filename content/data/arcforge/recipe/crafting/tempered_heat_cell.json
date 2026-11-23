@@ -1,18 +1,7 @@
 {
-  "type": "minecraft:crafting_shaped",
+  "type": "minecraft:crafting_transmute",
   "category": "misc",
-  "pattern": [
-    "wTw",
-    "TXT",
-    "wTw"
-  ],
-  "key": {
-    "T": "arcforge:tempered_alloy",
-    "X": "arcforge:wrought_heat_cell",
-    "w": "arcforge:slag_wool"
-  },
-  "result": {
-    "id": "arcforge:tempered_heat_cell",
-    "count": 1
-  }
+  "input": "arcforge:wrought_heat_cell",
+  "material": "arcforge:tempered_heat_cell_upgrade_kit",
+  "result": "arcforge:tempered_heat_cell"
 }

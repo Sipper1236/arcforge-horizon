@@ -4,11 +4,19 @@ use mod_api::{
     BlockEntityTickEvent, BlockEntityTickReply, Component, Compound, Host, HostTransaction,
     ItemStack, ServerHost, Tag, Text,
 };
+use std::{
+    collections::HashMap,
+    sync::{LazyLock, Mutex},
+    time::Instant,
+};
 
 const WROUGHT: &str = "arcforge:wrought_heat_cell";
 const TEMPERED: &str = "arcforge:tempered_heat_cell";
 const HARDENED: &str = "arcforge:hardened_heat_cell";
 const ARCFORGED: &str = "arcforge:arcforged_heat_cell";
+const TEMPERED_UPGRADE_KIT: &str = "arcforge:tempered_heat_cell_upgrade_kit";
+const HARDENED_UPGRADE_KIT: &str = "arcforge:hardened_heat_cell_upgrade_kit";
+const ARCFORGED_UPGRADE_KIT: &str = "arcforge:arcforged_heat_cell_upgrade_kit";
 const WROUGHT_CAPSULE: &str = "arcforge:wrought_thermal_capsule";
 const TEMPERED_CAPSULE: &str = "arcforge:tempered_thermal_capsule";
 const HARDENED_CAPSULE: &str = "arcforge:hardened_thermal_capsule";
@@ -31,6 +39,12 @@ const MAX_INSULATION: u32 = 8;
 const INPUT_TICK_KEY: &str = "HeatCellInputTick";
 const INPUT_USED_KEY: &str = "HeatCellInputUsed";
 const CAPSULE_LEAK_REMAINDER_KEY: &str = "horizon_heat_leak_remainder";
+const EXPLOSION_CHARGE_LIFETIME_SECS: u64 = 10;
+
+type ExplosionChargeKey = (String, [i32; 3]);
+
+static EXPLOSION_CHARGES: LazyLock<Mutex<HashMap<ExplosionChargeKey, (u64, Instant)>>> =
+    LazyLock::new(|| Mutex::new(HashMap::new()));
 
 const DIRECTIONS: [[i32; 3]; 6] = [
     [0, 1, 0],
@@ -221,6 +235,14 @@ pub(crate) fn ids() -> [&'static str; 4] {
     [WROUGHT, TEMPERED, HARDENED, ARCFORGED]
 }
 
+pub(crate) fn upgrade_kit_ids() -> [&'static str; 3] {
+    [
+        TEMPERED_UPGRADE_KIT,
+        HARDENED_UPGRADE_KIT,
+        ARCFORGED_UPGRADE_KIT,
+    ]
+}
+
 pub(crate) fn capsule_ids() -> [&'static str; 4] {
     [
         WROUGHT_CAPSULE,
@@ -284,6 +306,118 @@ fn set_item_heat(stack: &mut ItemStack, amount: u64) -> bool {
         data.insert(key, Tag::Int(amount.min(i32::MAX as u64) as i32));
     }
     stack.set(&HEAT_ITEM_DATA, data).is_ok()
+}
+
+pub(crate) fn block_drops(
+    host: &mut dyn ServerHost,
+    event: &mut mod_api::BlockDropsEvent<'_>,
+) {
+    let state = host.block_state_string(event.state).unwrap_or_default();
+    let Some(id) = ids().into_iter().find(|id| state.starts_with(id)) else {
+        return;
+    };
+    let Some(spec) = spec(id) else {
+        return;
+    };
+
+    let dimension = host.dimension().to_owned();
+    let stored = event
+        .block_entity
+        .and_then(|entity| entity.data(host))
+        .map(|data| get_i32(&data, "HeatHU").max(0) as u64)
+        .or_else(|| take_explosion_charge(&dimension, event.pos))
+        .unwrap_or_default()
+        .min(spec.capacity);
+    if stored == 0 {
+        return;
+    }
+
+    if let Some(drop) = event
+        .drops
+        .iter_mut()
+        .find(|drop| drop.stack.item().id(host) == id)
+    {
+        let _ = set_item_heat(&mut drop.stack, stored);
+    }
+}
+
+pub(crate) fn cache_explosion_charge(
+    host: &dyn Host,
+    pos: [i32; 3],
+    id: &str,
+    nbt: &Compound,
+) {
+    let Some(spec) = spec(id) else {
+        return;
+    };
+    let key = (host.dimension().to_owned(), pos);
+    let stored = get_i32(nbt, "HeatHU").max(0) as u64;
+    let mut pending = EXPLOSION_CHARGES
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    pending
+        .retain(|_, (_, created)| created.elapsed().as_secs() < EXPLOSION_CHARGE_LIFETIME_SECS);
+    if stored == 0 {
+        pending.remove(&key);
+    } else {
+        pending.insert(key, (stored.min(spec.capacity), Instant::now()));
+    }
+}
+
+fn take_explosion_charge(dimension: &str, pos: [i32; 3]) -> Option<u64> {
+    let mut pending = EXPLOSION_CHARGES
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    let (stored, created) = pending.remove(&(dimension.to_owned(), pos))?;
+    (created.elapsed().as_secs() < EXPLOSION_CHARGE_LIFETIME_SECS).then_some(stored)
+}
+
+pub(crate) fn restore_from_item(
+    host: &mut dyn ServerHost,
+    pos: [i32; 3],
+    stack: &ItemStack,
+    id: &str,
+) {
+    let Some(spec) = spec(id) else {
+        return;
+    };
+    let stored = item_heat(stack, spec);
+    if stored == 0 {
+        return;
+    }
+    let Some(level) = host.level(host.dimension()) else {
+        return;
+    };
+    if level
+        .block(host, pos)
+        .is_none_or(|block| block.id(host) != id)
+    {
+        return;
+    }
+    let Some(entity) = host.block_entity(level, pos) else {
+        return;
+    };
+    let heat = HeatStore::new(spec.capacity, spec.max_temperature, stored);
+    let mut updates = Compound::new();
+    set_i32(
+        &mut updates,
+        "HeatHU",
+        heat.stored_hu().min(i32::MAX as u64) as i32,
+    );
+    set_i32(
+        &mut updates,
+        "TemperatureC",
+        heat.temperature_c().min(i32::MAX as u32) as i32,
+    );
+    let _ = entity.merge_data(host, updates);
+    let heat_state = match heat.temperature_c() {
+        1_000.. => "4",
+        850.. => "3",
+        650.. => "2",
+        300.. => "1",
+        _ => "0",
+    };
+    host.set_block_property(pos, "heat", heat_state);
 }
 
 fn item_leak_remainder(stack: &ItemStack) -> f64 {

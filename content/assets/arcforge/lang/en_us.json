@@ -76,5 +76,8 @@
   "item.arcforge.petroleum_coke": "Petroleum Coke",
   "block.arcforge.cracking_unit_controller": "Cracking Unit Controller",
   "block.arcforge.cracking_unit_casing": "Cracking Unit Casing",
-  "item.arcforge.cracking_catalyst": "Cracking Catalyst"
+  "item.arcforge.cracking_catalyst": "Cracking Catalyst",
+  "item.arcforge.tempered_heat_cell_upgrade_kit": "Tempered Heat Cell Upgrade Kit",
+  "item.arcforge.hardened_heat_cell_upgrade_kit": "Hardened Heat Cell Upgrade Kit",
+  "item.arcforge.arcforged_heat_cell_upgrade_kit": "Arcforged Heat Cell Upgrade Kit"
 }

@@ -8,7 +8,7 @@ use mod_api::{
     Block, BlockEntityPart, BlockEntityTickEvent, BlockEntityTicksEvent, BlockKey, BlockPart,
     BlockStateProperty, Flow, Hooks, Host, HostSide, InteractionResult, Item, ItemPart,
     MenuContainer, MenuPart, MenuSlotRulesEvent, ModContainer, ModEnergyBuffer, ModFluidTanks,
-    Registrar, RegistrationContext, ServerHost,
+    Registrar, RegistrationContext, ServerHost, Tag,
 };
 use std::collections::BTreeMap;
 
@@ -70,7 +70,20 @@ struct ThermoelectricPlant;
 struct ThermalCapsule;
 
 #[mod_api::horizon_part]
-impl BlockPart for HeatCell {}
+impl BlockPart for HeatCell {
+    fn on_block_exploded(
+        &self,
+        host: &mut dyn ServerHost,
+        event: &mut mod_api::OnBlockExplodedEvent<'_>,
+    ) {
+        if let Some(level) = host.level(host.dimension())
+            && let Some(entity) = host.block_entity(level, event.pos)
+            && let Some(nbt) = entity.data(host)
+        {
+            heat_cell::cache_explosion_charge(host, event.pos, self.id, &nbt);
+        }
+    }
+}
 
 #[mod_api::horizon_part]
 impl MenuPart for HeatCell {
@@ -113,6 +126,17 @@ impl ItemPart for ThermalCapsule {
         event: &mut mod_api::InventoryTickEvent<'_>,
     ) {
         heat_cell::inventory_tick_capsule(host, event);
+    }
+}
+
+#[mod_api::horizon_part]
+impl ItemPart for HeatCell {
+    fn on_block_placed_by(
+        &self,
+        host: &mut dyn ServerHost,
+        event: &mut mod_api::OnBlockPlacedByEvent<'_>,
+    ) {
+        heat_cell::restore_from_item(host, event.pos, event.stack, self.id);
     }
 }
 
@@ -690,6 +714,10 @@ impl Hooks for Arcforge {
 
         for id in heat_cell::ids() {
             let mut cell = Block::new(id, "minecraft:iron_block");
+            cell.components = vec![(
+                "minecraft:max_stack_size".into(),
+                Some(Tag::Int(1)),
+            )];
             cell.state_properties = [(
                 "heat".into(),
                 BlockStateProperty::Enum {
@@ -709,6 +737,11 @@ impl Hooks for Arcforge {
         event.items.push(Item::new(CATALYST, "minecraft:clay_ball"));
         event.items.push(Item::new(BIO_COAL, "minecraft:coal"));
         event.items.push(Item::new(WOOD_ASH, "minecraft:bone_meal"));
+        for id in heat_cell::upgrade_kit_ids() {
+            let mut kit = Item::new(id, "minecraft:iron_ingot");
+            kit.max_stack_size = Some(64);
+            event.items.push(kit);
+        }
         for id in heat_cell::capsule_ids() {
             let mut capsule = Item::new(id, "minecraft:fire_charge");
             capsule.max_stack_size = Some(1);
@@ -847,6 +880,10 @@ impl Hooks for Arcforge {
         }
     }
 
+    fn block_drops(&self, host: &mut dyn ServerHost, event: &mut mod_api::BlockDropsEvent<'_>) {
+        heat_cell::block_drops(host, event);
+    }
+
     fn register(&self, registrar: &mut dyn Registrar, _: &RegistrationContext) {
         registrar.register_recipe_type("arcforge:cracking");
         registrar.register_raw_recipe_serializer("arcforge:cracking", "arcforge:cracking");
@@ -869,6 +906,8 @@ impl Hooks for Arcforge {
         for id in heat_cell::ids() {
             let block_path = id.strip_prefix("arcforge:").unwrap_or(id);
             let heat_cell_key = registrar.block_key(id);
+            let heat_cell_item_key = registrar.item_key(id);
+            registrar.item_part(heat_cell_item_key, HeatCell { id });
             let heat_cell = registrar
                 .block_entity_type(block_path)
                 .blocks(&[block_path])
