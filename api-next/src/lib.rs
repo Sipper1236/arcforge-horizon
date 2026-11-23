@@ -262,7 +262,7 @@ impl Hooks for Arcforge {
         host: HostSide<'_>,
         event: &mut mod_api::RightClickBlockEvent<'_>,
     ) -> Flow {
-        let is_wrench_on_controller = {
+        let wrench_target = {
             let host: &dyn Host = match &host {
                 HostSide::Server(host) => &**host,
                 HostSide::Client(host) => &**host,
@@ -271,26 +271,41 @@ impl Hooks for Arcforge {
                 .click
                 .stack
                 .is_some_and(|stack| stack.item().id(host) == WRENCH);
-            held_wrench
-                && host
-                    .level(event.click.dimension.key().id())
+            if held_wrench {
+                host.level(event.click.dimension.key().id())
                     .and_then(|level| level.block(host, event.click.pos))
-                    .is_some_and(|block| block.id(host) == CONTROLLER)
+                    .map(|block| block.id(host).to_owned())
+            } else {
+                None
+            }
         };
 
-        if !is_wrench_on_controller {
+        if !wrench_target
+            .as_deref()
+            .is_some_and(|id| id == CONTROLLER || id == FIREBOX)
+        {
             return Flow::Continue;
         }
 
         if let HostSide::Server(host) = host {
             if let Some(level) = host.level(event.click.dimension.key().id()) {
-                cracking_unit::wrench(
-                    host,
-                    level,
-                    event.click.pos,
-                    event.click.hit.face,
-                    event.click.player,
-                );
+                match wrench_target.as_deref() {
+                    Some(CONTROLLER) => cracking_unit::wrench(
+                        host,
+                        level,
+                        event.click.pos,
+                        event.click.hit.face,
+                        event.click.player,
+                    ),
+                    Some(FIREBOX) => firebox::wrench(
+                        host,
+                        level,
+                        event.click.pos,
+                        event.click.hit.face,
+                        event.click.player,
+                    ),
+                    _ => {}
+                }
             }
         }
         *event.cancellation_result = InteractionResult::Success;
@@ -374,10 +389,15 @@ impl Hooks for Arcforge {
             },
         );
         let mut firebox_fluids = ModFluidTanks::default();
-        firebox_fluids.tanks = vec![16_000];
-        firebox_fluids.faces = std::array::from_fn(|_| vec![0]);
+        firebox_fluids.tanks = vec![firebox::FLUE_TANK_CAPACITY, firebox::OXYGEN_TANK_CAPACITY];
+        firebox_fluids.faces = std::array::from_fn(|_| vec![0, 1]);
+        firebox_fluids.inputs = vec![1];
         firebox_fluids.outputs = vec![0];
         registrar.block_fluids(&firebox_key, firebox_fluids);
+        registrar.block_entity_capability_before_game(&mod_api::FLUIDS, &firebox, |_, at| {
+            Some(Box::new(firebox::FireboxFluids::new(at))
+                as Box<dyn mod_api::ResourceHandler<mod_api::FluidResource>>)
+        });
         registrar.menu_part(FIREBOX_MENU, Firebox);
     }
 }
