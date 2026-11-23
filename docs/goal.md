@@ -2,7 +2,7 @@
 
 ## Objective
 
-Port the complete survival gameplay scope of the pinned Arcforge release to Horizon as a Rust-native mod, using the pinned Horizon modding API without changing it. The parity target is Arcforge commit `8843cb02cf9132f278f6a8e804b6d78837d3cbcb`; the Horizon target is the released nightly `nightly-2026-11-22`, commit `2b77287de099c9316278ba7ac4d83590fdb7ef30`.
+Port the complete survival gameplay scope of the pinned Arcforge release to Horizon as a Rust-native mod, using the pinned Horizon modding API without changing it. The parity target is Arcforge commit `8843cb02cf9132f278f6a8e804b6d78837d3cbcb`; the Horizon target is the latest released nightly, commit `9f42064c11efe7ef3e5ed2baad7ddc2a3b36eea0` (Nightly 2026-11-13).
 
 The current code is an early prototype, not a complete port. Continue implementing real gameplay from the scope in the root [README](../README.md), preserve Arcforge's recognizable mechanics and progression, and update the as-built and remaining-work documents whenever implementation changes.
 
