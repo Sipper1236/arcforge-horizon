@@ -1,7 +1,8 @@
 //! Current-API Firebox: solid fuel, stored heat, and bounded adjacent output.
 
 use mod_api::{
-    BlockEntityTickEvent, BlockEntityTickReply, Compound, Host, ItemStack, ServerHost, Tag,
+    BlockEntityTickEvent, BlockEntityTickReply, Compound, Host, Identifier, ItemStack, ServerHost,
+    Tag,
 };
 
 const CAPACITY: u64 = 40_000;
@@ -52,9 +53,10 @@ pub(crate) fn tick(host: &mut dyn ServerHost, event: &mut BlockEntityTickEvent<'
     let mut burn = get_i32(&event.entity.nbt, "BurnTime").max(0) as u32;
 
     if burn == 0 && heat.stored_hu() < CAPACITY {
-        let fuel = event.entity.items[0]
-            .as_ref()
-            .and_then(|stack| fuel_ticks(&stack.item).map(|ticks| (stack.item.to_string(), ticks)));
+        let fuel = event.entity.items[0].as_ref().and_then(|stack| {
+            let item = stack.item().id(host);
+            fuel_ticks(&item).map(|ticks| (item, ticks))
+        });
         if let Some((fuel_item, ticks)) = fuel
             && consume_one(&mut event.entity.items[0])
         {
@@ -151,30 +153,33 @@ fn try_leave_wood_ash(host: &mut dyn ServerHost, item: &str, slot: &mut Option<I
         return false;
     }
     let dimension = host.dimension();
-    if host
-        .level_random(dimension)
-        .is_some_and(|random| random.next_float() < 0.5)
+    let Some(level) = host.level(dimension) else {
+        return false;
+    };
+    if level
+        .with_random(host, |random| random.next_float() < 0.5)
+        .unwrap_or(false)
     {
-        insert_wood_ash(slot)
+        insert_wood_ash(host, slot)
     } else {
         false
     }
 }
 
-fn insert_wood_ash(slot: &mut Option<ItemStack>) -> bool {
+fn insert_wood_ash(host: &dyn Host, slot: &mut Option<ItemStack>) -> bool {
     match slot {
-        Some(stack) if stack.item.as_ref() == WOOD_ASH && stack.count < 64 => {
-            stack.count += 1;
-            true
+        Some(stack) if stack.item().id(host) == WOOD_ASH && stack.count() < 64 => {
+            stack.set_count(stack.count() + 1).is_ok()
         }
         Some(_) => false,
         None => {
-            *slot = Some(ItemStack {
-                item: WOOD_ASH.into(),
-                count: 1,
-                damage: 0,
-                extra: None,
-            });
+            let Ok(id) = Identifier::parse(WOOD_ASH) else {
+                return false;
+            };
+            let Some(item) = host.item_key(&id) else {
+                return false;
+            };
+            *slot = Some(ItemStack::of(item));
             true
         }
     }
@@ -184,12 +189,10 @@ fn consume_one(slot: &mut Option<ItemStack>) -> bool {
     let Some(stack) = slot.as_mut() else {
         return false;
     };
-    if stack.count == 0 {
-        return false;
-    }
-    stack.count -= 1;
-    if stack.count == 0 {
+    if stack.count() <= 1 {
         *slot = None;
+    } else if stack.set_count(stack.count() - 1).is_err() {
+        return false;
     }
     true
 }
