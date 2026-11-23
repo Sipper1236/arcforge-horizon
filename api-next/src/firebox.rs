@@ -2,7 +2,8 @@
 
 use mod_api::{
     BlockEntityTickEvent, BlockEntityTickReply, BlockSide, Compound, Direction, FluidResource,
-    Host, Identifier, ItemStack, RandomSource, ResourceHandler, ServerHost, Tag, Text, Transaction,
+    FluidStack, Host, HostTransaction, Identifier, ItemResource, ItemStack, RandomSource,
+    ResourceHandler, ServerHost, Tag, Text, Transaction,
 };
 
 const CAPACITY: u64 = 40_000;
@@ -15,7 +16,7 @@ const SPEED_SLOT: usize = 2;
 const HEAT_SLOT: usize = 3;
 const FLUE_TANK: usize = 0;
 const OXYGEN_TANK: usize = 1;
-pub(crate) const FLUE_TANK_CAPACITY: u32 = 16_000;
+pub(crate) const FLUE_TANK_CAPACITY: u32 = 4_000;
 pub(crate) const OXYGEN_TANK_CAPACITY: u32 = 2_000;
 const SPEED_UPGRADE: &str = "arcforge:speed_upgrade";
 const HEAT_UPGRADE: &str = "arcforge:heat_upgrade";
@@ -25,6 +26,7 @@ const OXYGEN: &str = "arcforge:oxygen";
 const OXY_FUEL_HEAT_BONUS_C: u32 = 300;
 const OXY_FUEL_HEAT_MULTIPLIER: f64 = 1.25;
 const OXYGEN_MILLI_PER_TICK: u64 = 250;
+const FLUE_OUTPUT_PER_TICK: u32 = 400;
 
 const PORT_KEYS: [&str; 6] = [
     "FireboxPortUp",
@@ -38,28 +40,45 @@ const PORT_NAMES: [&str; 6] = ["Up", "Down", "North", "South", "West", "East"];
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum PortMode {
-    Heat = 0,
-    Oxygen = 1,
-    FlueGas = 2,
-    Disabled = 3,
+    None = 0,
+    Input = 1,
+    Output = 2,
+    Heat = 3,
+    Oxygen = 4,
+    FlueGas = 5,
 }
 
 impl PortMode {
     fn from_value(value: i32) -> Self {
         match value {
-            1 => Self::Oxygen,
-            2 => Self::FlueGas,
-            3 => Self::Disabled,
-            _ => Self::Heat,
+            1 => Self::Input,
+            2 => Self::Output,
+            3 => Self::Heat,
+            4 => Self::Oxygen,
+            5 => Self::FlueGas,
+            _ => Self::None,
         }
     }
 
     fn label(self) -> &'static str {
         match self {
+            Self::None => "None",
+            Self::Input => "Input",
+            Self::Output => "Output",
             Self::Heat => "Heat",
             Self::Oxygen => "Oxygen",
             Self::FlueGas => "Flue Gas",
-            Self::Disabled => "Off",
+        }
+    }
+
+    fn short_label(self) -> &'static str {
+        match self {
+            Self::None => "None",
+            Self::Input => "In",
+            Self::Output => "Out",
+            Self::Heat => "Heat",
+            Self::Oxygen => "O2",
+            Self::FlueGas => "Flue",
         }
     }
 }
@@ -196,6 +215,7 @@ pub(crate) fn tick(host: &mut dyn ServerHost, event: &mut BlockEntityTickEvent<'
 
     let level = host.level(host.dimension());
     if let Some(level) = level {
+        changed |= transfer_flue_gas(host, level, event.pos, &mut event.entity.nbt);
         transfer_heat(host, level, event.pos, &event.entity.nbt, &mut heat);
     }
 
@@ -264,6 +284,84 @@ fn transfer_heat(
         let moved = super::heat_cell::accept_heat(host, level, neighbor, heat, rate)
             + super::cracking_unit::accept_heat(host, level, neighbor, heat, rate);
         output_left = output_left.saturating_sub(moved);
+    }
+}
+
+fn transfer_flue_gas(
+    host: &mut dyn ServerHost,
+    level: mod_api::LevelRef,
+    pos: [i32; 3],
+    nbt: &mut Compound,
+) -> bool {
+    let Some(fluid) = host.fluid_key(CARBON_DIOXIDE) else {
+        return false;
+    };
+    let resource = FluidResource::of(&FluidStack::new(fluid, 1));
+    let mut budget = FLUE_OUTPUT_PER_TICK;
+    let mut changed = false;
+
+    for index in 0..DIRECTIONS.len() {
+        if budget == 0 || fluid_amount(nbt, FLUE_TANK) == 0 {
+            break;
+        }
+        if port_mode(nbt, index) != PortMode::FlueGas {
+            continue;
+        }
+        let direction = direction_at(index);
+        let offset = DIRECTIONS[index];
+        let neighbor = [pos[0] + offset[0], pos[1] + offset[1], pos[2] + offset[2]];
+        let Some(target) =
+            level.capability(host, &mod_api::FLUIDS, neighbor, Some(opposite(direction)))
+        else {
+            continue;
+        };
+        let offer = fluid_amount(nbt, FLUE_TANK).min(budget);
+        let target_size = target.size(host);
+        let inserted = host
+            .transaction(|host, tx| {
+                let mut inserted = 0_u32;
+                for tank in 0..target_size {
+                    let remaining = offer.saturating_sub(inserted);
+                    if remaining == 0 {
+                        break;
+                    }
+                    let accepted = target.insert(host, tx, tank, &resource, remaining);
+                    if accepted > remaining {
+                        return Err(());
+                    }
+                    inserted += accepted;
+                }
+                Ok(inserted)
+            })
+            .unwrap_or_default();
+        if inserted > 0 {
+            let removed = fluid_extract(nbt, FLUE_TANK, CARBON_DIOXIDE, inserted);
+            changed |= removed > 0;
+            budget = budget.saturating_sub(removed);
+        }
+    }
+    changed
+}
+
+fn direction_at(index: usize) -> Direction {
+    match index {
+        0 => Direction::Up,
+        1 => Direction::Down,
+        2 => Direction::North,
+        3 => Direction::South,
+        4 => Direction::West,
+        _ => Direction::East,
+    }
+}
+
+fn opposite(direction: Direction) -> Direction {
+    match direction {
+        Direction::Up => Direction::Down,
+        Direction::Down => Direction::Up,
+        Direction::North => Direction::South,
+        Direction::South => Direction::North,
+        Direction::West => Direction::East,
+        Direction::East => Direction::West,
     }
 }
 
@@ -403,9 +501,9 @@ pub(crate) fn draw_screen(event: &mut mod_api::ScreenDrawEvent<'_>) {
     draw.text(
         &format!(
             "U:{} D:{} N:{}",
-            port_modes[0].label(),
-            port_modes[1].label(),
-            port_modes[2].label()
+            port_modes[0].short_label(),
+            port_modes[1].short_label(),
+            port_modes[2].short_label()
         ),
         [ox + 8.0, oy + 130.0],
         0xFFBBBBBB,
@@ -414,9 +512,9 @@ pub(crate) fn draw_screen(event: &mut mod_api::ScreenDrawEvent<'_>) {
     draw.text(
         &format!(
             "S:{} W:{} E:{}",
-            port_modes[3].label(),
-            port_modes[4].label(),
-            port_modes[5].label()
+            port_modes[3].short_label(),
+            port_modes[4].short_label(),
+            port_modes[5].short_label()
         ),
         [ox + 8.0, oy + 142.0],
         0xFFBBBBBB,
@@ -534,7 +632,7 @@ pub(crate) fn wrench(
         return;
     };
     let current = port_mode(&nbt, index);
-    let next = PortMode::from_value((current as i32 + 1) % 4);
+    let next = PortMode::from_value((current as i32 + 1) % 6);
     let mut updates = Compound::new();
     set_i32(&mut updates, PORT_KEYS[index], next as i32);
     let _ = entity.merge_data(host, updates);
@@ -551,9 +649,17 @@ pub(crate) fn wrench(
 }
 
 fn port_mode(nbt: &Compound, index: usize) -> PortMode {
-    PORT_KEYS.get(index).map_or(PortMode::Heat, |key| {
-        PortMode::from_value(get_i32(nbt, key))
-    })
+    let Some(key) = PORT_KEYS.get(index) else {
+        return PortMode::None;
+    };
+    if let Some(value) = get_i32_option(nbt, key) {
+        return PortMode::from_value(value);
+    }
+    match index {
+        0 => PortMode::Input,
+        3 => PortMode::Heat,
+        _ => PortMode::None,
+    }
 }
 
 fn port_mode_value(nbt: &Compound, index: usize) -> i32 {
@@ -572,8 +678,136 @@ fn direction_index(direction: Option<Direction>) -> Option<usize> {
         Direction::South => 3,
         Direction::West => 4,
         Direction::East => 5,
-        _ => return None,
     })
+}
+
+fn get_i32_option(nbt: &Compound, name: &str) -> Option<i32> {
+    match nbt.get(&name.into()) {
+        Some(Tag::Int(value)) => Some(*value),
+        _ => None,
+    }
+}
+
+/// Input faces accept fuel; Output faces expose only the ash slot.
+pub(crate) struct FireboxItems(BlockSide);
+
+impl FireboxItems {
+    pub(crate) fn new(at: BlockSide) -> Self {
+        Self(at)
+    }
+
+    fn mode(&self, host: &mut dyn ServerHost) -> Option<PortMode> {
+        let index = direction_index(self.0.side)?;
+        let entity = host.block_entity(self.0.level, self.0.pos)?;
+        let nbt = entity.data(&*host)?;
+        Some(port_mode(&nbt, index))
+    }
+
+    fn route(&self, host: &mut dyn ServerHost, index: usize) -> Option<(usize, PortMode)> {
+        if self.0.side.is_none() {
+            return match index {
+                0 => Some((0, PortMode::None)),
+                1 => Some((1, PortMode::None)),
+                _ => None,
+            };
+        }
+        match (self.mode(host)?, index) {
+            (PortMode::Input, 0) => Some((0, PortMode::Input)),
+            (PortMode::Output, 0) => Some((1, PortMode::Output)),
+            _ => None,
+        }
+    }
+
+    fn accessible_size(&self, host: &mut dyn ServerHost) -> usize {
+        if !mod_api::backend_of(host)
+            .and_then(|backend| backend.container_size(self.0))
+            .is_some()
+        {
+            return 0;
+        }
+        if self.0.side.is_none() {
+            return 2;
+        }
+        match self.mode(host) {
+            Some(PortMode::Input | PortMode::Output) => 1,
+            _ => 0,
+        }
+    }
+}
+
+impl ResourceHandler<ItemResource> for FireboxItems {
+    fn size(&self, host: &mut dyn ServerHost) -> usize {
+        self.accessible_size(host)
+    }
+
+    fn resource(&self, host: &mut dyn ServerHost, index: usize) -> Option<ItemResource> {
+        let (slot, _) = self.route(host, index)?;
+        let held = mod_api::backend_of(host)?.container_stack(self.0, slot)?;
+        Some(ItemResource::of(&held))
+    }
+
+    fn amount(&self, host: &mut dyn ServerHost, index: usize) -> u32 {
+        let Some((slot, _)) = self.route(host, index) else {
+            return 0;
+        };
+        mod_api::backend_of(host)
+            .and_then(|backend| backend.container_stack(self.0, slot))
+            .map_or(0, |held| held.count())
+    }
+
+    fn capacity(&self, host: &mut dyn ServerHost, index: usize, resource: &ItemResource) -> u32 {
+        let Some((slot, mode)) = self.route(host, index) else {
+            return 0;
+        };
+        if !matches!(mode, PortMode::Input | PortMode::None) || slot != 0 {
+            return 0;
+        }
+        mod_api::backend_of(host).map_or(0, |backend| {
+            backend.container_capacity(self.0, slot, resource.as_stack())
+        })
+    }
+
+    fn insert(
+        &self,
+        host: &mut dyn ServerHost,
+        tx: &Transaction,
+        index: usize,
+        resource: &ItemResource,
+        amount: u32,
+    ) -> u32 {
+        let Some((slot, mode)) = self.route(host, index) else {
+            return 0;
+        };
+        if !matches!(mode, PortMode::Input | PortMode::None) || slot != 0 {
+            return 0;
+        }
+        let Some(backend) = mod_api::backend_mut_of(host) else {
+            return 0;
+        };
+        match backend.container_insert(self.0, slot, resource, amount, tx) {
+            Ok(rest) => amount - rest.map_or(0, |rest| rest.count().min(amount)),
+            Err(_) => 0,
+        }
+    }
+
+    fn extract(
+        &self,
+        host: &mut dyn ServerHost,
+        tx: &Transaction,
+        index: usize,
+        _resource: &ItemResource,
+        amount: u32,
+    ) -> u32 {
+        let Some((slot, mode)) = self.route(host, index) else {
+            return 0;
+        };
+        if !matches!(mode, PortMode::Output | PortMode::None) || slot != 1 {
+            return 0;
+        }
+        mod_api::backend_mut_of(host)
+            .and_then(|backend| backend.container_extract(self.0, slot, amount, tx))
+            .map_or(0, |out| out.count().min(amount))
+    }
 }
 
 /// A per-side fluid handler: Oxygen enters its selected port and Flue Gas leaves its own.
@@ -588,13 +822,17 @@ impl FireboxFluids {
         if external_index != 0 {
             return None;
         }
-        let side = direction_index(self.0.side)?;
-        let entity = host.block_entity(self.0.level, self.0.pos)?;
-        let nbt = entity.data(&*host)?;
-        match port_mode(&nbt, side) {
+        let mode = if let Some(side) = direction_index(self.0.side) {
+            let entity = host.block_entity(self.0.level, self.0.pos)?;
+            let nbt = entity.data(&*host)?;
+            port_mode(&nbt, side)
+        } else {
+            PortMode::Oxygen
+        };
+        match mode {
             PortMode::Oxygen => Some((OXYGEN_TANK, PortMode::Oxygen)),
             PortMode::FlueGas => Some((FLUE_TANK, PortMode::FlueGas)),
-            PortMode::Heat | PortMode::Disabled => None,
+            _ => None,
         }
     }
 

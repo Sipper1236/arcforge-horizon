@@ -375,21 +375,17 @@ impl Hooks for Arcforge {
             &firebox_key,
             ModContainer {
                 slots: 4,
-                faces: [
-                    vec![1],
-                    vec![0, 2, 3],
-                    vec![0, 2, 3],
-                    vec![0, 2, 3],
-                    vec![0, 2, 3],
-                    vec![0, 2, 3],
-                ],
-                inputs: vec![0, 2, 3],
+                faces: std::array::from_fn(|_| vec![0, 1]),
+                inputs: vec![0],
                 outputs: vec![1],
                 menu: Some(FIREBOX_MENU.into()),
             },
         );
         let mut firebox_fluids = ModFluidTanks::default();
-        firebox_fluids.tanks = vec![firebox::FLUE_TANK_CAPACITY, firebox::OXYGEN_TANK_CAPACITY];
+        firebox_fluids.tanks = vec![
+            firebox::FLUE_TANK_CAPACITY as i32,
+            firebox::OXYGEN_TANK_CAPACITY as i32,
+        ];
         firebox_fluids.faces = std::array::from_fn(|_| vec![0, 1]);
         firebox_fluids.inputs = vec![1];
         firebox_fluids.outputs = vec![0];
@@ -397,6 +393,10 @@ impl Hooks for Arcforge {
         registrar.block_entity_capability_before_game(&mod_api::FLUIDS, &firebox, |_, at| {
             Some(Box::new(firebox::FireboxFluids::new(at))
                 as Box<dyn mod_api::ResourceHandler<mod_api::FluidResource>>)
+        });
+        registrar.block_entity_capability_before_game(&mod_api::ITEMS, &firebox, |_, at| {
+            Some(Box::new(firebox::FireboxItems::new(at))
+                as Box<dyn mod_api::ResourceHandler<mod_api::ItemResource>>)
         });
         registrar.menu_part(FIREBOX_MENU, Firebox);
     }
