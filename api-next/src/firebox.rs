@@ -2,8 +2,8 @@
 
 use mod_api::{
     BlockEntityTickEvent, BlockEntityTickReply, BlockSide, Compound, Direction, FluidResource,
-    FluidStack, Host, HostTransaction, Identifier, ItemResource, ItemStack, RandomSource,
-    ResourceHandler, ServerHost, Tag, Text, Transaction,
+    FluidStack, Host, HostBlockStates, HostTransaction, Identifier, ItemResource, ItemStack,
+    RandomSource, ResourceHandler, ServerHost, Tag, Text, Transaction,
 };
 
 const CAPACITY: u64 = 40_000;
