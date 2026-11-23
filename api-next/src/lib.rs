@@ -38,6 +38,7 @@ const SOLAR_COLLECTOR: &str = solar::COLLECTOR;
 const SOLAR_MENU: &str = "arcforge:solar_thermal_array";
 const THERMOELECTRIC_PLANT: &str = "arcforge:thermoelectric_plant";
 const THERMOELECTRIC_MENU: &str = "arcforge:thermoelectric_plant";
+const HEAT_CELL_MENU: &str = "arcforge:heat_cell";
 const BIO_COAL: &str = "arcforge:bio_coal";
 const BIO_COAL_BLOCK: &str = "arcforge:bio_coal_block";
 const WOOD_ASH: &str = "arcforge:wood_ash";
@@ -128,6 +129,34 @@ impl BlockEntityPart for CrackingUnit {
 
 #[mod_api::horizon_part]
 impl BlockEntityPart for HeatCell {
+    fn screen(&self, _: &dyn Host, _: &mut mod_api::ScreenEvent<'_>) -> Option<mod_api::Screen> {
+        Some(heat_cell::screen())
+    }
+
+    fn screen_draw(&self, _: &dyn mod_api::ClientHost, event: &mut mod_api::ScreenDrawEvent<'_>) {
+        heat_cell::draw_screen(event);
+    }
+
+    fn screen_click(
+        &self,
+        _: &dyn mod_api::ClientHost,
+        event: &mut mod_api::ScreenClickEvent<'_>,
+    ) -> Option<i32> {
+        heat_cell::screen_click(event.at, event.right)
+    }
+
+    fn menu_button(&self, _: &mut dyn ServerHost, event: &mut mod_api::MenuButtonEvent<'_>) {
+        heat_cell::select_redstone_mode(&mut event.entity.nbt, event.context.id);
+    }
+
+    fn screen_tooltip(
+        &self,
+        _: &dyn mod_api::ClientHost,
+        event: &mut mod_api::ScreenTooltipEvent<'_>,
+    ) {
+        heat_cell::screen_tooltip(event.at, event.lines);
+    }
+
     fn block_entity_ticks(&self, _: &dyn Host, event: &mut BlockEntityTicksEvent<'_>) {
         event.ticks = true;
     }
@@ -787,6 +816,7 @@ impl Hooks for Arcforge {
 
         for id in heat_cell::ids() {
             let block_path = id.strip_prefix("arcforge:").unwrap_or(id);
+            let heat_cell_key = registrar.block_key(id);
             let heat_cell = registrar
                 .block_entity_type(block_path)
                 .blocks(&[block_path])
@@ -794,7 +824,23 @@ impl Hooks for Arcforge {
             registrar
                 .block_entity_part(&heat_cell, HeatCell { id })
                 .expect("Arcforge heat-cell block-entity Part should register");
+            registrar.block_container(
+                &heat_cell_key,
+                ModContainer {
+                    slots: 1,
+                    faces: std::array::from_fn(|_| Vec::new()),
+                    inputs: vec![],
+                    outputs: vec![],
+                    menu: Some(HEAT_CELL_MENU.into()),
+                },
+            );
         }
+        registrar.menu_part(
+            HEAT_CELL_MENU,
+            HeatCell {
+                id: heat_cell::ids()[0],
+            },
+        );
 
         for id in thermal::ids() {
             let block_path = id.strip_prefix("arcforge:").unwrap_or(id);
