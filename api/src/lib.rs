@@ -9189,6 +9189,12 @@ mod tests {
             true
         }
 
+        fn block_property(&self, _pos: [i32; 3], _key: &str) -> Option<String> {
+            None
+        }
+
+        fn block_entity_sync(&mut self, _pos: [i32; 3]) {}
+
         fn set_block_property(&mut self, _pos: [i32; 3], _key: &str, _value: &str) -> bool {
             true
         }
