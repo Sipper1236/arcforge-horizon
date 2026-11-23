@@ -9158,6 +9158,10 @@ mod tests {
             Some(self.test_world_id)
         }
 
+        fn level(&self, _dimension: &str) -> Option<horizon_client::mod_api::LevelRef> {
+            None
+        }
+
         fn dimension(&self) -> &'static str {
             "minecraft:overworld"
         }
