@@ -592,7 +592,14 @@ fn transfer_heat(
         }
         let neighbor = [pos[0] + offset[0], pos[1] + offset[1], pos[2] + offset[2]];
         let limit = budget.min(OUTPUT_PER_TARGET);
-        let moved = super::heat_cell::accept_heat(host, level, neighbor, heat, limit)
+        let moved = super::heat_cell::accept_heat(
+            host,
+            level,
+            neighbor,
+            super::heat_cell::opposite_face_index(index),
+            heat,
+            limit,
+        )
             + super::cracking_unit::accept_heat(host, level, neighbor, heat, limit)
             + super::thermal::accept_heat(host, level, neighbor, pos, heat, limit)
             + super::thermoelectric::accept_heat(

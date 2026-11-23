@@ -2,7 +2,7 @@
 
 use mod_api::{
     BlockEntityTickEvent, BlockEntityTickReply, Component, Compound, Host, HostTransaction,
-    ItemStack, ServerHost, Tag,
+    ItemStack, ServerHost, Tag, Text,
 };
 
 const WROUGHT: &str = "arcforge:wrought_heat_cell";
@@ -15,6 +15,15 @@ const HARDENED_CAPSULE: &str = "arcforge:hardened_thermal_capsule";
 const ARCFORGED_CAPSULE: &str = "arcforge:arcforged_thermal_capsule";
 pub(crate) const INSULATION_UPGRADE: &str = "arcforge:insulation_upgrade";
 const REDSTONE_MODE_KEY: &str = "redstone_mode";
+const PORT_KEYS: [&str; 6] = [
+    "HeatCellPortUp",
+    "HeatCellPortDown",
+    "HeatCellPortNorth",
+    "HeatCellPortSouth",
+    "HeatCellPortWest",
+    "HeatCellPortEast",
+];
+const PORT_NAMES: [&str; 6] = ["Up", "Down", "North", "South", "West", "East"];
 const INPUT_SLOT: usize = 0;
 const OUTPUT_SLOT: usize = 1;
 const INSULATION_SLOT: usize = 2;
@@ -69,6 +78,42 @@ enum RedstoneMode {
     Ignore = 0,
     High = 1,
     Low = 2,
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum PortMode {
+    Auto = 0,
+    Input = 1,
+    Output = 2,
+    Disabled = 3,
+}
+
+impl PortMode {
+    fn from_value(value: i32) -> Self {
+        match value {
+            1 => Self::Input,
+            2 => Self::Output,
+            3 => Self::Disabled,
+            _ => Self::Auto,
+        }
+    }
+
+    fn label(self) -> &'static str {
+        match self {
+            Self::Auto => "Auto",
+            Self::Input => "Input",
+            Self::Output => "Output",
+            Self::Disabled => "Disabled",
+        }
+    }
+
+    fn can_input(self) -> bool {
+        matches!(self, Self::Auto | Self::Input)
+    }
+
+    fn can_output(self) -> bool {
+        matches!(self, Self::Auto | Self::Output)
+    }
 }
 
 impl RedstoneMode {
@@ -183,6 +228,22 @@ pub(crate) fn capsule_ids() -> [&'static str; 4] {
         HARDENED_CAPSULE,
         ARCFORGED_CAPSULE,
     ]
+}
+
+pub(crate) fn face_index(face: [i32; 3]) -> Option<usize> {
+    DIRECTIONS.iter().position(|direction| *direction == face)
+}
+
+pub(crate) fn opposite_face_index(index: usize) -> usize {
+    match index {
+        0 => 1,
+        1 => 0,
+        2 => 3,
+        3 => 2,
+        4 => 5,
+        5 => 4,
+        _ => index,
+    }
 }
 
 pub(crate) fn is_capsule(id: &str) -> bool {
@@ -318,6 +379,7 @@ pub(crate) fn accept_heat(
     host: &mut dyn ServerHost,
     level: mod_api::LevelRef,
     pos: [i32; 3],
+    face_index: usize,
     source: &mut HeatStore,
     rate: u64,
 ) -> u64 {
@@ -336,6 +398,12 @@ pub(crate) fn accept_heat(
     let Some(nbt) = entity.data(&*host) else {
         return 0;
     };
+    if PORT_KEYS.get(face_index).is_none() {
+        return 0;
+    }
+    if !port_mode(&nbt, face_index).can_input() {
+        return 0;
+    }
 
     let mut sink = HeatStore::new(
         spec.capacity,
@@ -378,6 +446,47 @@ pub(crate) fn accept_heat(
         host.set_block_property(pos, "heat", heat_state);
     }
     moved
+}
+
+pub(crate) fn wrench(
+    host: &mut dyn ServerHost,
+    level: mod_api::LevelRef,
+    pos: [i32; 3],
+    face: [i32; 3],
+    player_uuid: u128,
+) {
+    let Some(index) = face_index(face) else {
+        return;
+    };
+    let Some(entity) = host.block_entity(level, pos) else {
+        return;
+    };
+    let Some(nbt) = entity.data(&*host) else {
+        return;
+    };
+    let current = port_mode(&nbt, index);
+    let next = PortMode::from_value((current as i32 + 1) % 4);
+    let mut updates = Compound::new();
+    set_i32(&mut updates, PORT_KEYS[index], next as i32);
+    let _ = entity.merge_data(host, updates);
+    if let Some(player) = host.player(player_uuid) {
+        let _ = player.action_bar(
+            host,
+            Text::literal(format!(
+                "Heat Cell {} port: {}",
+                PORT_NAMES[index],
+                next.label()
+            )),
+        );
+    }
+}
+
+fn port_mode(nbt: &Compound, index: usize) -> PortMode {
+    let value = PORT_KEYS
+        .get(index)
+        .map(|key| get_i32(nbt, key))
+        .unwrap_or_default();
+    PortMode::from_value(value)
 }
 
 fn spec(id: &str) -> Option<Spec> {
@@ -534,6 +643,9 @@ pub(crate) fn tick(host: &mut dyn ServerHost, event: &mut BlockEntityTickEvent<'
                 break;
             }
             let direction_index = (start + index) % DIRECTIONS.len();
+            if !port_mode(&event.entity.nbt, direction_index).can_output() {
+                continue;
+            }
             let offset = DIRECTIONS[direction_index];
             let neighbor = [
                 event.pos[0] + offset[0],
@@ -541,11 +653,26 @@ pub(crate) fn tick(host: &mut dyn ServerHost, event: &mut BlockEntityTickEvent<'
                 event.pos[2] + offset[2],
             ];
             let before = heat.stored_hu();
-            let mut moved =
-                super::cracking_unit::accept_heat(host, level, neighbor, &mut heat, budget);
+            let input_face = opposite_face_index(direction_index);
+            let mut moved = accept_heat(
+                host,
+                level,
+                neighbor,
+                input_face,
+                &mut heat,
+                budget,
+            );
             let remaining = budget.saturating_sub(moved);
-            moved +=
-                super::thermal::accept_heat(host, level, neighbor, event.pos, &mut heat, remaining);
+            moved += super::cracking_unit::accept_heat(host, level, neighbor, &mut heat, remaining);
+            let remaining = budget.saturating_sub(moved);
+            moved += super::thermal::accept_heat(
+                host,
+                level,
+                neighbor,
+                event.pos,
+                &mut heat,
+                remaining,
+            );
             let remaining = budget.saturating_sub(moved);
             moved += super::thermoelectric::accept_heat(
                 host,

@@ -716,7 +716,10 @@ fn transfer_to_neighbor(
         return accept_heat(host, level, target_pos, source_pos, heat, rate);
     }
     if super::heat_cell::ids().contains(&target_id.as_str()) {
-        return super::heat_cell::accept_heat(host, level, target_pos, heat, rate);
+        let Some(face) = super::heat_cell::face_index(incoming_face) else {
+            return 0;
+        };
+        return super::heat_cell::accept_heat(host, level, target_pos, face, heat, rate);
     }
     if target_id == super::THERMOELECTRIC_PLANT {
         let Some(face) = SIDES.iter().position(|side| side.offset == incoming_face) else {

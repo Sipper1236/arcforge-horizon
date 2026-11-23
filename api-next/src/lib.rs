@@ -760,6 +760,7 @@ impl Hooks for Arcforge {
                 || id == GEOTHERMAL_PLANT
                 || id == THERMOELECTRIC_PLANT
                 || thermal::spec(id).is_some()
+                || heat_cell::ids().contains(&id)
                 || id == SOLAR_CONTROLLER
                 || id == SOLAR_CASING
                 || id == SOLAR_COLLECTOR
@@ -792,6 +793,13 @@ impl Hooks for Arcforge {
                         event.click.player,
                     ),
                     Some(THERMOELECTRIC_PLANT) => thermoelectric::wrench(
+                        host,
+                        level,
+                        event.click.pos,
+                        event.click.hit.face,
+                        event.click.player,
+                    ),
+                    Some(id) if heat_cell::ids().contains(&id) => heat_cell::wrench(
                         host,
                         level,
                         event.click.pos,

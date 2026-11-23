@@ -689,7 +689,14 @@ fn transfer_heat_ports(
             if tower.contains(neighbor) {
                 continue;
             }
-            let moved = super::heat_cell::accept_heat(host, level, neighbor, heat, rate)
+            let moved = super::heat_cell::accept_heat(
+                host,
+                level,
+                neighbor,
+                super::heat_cell::opposite_face_index(face_index),
+                heat,
+                rate,
+            )
                 + super::cracking_unit::accept_heat(host, level, neighbor, heat, rate)
                 + super::thermal::accept_heat(host, level, neighbor, part, heat, rate)
                 + super::thermoelectric::accept_heat(
