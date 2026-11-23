@@ -13,9 +13,21 @@ const OUTPUT_PER_TICK: u64 = 600;
 const MAX_UPGRADES: u32 = 8;
 const SPEED_SLOT: usize = 2;
 const HEAT_SLOT: usize = 3;
+const FLUE_TANK: usize = 0;
+const FLUE_TANK_CAPACITY: u32 = 16_000;
 const SPEED_UPGRADE: &str = "arcforge:speed_upgrade";
 const HEAT_UPGRADE: &str = "arcforge:heat_upgrade";
 const WOOD_ASH: &str = "arcforge:wood_ash";
+const CARBON_DIOXIDE: &str = "arcforge:carbon_dioxide";
+
+macro_rules! java_string {
+    ($value:expr) => {{
+        let Tag::String(value) = Tag::String($value.into()) else {
+            unreachable!()
+        };
+        value
+    }};
+}
 
 const DIRECTIONS: [[i32; 3]; 6] = [
     [0, 1, 0],
@@ -95,6 +107,7 @@ pub(crate) fn tick(host: &mut dyn ServerHost, event: &mut BlockEntityTickEvent<'
     heat.set_source_temperature(if produced > 0 { MAX_TEMPERATURE_C } else { 20 });
 
     if produced > 0 {
+        changed |= add_flue_gas(&mut event.entity.nbt, produced);
         burn = burn.saturating_sub(1);
         if burn == 0 {
             if let Some(item) = get_string(&event.entity.nbt, "BurningItem") {
@@ -138,6 +151,7 @@ pub(crate) fn tick(host: &mut dyn ServerHost, event: &mut BlockEntityTickEvent<'
         produced.min(i16::MAX as u64) as i32,
         speed_upgrades as i32,
         heat_upgrades as i32,
+        fluid_amount(&event.entity.nbt, FLUE_TANK).min(i16::MAX as u32) as i32,
     ];
     if event.entity.data.as_slice() != data.as_slice() {
         event.entity.data = data.into();
@@ -197,10 +211,10 @@ pub(crate) fn screen() -> mod_api::Screen {
         width: 176.0,
         height: 254.0,
         slots: vec![
-            Some([16.0, 108.0]),
-            Some([40.0, 108.0]),
-            Some([104.0, 108.0]),
-            Some([128.0, 108.0]),
+            Some([16.0, 118.0]),
+            Some([40.0, 118.0]),
+            Some([104.0, 118.0]),
+            Some([128.0, 118.0]),
         ],
         inventory_y: 168.0,
         inventory_x: 8.0,
@@ -229,6 +243,7 @@ pub(crate) fn draw_screen(event: &mut mod_api::ScreenDrawEvent<'_>) {
         .copied()
         .unwrap_or_default()
         .clamp(0, MAX_UPGRADES as i32);
+    let flue_gas = data.get(8).copied().unwrap_or_default().max(0);
     let draw = &mut *event.draw;
     draw.text("Firebox", [ox + 8.0, oy + 6.0], 0xFFFFFFFF, true);
     draw.text(
@@ -275,20 +290,102 @@ pub(crate) fn draw_screen(event: &mut mod_api::ScreenDrawEvent<'_>) {
         0xFFFFFFFF,
         true,
     );
-    draw.text("Fuel", [ox + 16.0, oy + 94.0], 0xFFBBBBBB, true);
-    draw.text("Ash", [ox + 40.0, oy + 94.0], 0xFFBBBBBB, true);
+    draw.text(
+        &format!("Flue gas: {flue_gas} mB CO2"),
+        [ox + 8.0, oy + 94.0],
+        0xFFBBBBBB,
+        true,
+    );
+    draw.text("Fuel", [ox + 16.0, oy + 106.0], 0xFFBBBBBB, true);
+    draw.text("Ash", [ox + 40.0, oy + 106.0], 0xFFBBBBBB, true);
     draw.text(
         &format!("S:{speed_upgrades}/{MAX_UPGRADES}"),
-        [ox + 92.0, oy + 94.0],
+        [ox + 92.0, oy + 106.0],
         0xFFBBBBBB,
         true,
     );
     draw.text(
         &format!("H:{heat_upgrades}/{MAX_UPGRADES}"),
-        [ox + 132.0, oy + 94.0],
+        [ox + 132.0, oy + 106.0],
         0xFFBBBBBB,
         true,
     );
+}
+
+fn add_flue_gas(nbt: &mut Compound, produced_hu: u64) -> bool {
+    let fractional = get_i32(nbt, "FlueMilli").clamp(0, 999) as u64;
+    let total_milli = fractional.saturating_add(produced_hu.saturating_mul(4));
+    let amount = (total_milli / 1000).min(u64::from(u32::MAX)) as u32;
+    let mut changed = set_i32(nbt, "FlueMilli", (total_milli % 1000) as i32);
+    if amount > 0 {
+        changed |= fluid_insert(nbt, FLUE_TANK, CARBON_DIOXIDE, amount, FLUE_TANK_CAPACITY) > 0;
+    }
+    changed
+}
+
+fn fluid_tanks(nbt: &Compound) -> Vec<(Option<String>, u32)> {
+    let Some(Tag::List(list)) = nbt.get(&java_string!("fluids")) else {
+        return Vec::new();
+    };
+    list.iter()
+        .map(|entry| match entry {
+            Tag::Compound(map) => {
+                let fluid = match map.get(&java_string!("Fluid")) {
+                    Some(Tag::String(name)) if name.to_string_lossy() != "minecraft:empty" => {
+                        Some(name.to_string_lossy())
+                    }
+                    _ => None,
+                };
+                let amount = match map.get(&java_string!("Amount")) {
+                    Some(Tag::Int(value)) => (*value).max(0) as u32,
+                    _ => 0,
+                };
+                (fluid, amount)
+            }
+            _ => (None, 0),
+        })
+        .collect()
+}
+
+fn fluid_amount(nbt: &Compound, index: usize) -> u32 {
+    fluid_tanks(nbt).get(index).map_or(0, |(_, amount)| *amount)
+}
+
+fn write_fluid_tanks(nbt: &mut Compound, tanks: &[(Option<String>, u32)]) {
+    let list = tanks
+        .iter()
+        .map(|(fluid, amount)| {
+            let mut tank = Compound::new();
+            tank.insert(
+                java_string!("Fluid"),
+                Tag::String(java_string!(fluid.as_deref().unwrap_or("minecraft:empty"))),
+            );
+            tank.insert(
+                java_string!("Amount"),
+                Tag::Int((*amount).min(i32::MAX as u32) as i32),
+            );
+            Tag::Compound(tank)
+        })
+        .collect();
+    nbt.insert(java_string!("fluids"), Tag::List(list));
+}
+
+fn fluid_insert(nbt: &mut Compound, index: usize, fluid: &str, amount: u32, capacity: u32) -> u32 {
+    let mut tanks = fluid_tanks(nbt);
+    if tanks.len() <= index {
+        tanks.resize(index + 1, (None, 0));
+    }
+    let (current, stored) = &mut tanks[index];
+    if current.as_deref().is_some_and(|name| name != fluid) {
+        return 0;
+    }
+    let accepted = amount.min(capacity.saturating_sub(*stored));
+    if accepted > 0 {
+        *current = Some(fluid.to_owned());
+        *stored += accepted;
+        write_fluid_tanks(nbt, &tanks);
+    }
+    accepted
 }
 
 pub(crate) fn screen_tooltip(at: [f32; 2], lines: &mut Vec<String>) {

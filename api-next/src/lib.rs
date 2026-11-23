@@ -373,6 +373,11 @@ impl Hooks for Arcforge {
                 menu: Some(FIREBOX_MENU.into()),
             },
         );
+        let mut firebox_fluids = ModFluidTanks::default();
+        firebox_fluids.tanks = vec![16_000];
+        firebox_fluids.faces = std::array::from_fn(|_| vec![0]);
+        firebox_fluids.outputs = vec![0];
+        registrar.block_fluids(&firebox_key, firebox_fluids);
         registrar.menu_part(FIREBOX_MENU, Firebox);
     }
 }
