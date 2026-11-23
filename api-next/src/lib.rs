@@ -13,6 +13,7 @@ use mod_api::{
 
 mod cracking_unit;
 mod firebox;
+mod geothermal;
 mod heat_cell;
 
 const CONTROLLER: &str = "arcforge:cracking_unit_controller";
@@ -24,6 +25,8 @@ const WRENCH: &str = "arcforge:wrench";
 const MACHINE_MENU: &str = "arcforge:cracking_unit";
 const FIREBOX: &str = "arcforge:firebox";
 const FIREBOX_MENU: &str = "arcforge:firebox";
+const GEOTHERMAL_PLANT: &str = "arcforge:geothermal_plant";
+const GEOTHERMAL_MENU: &str = "arcforge:geothermal_plant";
 const BIO_COAL: &str = "arcforge:bio_coal";
 const BIO_COAL_BLOCK: &str = "arcforge:bio_coal_block";
 const WOOD_ASH: &str = "arcforge:wood_ash";
@@ -42,11 +45,16 @@ struct HeatCell {
 
 struct Firebox;
 
+struct GeothermalPlant;
+
 #[mod_api::horizon_part]
 impl BlockPart for HeatCell {}
 
 #[mod_api::horizon_part]
 impl BlockPart for Firebox {}
+
+#[mod_api::horizon_part]
+impl BlockPart for GeothermalPlant {}
 
 #[mod_api::horizon_part]
 impl BlockPart for CrackingUnit {}
@@ -129,6 +137,33 @@ impl BlockEntityPart for Firebox {
 }
 
 #[mod_api::horizon_part]
+impl BlockEntityPart for GeothermalPlant {
+    fn screen(&self, _: &dyn Host, _: &mut mod_api::ScreenEvent<'_>) -> Option<mod_api::Screen> {
+        Some(geothermal::screen())
+    }
+
+    fn screen_draw(&self, _: &dyn mod_api::ClientHost, event: &mut mod_api::ScreenDrawEvent<'_>) {
+        geothermal::draw_screen(event);
+    }
+
+    fn screen_tooltip(
+        &self,
+        _: &dyn mod_api::ClientHost,
+        event: &mut mod_api::ScreenTooltipEvent<'_>,
+    ) {
+        geothermal::screen_tooltip(event.at, event.lines);
+    }
+
+    fn block_entity_ticks(&self, _: &dyn Host, event: &mut BlockEntityTicksEvent<'_>) {
+        event.ticks = true;
+    }
+
+    fn block_entity_tick(&self, host: &mut dyn ServerHost, event: &mut BlockEntityTickEvent<'_>) {
+        geothermal::tick(host, event);
+    }
+}
+
+#[mod_api::horizon_part]
 impl MenuPart for CrackingUnit {
     fn menu_slot_rules(&self, host: &dyn Host, event: &mut MenuSlotRulesEvent<'_>) {
         if event.container != MenuContainer::Main {
@@ -156,6 +191,29 @@ impl MenuPart for Firebox {
         let item = event.stack.item().id(host);
         match event.slot {
             0 => event.may_place &= firebox::accepts_fuel(&item),
+            1 => event.may_place = false,
+            2 => {
+                event.max_stack = 8;
+                event.may_place &= item == SPEED_UPGRADE;
+            }
+            3 => {
+                event.max_stack = 8;
+                event.may_place &= item == HEAT_UPGRADE;
+            }
+            _ => event.may_place = false,
+        }
+    }
+}
+
+#[mod_api::horizon_part]
+impl MenuPart for GeothermalPlant {
+    fn menu_slot_rules(&self, host: &dyn Host, event: &mut MenuSlotRulesEvent<'_>) {
+        if event.container != MenuContainer::Main {
+            return;
+        }
+        let item = event.stack.item().id(host);
+        match event.slot {
+            0 => event.may_place &= item == "minecraft:lava_bucket",
             1 => event.may_place = false,
             2 => {
                 event.max_stack = 8;
@@ -221,6 +279,26 @@ impl Hooks for Arcforge {
         ]
         .into();
         event.blocks.push(firebox);
+        let mut geothermal = Block::new(GEOTHERMAL_PLANT, "minecraft:blast_furnace");
+        geothermal.state_properties = [
+            (
+                "facing".into(),
+                BlockStateProperty::Enum {
+                    values: ["north", "east", "south", "west"]
+                        .into_iter()
+                        .map(str::to_owned)
+                        .collect(),
+                },
+            ),
+            ("lit".into(), BlockStateProperty::Boolean),
+        ]
+        .into();
+        geothermal.default_state = [
+            ("facing".into(), "north".into()),
+            ("lit".into(), "false".into()),
+        ]
+        .into();
+        event.blocks.push(geothermal);
         event
             .blocks
             .push(Block::new(BIO_COAL_BLOCK, "minecraft:coal_block"));
@@ -282,7 +360,7 @@ impl Hooks for Arcforge {
 
         if !wrench_target
             .as_deref()
-            .is_some_and(|id| id == CONTROLLER || id == FIREBOX)
+            .is_some_and(|id| id == CONTROLLER || id == FIREBOX || id == GEOTHERMAL_PLANT)
         {
             return Flow::Continue;
         }
@@ -298,6 +376,13 @@ impl Hooks for Arcforge {
                         event.click.player,
                     ),
                     Some(FIREBOX) => firebox::wrench(
+                        host,
+                        level,
+                        event.click.pos,
+                        event.click.hit.face,
+                        event.click.player,
+                    ),
+                    Some(GEOTHERMAL_PLANT) => geothermal::wrench(
                         host,
                         level,
                         event.click.pos,
@@ -344,6 +429,14 @@ impl Hooks for Arcforge {
         registrar
             .block_entity_part(&firebox, Firebox)
             .expect("Arcforge's Firebox block-entity Part should register");
+
+        let geothermal = registrar
+            .block_entity_type("geothermal_plant")
+            .blocks(&["geothermal_plant"])
+            .build();
+        registrar
+            .block_entity_part(&geothermal, GeothermalPlant)
+            .expect("Arcforge's Geothermal Plant block-entity Part should register");
 
         registrar.block_container(
             &controller,
@@ -399,5 +492,32 @@ impl Hooks for Arcforge {
                 as Box<dyn mod_api::ResourceHandler<mod_api::ItemResource>>)
         });
         registrar.menu_part(FIREBOX_MENU, Firebox);
+
+        let geothermal_key = registrar.block_key(GEOTHERMAL_PLANT);
+        registrar.block_container(
+            &geothermal_key,
+            ModContainer {
+                slots: 4,
+                faces: std::array::from_fn(|_| vec![0, 1]),
+                inputs: vec![0, 2, 3],
+                outputs: vec![1],
+                menu: Some(GEOTHERMAL_MENU.into()),
+            },
+        );
+        let mut geothermal_fluids = ModFluidTanks::default();
+        geothermal_fluids.tanks = vec![geothermal::LAVA_TANK_CAPACITY as i32];
+        geothermal_fluids.faces = std::array::from_fn(|_| vec![0]);
+        geothermal_fluids.inputs = vec![0];
+        geothermal_fluids.outputs = vec![];
+        registrar.block_fluids(&geothermal_key, geothermal_fluids);
+        registrar.block_entity_capability_before_game(&mod_api::FLUIDS, &geothermal, |_, at| {
+            Some(Box::new(geothermal::GeothermalFluids::new(at))
+                as Box<dyn mod_api::ResourceHandler<mod_api::FluidResource>>)
+        });
+        registrar.block_entity_capability_before_game(&mod_api::ITEMS, &geothermal, |_, at| {
+            Some(Box::new(geothermal::GeothermalItems::new(at))
+                as Box<dyn mod_api::ResourceHandler<mod_api::ItemResource>>)
+        });
+        registrar.menu_part(GEOTHERMAL_MENU, GeothermalPlant);
     }
 }
