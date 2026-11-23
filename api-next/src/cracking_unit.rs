@@ -20,6 +20,16 @@ const CATALYST_SLOT: usize = 1;
 const FEED_TANK: usize = 0;
 const HYDROGEN_TANK: usize = 1;
 const OUTPUT_START: usize = 2;
+const MODE_BUTTON_CATALYTIC: i32 = 420;
+const MODE_BUTTON_HYDROCRACKING: i32 = 421;
+const MODE_BUTTONS: [(i32, &'static str, f32); 2] = [
+    (MODE_BUTTON_CATALYTIC, "catalytic", 40.0),
+    (MODE_BUTTON_HYDROCRACKING, "hydrocracking", 64.0),
+];
+const MODE_BUTTON_Y: f32 = 17.0;
+const MODE_BUTTON_SIZE: f32 = 20.0;
+const SCREEN_HEIGHT: f32 = 254.0;
+const SCREEN_INVENTORY_Y: f32 = 168.0;
 
 #[derive(Clone, Copy)]
 struct Facing {
@@ -158,6 +168,241 @@ pub(crate) fn wrench(
     if let Some(player) = host.player(player_uuid) {
         let _ = player.action_bar(host, Text::literal(message));
     }
+}
+
+fn mode_button_at(at: [f32; 2]) -> Option<i32> {
+    MODE_BUTTONS
+        .iter()
+        .find(|(_, _, x)| {
+            at[0] >= *x
+                && at[0] < *x + MODE_BUTTON_SIZE
+                && at[1] >= MODE_BUTTON_Y
+                && at[1] < MODE_BUTTON_Y + MODE_BUTTON_SIZE
+        })
+        .map(|(id, _, _)| *id)
+}
+
+pub(crate) fn screen_click(at: [f32; 2], right: bool) -> Option<i32> {
+    if right { None } else { mode_button_at(at) }
+}
+
+pub(crate) fn screen_tooltip(at: [f32; 2], lines: &mut Vec<String>) {
+    match mode_button_at(at) {
+        Some(MODE_BUTTON_CATALYTIC) => {
+            lines.push("Catalytic cracking".to_owned());
+            lines.push("Consumes Cracking Catalyst; no Hydrogen input".to_owned());
+        }
+        Some(MODE_BUTTON_HYDROCRACKING) => {
+            lines.push("Hydrocracking".to_owned());
+            lines.push("Consumes Hydrogen; no catalyst required".to_owned());
+        }
+        _ => {}
+    }
+}
+
+pub(crate) fn select_mode(nbt: &mut Compound, button: i32) {
+    let Some((_, selected, _)) = MODE_BUTTONS.iter().find(|(id, _, _)| *id == button) else {
+        return;
+    };
+    let selected = *selected;
+    if get_string(nbt, "CrackingMode").as_deref() != Some(selected) {
+        set_string(nbt, "CrackingMode", selected);
+        set_i32(nbt, "CrackingProgress", 0);
+        set_i32(nbt, "CrackingTotal", 0);
+    }
+}
+
+pub(crate) fn screen() -> mod_api::Screen {
+    mod_api::Screen {
+        width: 176.0,
+        height: SCREEN_HEIGHT,
+        slots: vec![Some([16.0, 52.0]), Some([40.0, 52.0])],
+        inventory_y: SCREEN_INVENTORY_Y,
+        inventory_x: 8.0,
+        own_labels: true,
+        own_background: false,
+        ..mod_api::Screen::default()
+    }
+}
+
+fn screen_status(status: i32) -> &'static str {
+    match status {
+        1 => "Structure incomplete",
+        2 => "No recipe for selected mode",
+        3 => "Waiting for recipe inputs",
+        4 => "Needs Cracking Catalyst",
+        5 => "Product tanks full",
+        6 => "Heating / needs more heat",
+        _ => "Processing",
+    }
+}
+
+pub(crate) fn draw_screen(event: &mut mod_api::ScreenDrawEvent<'_>) {
+    let [ox, oy] = event.origin;
+    let data = event.data;
+    let mode_index = data.first().copied().unwrap_or_default();
+    let progress = data.get(1).copied().unwrap_or_default().max(0);
+    let duration = data.get(2).copied().unwrap_or_default().max(0);
+    let temperature = data.get(3).copied().unwrap_or_default().max(0);
+    let heat_tens = data.get(4).copied().unwrap_or_default().max(0);
+    let status = data.get(5).copied().unwrap_or(1);
+    let minimum_temperature = data.get(6).copied().unwrap_or_default().max(0);
+    let feed = data.get(7).copied().unwrap_or_default().max(0);
+    let hydrogen = data.get(8).copied().unwrap_or_default().max(0);
+    let naphtha = data.get(9).copied().unwrap_or_default().max(0);
+    let diesel = data.get(10).copied().unwrap_or_default().max(0);
+    let third_product = data.get(11).copied().unwrap_or_default().max(0);
+    let light_oil = data.get(12).copied().unwrap_or_default().max(0);
+    let draw = &mut *event.draw;
+    macro_rules! text {
+        ($label:expr, $x:expr, $y:expr, $color:expr $(,)?) => {
+            draw.text($label, [ox + $x, oy + $y], $color, true)
+        };
+    }
+    macro_rules! fill {
+        ($rect:expr, $color:expr) => {
+            draw.fill(
+                [ox + ($rect)[0], oy + ($rect)[1], ($rect)[2], ($rect)[3]],
+                $color,
+            )
+        };
+    }
+
+    text!("Cracking Unit", 8.0, 6.0, 0xFFFFFFFF);
+    text!("Mode", 8.0, 20.0, 0xFFBBBBBB);
+    let selected_mode = if mode_index == 1 {
+        "hydrocracking"
+    } else {
+        "catalytic"
+    };
+    for (_, button_mode, x) in MODE_BUTTONS {
+        let selected = button_mode == selected_mode;
+        let button_sprite = if selected {
+            "arcforge:gui/sprites/widget/arcforge/button_pressed"
+        } else {
+            "arcforge:gui/sprites/widget/arcforge/button"
+        };
+        let _ = draw.sprite(
+            button_sprite,
+            [0.0, 0.0, MODE_BUTTON_SIZE, MODE_BUTTON_SIZE],
+            [
+                ox + x,
+                oy + MODE_BUTTON_Y,
+                MODE_BUTTON_SIZE,
+                MODE_BUTTON_SIZE,
+            ],
+            None,
+        );
+        let icon = if button_mode == "hydrocracking" {
+            "arcforge:gui/sprites/widget/arcforge/cracking_hydrocracking"
+        } else {
+            "arcforge:gui/sprites/widget/arcforge/cracking_catalytic"
+        };
+        let offset = if selected { 3.0 } else { 2.0 };
+        let _ = draw.sprite(
+            icon,
+            [0.0, 0.0, 16.0, 16.0],
+            [ox + x + offset, oy + MODE_BUTTON_Y + offset, 16.0, 16.0],
+            None,
+        );
+        if selected {
+            fill!(
+                [x - 1.0, MODE_BUTTON_Y - 1.0, MODE_BUTTON_SIZE + 2.0, 1.0],
+                0xFF62B64F
+            );
+            fill!(
+                [
+                    x - 1.0,
+                    MODE_BUTTON_Y + MODE_BUTTON_SIZE,
+                    MODE_BUTTON_SIZE + 2.0,
+                    1.0,
+                ],
+                0xFF62B64F
+            );
+            fill!([x - 1.0, MODE_BUTTON_Y, 1.0, MODE_BUTTON_SIZE], 0xFF62B64F);
+            fill!(
+                [x + MODE_BUTTON_SIZE, MODE_BUTTON_Y, 1.0, MODE_BUTTON_SIZE],
+                0xFF62B64F
+            );
+        }
+    }
+    text!(
+        if selected_mode == "hydrocracking" {
+            "Hydrocracking"
+        } else {
+            "Catalytic"
+        },
+        90.0,
+        22.0,
+        0xFFE0E0E0,
+    );
+    text!("Speed", 8.0, 41.0, 0xFFBBBBBB);
+    text!("Catalyst", 40.0, 41.0, 0xFFBBBBBB);
+    text!(screen_status(status), 8.0, 70.0, 0xFFE0E0E0);
+    text!(&format!("Oil {feed}/32k mB"), 8.0, 82.0, 0xFFE0E0E0);
+    text!(&format!("H2 {hydrogen}/16k mB"), 90.0, 82.0, 0xFFE0E0E0);
+    text!(
+        &format!("Naphtha {:.1}k", naphtha as f32 / 1_000.0),
+        8.0,
+        94.0,
+        0xFFE0E0E0,
+    );
+    text!(
+        &format!("Diesel {:.1}k", diesel as f32 / 1_000.0),
+        90.0,
+        94.0,
+        0xFFE0E0E0,
+    );
+    text!(
+        &format!(
+            "{} {:.1}k",
+            if selected_mode == "hydrocracking" {
+                "Kerosene"
+            } else {
+                "Refinery Gas"
+            },
+            third_product as f32 / 1_000.0
+        ),
+        8.0,
+        105.0,
+        0xFFE0E0E0,
+    );
+    text!(
+        &format!("Light Oil {:.1}k", light_oil as f32 / 1_000.0),
+        90.0,
+        105.0,
+        0xFFE0E0E0,
+    );
+    text!(
+        &format!("Temp {temperature} C / {minimum_temperature} C"),
+        8.0,
+        116.0,
+        0xFFE0E0E0,
+    );
+    text!(
+        &format!(
+            "Heat {:.1}/{:.0} kHU",
+            heat_tens as f32 / 100.0,
+            HEAT_CAPACITY as f32 / 1_000.0
+        ),
+        8.0,
+        127.0,
+        0xFFE0E0E0,
+    );
+    if duration > 0 {
+        text!(
+            &format!("Progress {progress}/{duration} t"),
+            8.0,
+            138.0,
+            0xFFE0E0E0,
+        );
+        fill!([8.0, 149.0, 160.0, 5.0], 0xFF383838);
+        let fraction = (progress as f32 / duration as f32).clamp(0.0, 1.0);
+        fill!([8.0, 149.0, 160.0 * fraction, 5.0], 0xFF62B64F);
+    } else {
+        text!("Progress 0/0 t", 8.0, 138.0, 0xFFAAAAAA);
+    }
+    text!("Inventory", 8.0, 157.0, 0xFFFFFFFF);
 }
 
 fn set_property(

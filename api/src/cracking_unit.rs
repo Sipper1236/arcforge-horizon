@@ -795,7 +795,7 @@ pub(crate) fn container() -> ModContainer {
         ],
         inputs: vec![SPEED_SLOT, CATALYST_SLOT],
         outputs: vec![],
-        menu: Some("arcforge:machine_2_slot".into()),
+        menu: Some("arcforge:cracking_unit".into()),
     }
 }
 pub(crate) fn item_allowed(slot: usize, item: &str, count: u32) -> bool {

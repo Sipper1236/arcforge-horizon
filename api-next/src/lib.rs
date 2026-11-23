@@ -18,7 +18,7 @@ const CASING: &str = "arcforge:cracking_unit_casing";
 const CATALYST: &str = "arcforge:cracking_catalyst";
 const SPEED_UPGRADE: &str = "arcforge:speed_upgrade";
 const WRENCH: &str = "arcforge:wrench";
-const MACHINE_MENU: &str = "arcforge:machine_2_slot";
+const MACHINE_MENU: &str = "arcforge:cracking_unit";
 
 #[derive(Default)]
 struct Arcforge;
@@ -33,6 +33,34 @@ impl BlockPart for CrackingUnit {}
 
 #[mod_api::horizon_part]
 impl BlockEntityPart for CrackingUnit {
+    fn screen(&self, _: &dyn Host, _: &mut mod_api::ScreenEvent<'_>) -> Option<mod_api::Screen> {
+        Some(cracking_unit::screen())
+    }
+
+    fn screen_draw(&self, _: &dyn mod_api::ClientHost, event: &mut mod_api::ScreenDrawEvent<'_>) {
+        cracking_unit::draw_screen(event);
+    }
+
+    fn screen_click(
+        &self,
+        _: &dyn mod_api::ClientHost,
+        event: &mut mod_api::ScreenClickEvent<'_>,
+    ) -> Option<i32> {
+        cracking_unit::screen_click(event.at, event.right)
+    }
+
+    fn screen_tooltip(
+        &self,
+        _: &dyn mod_api::ClientHost,
+        event: &mut mod_api::ScreenTooltipEvent<'_>,
+    ) {
+        cracking_unit::screen_tooltip(event.at, event.lines);
+    }
+
+    fn menu_button(&self, _: &mut dyn ServerHost, event: &mut mod_api::MenuButtonEvent<'_>) {
+        cracking_unit::select_mode(&mut event.entity.nbt, event.context.id);
+    }
+
     fn block_entity_ticks(&self, _: &dyn Host, event: &mut BlockEntityTicksEvent<'_>) {
         event.ticks = true;
     }
