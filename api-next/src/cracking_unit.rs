@@ -156,7 +156,7 @@ pub(crate) fn wrench(
 
     let _ = entity.merge_data(host, updates);
     if let Some(player) = host.player(player_uuid) {
-        let _ = host.player_action_bar(player, Text::literal(message));
+        let _ = player.action_bar(host, Text::literal(message));
     }
 }
 

@@ -116,7 +116,7 @@ impl Hooks for Arcforge {
                 .is_some_and(|stack| stack.item().id(host) == WRENCH);
             held_wrench
                 && host
-                    .level(event.click.dimension)
+                    .level(event.click.dimension.key().id())
                     .and_then(|level| level.block(host, event.click.pos))
                     .is_some_and(|block| block.id(host) == CONTROLLER)
         };
@@ -126,13 +126,15 @@ impl Hooks for Arcforge {
         }
 
         if let HostSide::Server(host) = host {
-            cracking_unit::wrench(
-                host,
-                event.click.dimension,
-                event.click.pos,
-                event.click.hit.face,
-                event.click.player,
-            );
+            if let Some(level) = host.level(event.click.dimension.key().id()) {
+                cracking_unit::wrench(
+                    host,
+                    level,
+                    event.click.pos,
+                    event.click.hit.face,
+                    event.click.player,
+                );
+            }
         }
         *event.cancellation_result = InteractionResult::Success;
         Flow::Cancel
