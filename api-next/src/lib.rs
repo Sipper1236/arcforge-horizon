@@ -93,6 +93,9 @@ impl Hooks for Arcforge {
     }
 
     fn register(&self, registrar: &mut dyn Registrar, _: &RegistrationContext) {
+        registrar.register_recipe_type("arcforge:cracking");
+        registrar.register_raw_recipe_serializer("arcforge:cracking", "arcforge:cracking");
+
         let controller = registrar.block_key(CONTROLLER);
         let casing = registrar.block_key(CASING);
         let cracking_unit = registrar
