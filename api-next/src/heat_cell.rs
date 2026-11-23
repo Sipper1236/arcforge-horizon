@@ -308,10 +308,7 @@ fn set_item_heat(stack: &mut ItemStack, amount: u64) -> bool {
     stack.set(&HEAT_ITEM_DATA, data).is_ok()
 }
 
-pub(crate) fn block_drops(
-    host: &mut dyn ServerHost,
-    event: &mut mod_api::BlockDropsEvent<'_>,
-) {
+pub(crate) fn block_drops(host: &mut dyn ServerHost, event: &mut mod_api::BlockDropsEvent<'_>) {
     let state = host.block_state_string(event.state).unwrap_or_default();
     let Some(id) = ids().into_iter().find(|id| state.starts_with(id)) else {
         return;
@@ -341,12 +338,7 @@ pub(crate) fn block_drops(
     }
 }
 
-pub(crate) fn cache_explosion_charge(
-    host: &dyn Host,
-    pos: [i32; 3],
-    id: &str,
-    nbt: &Compound,
-) {
+pub(crate) fn cache_explosion_charge(host: &dyn Host, pos: [i32; 3], id: &str, nbt: &Compound) {
     let Some(spec) = spec(id) else {
         return;
     };
@@ -355,8 +347,7 @@ pub(crate) fn cache_explosion_charge(
     let mut pending = EXPLOSION_CHARGES
         .lock()
         .unwrap_or_else(std::sync::PoisonError::into_inner);
-    pending
-        .retain(|_, (_, created)| created.elapsed().as_secs() < EXPLOSION_CHARGE_LIFETIME_SECS);
+    pending.retain(|_, (_, created)| created.elapsed().as_secs() < EXPLOSION_CHARGE_LIFETIME_SECS);
     if stored == 0 {
         pending.remove(&key);
     } else {

@@ -714,10 +714,7 @@ impl Hooks for Arcforge {
 
         for id in heat_cell::ids() {
             let mut cell = Block::new(id, "minecraft:iron_block");
-            cell.components = vec![(
-                "minecraft:max_stack_size".into(),
-                Some(Tag::Int(1)),
-            )];
+            cell.components = vec![("minecraft:max_stack_size".into(), Some(Tag::Int(1)))];
             cell.state_properties = [(
                 "heat".into(),
                 BlockStateProperty::Enum {
