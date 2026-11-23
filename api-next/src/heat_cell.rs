@@ -1,8 +1,8 @@
 //! Current-API heat cells and the first heat-network consumer path.
 
 use mod_api::{
-    BlockEntityTickEvent, BlockEntityTickReply, Component, Compound, Host, ItemStack, ServerHost,
-    Tag,
+    BlockEntityTickEvent, BlockEntityTickReply, Component, Compound, Host, HostTransaction,
+    ItemStack, ServerHost, Tag,
 };
 
 const WROUGHT: &str = "arcforge:wrought_heat_cell";
@@ -288,8 +288,11 @@ pub(crate) fn inventory_tick_capsule(
     } else {
         total - lost as f64
     };
+    let Some(player) = host.players().acting_player() else {
+        return;
+    };
     let place = mod_api::ItemPlace::PlayerSlot {
-        player: event.player,
+        player: player.uuid(),
         slot: event.slot,
     };
     let _ = host.transaction(|host, tx| {

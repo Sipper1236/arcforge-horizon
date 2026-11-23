@@ -845,9 +845,7 @@ impl Hooks for Arcforge {
 
         for id in heat_cell::capsule_ids() {
             let capsule = registrar.item_key(id);
-            registrar
-                .item_part(&capsule, ThermalCapsule)
-                .expect("Arcforge thermal-capsule item Part should register");
+            registrar.item_part(capsule, ThermalCapsule);
         }
 
         let controller = registrar.block_key(CONTROLLER);
