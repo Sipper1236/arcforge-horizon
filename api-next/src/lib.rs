@@ -239,6 +239,18 @@ impl BlockEntityPart for ThermoelectricPlant {
         thermoelectric::draw_screen(event);
     }
 
+    fn screen_click(
+        &self,
+        _: &dyn mod_api::ClientHost,
+        event: &mut mod_api::ScreenClickEvent<'_>,
+    ) -> Option<i32> {
+        thermoelectric::screen_click(event.at, event.right)
+    }
+
+    fn menu_button(&self, _: &mut dyn ServerHost, event: &mut mod_api::MenuButtonEvent<'_>) {
+        thermoelectric::select_redstone_mode(&mut event.entity.nbt, event.context.id);
+    }
+
     fn screen_tooltip(
         &self,
         _: &dyn mod_api::ClientHost,

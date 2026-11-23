@@ -9,6 +9,7 @@ const PLANT: &str = "arcforge:thermoelectric_plant";
 const SPEED_UPGRADE: &str = "arcforge:speed_upgrade";
 const HEAT_UPGRADE: &str = "arcforge:heat_upgrade";
 const THERMOELECTRIC_UPGRADE: &str = "arcforge:thermoelectric_upgrade";
+const REDSTONE_MODE_KEY: &str = "ThermoelectricRedstoneMode";
 
 const HEAT_CAPACITY: u64 = 20_000;
 const MAX_TEMPERATURE_C: u32 = 1_400;
@@ -60,6 +61,39 @@ impl PortMode {
             Self::None => "None",
             Self::Heat => "Heat",
             Self::Energy => "Energy",
+        }
+    }
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum RedstoneMode {
+    Ignore = 0,
+    High = 1,
+    Low = 2,
+}
+
+impl RedstoneMode {
+    fn from_value(value: i32) -> Self {
+        match value {
+            1 => Self::High,
+            2 => Self::Low,
+            _ => Self::Ignore,
+        }
+    }
+
+    fn label(self) -> &'static str {
+        match self {
+            Self::Ignore => "Ignore",
+            Self::High => "High",
+            Self::Low => "Low",
+        }
+    }
+
+    fn can_run(self, powered: bool) -> bool {
+        match self {
+            Self::Ignore => true,
+            Self::High => powered,
+            Self::Low => !powered,
         }
     }
 }
@@ -169,6 +203,10 @@ pub(crate) fn tick(host: &mut dyn ServerHost, event: &mut BlockEntityTickEvent<'
         event.entity.items.get(2).and_then(Option::as_ref),
         THERMOELECTRIC_UPGRADE,
     );
+    let redstone_mode = RedstoneMode::from_value(get_i32(&event.entity.nbt, REDSTONE_MODE_KEY));
+    let level = host.level(host.dimension());
+    let powered = level.is_some_and(|level| level.has_neighbor_signal(host, event.pos));
+    let enabled = redstone_mode.can_run(powered);
 
     let mut heat = super::heat_cell::HeatStore::new(
         HEAT_CAPACITY,
@@ -182,7 +220,7 @@ pub(crate) fn tick(host: &mut dyn ServerHost, event: &mut BlockEntityTickEvent<'
     let mut heat_used = 0_u64;
     let mut fe_generated = 0_u64;
 
-    if energy < FE_CAPACITY && heat.stored_hu() > 0 {
+    if enabled && energy < FE_CAPACITY && heat.stored_hu() > 0 {
         let wanted = div_ceil(throughput.saturating_mul(heat.stored_hu()), HEAT_CAPACITY);
         let wanted_fe = (wanted as f64 * efficiency) as u64;
         let room = FE_CAPACITY.saturating_sub(energy);
@@ -196,7 +234,6 @@ pub(crate) fn tick(host: &mut dyn ServerHost, event: &mut BlockEntityTickEvent<'
         energy = energy.saturating_add(fe_generated).min(FE_CAPACITY);
     }
 
-    let level = host.level(host.dimension());
     if let Some(level) = level {
         let transferred = transfer_energy(host, level, event.pos, &event.entity.nbt, energy);
         energy = energy.saturating_sub(transferred);
@@ -230,6 +267,11 @@ pub(crate) fn tick(host: &mut dyn ServerHost, event: &mut BlockEntityTickEvent<'
     );
     changed |= set_i32(
         &mut event.entity.nbt,
+        REDSTONE_MODE_KEY,
+        redstone_mode as i32,
+    );
+    changed |= set_i32(
+        &mut event.entity.nbt,
         "ThermoelectricEfficiencyPercent",
         (efficiency * 100.0).round().min(i32::MAX as f64) as i32,
     );
@@ -239,7 +281,7 @@ pub(crate) fn tick(host: &mut dyn ServerHost, event: &mut BlockEntityTickEvent<'
         if fe_generated > 0 { "true" } else { "false" },
     );
 
-    let mut data = [0_i32; 17];
+    let mut data = [0_i32; 18];
     data[0] = (heat.stored_hu() / 10).min(i32::MAX as u64) as i32;
     data[1] = (HEAT_CAPACITY / 10) as i32;
     data[2] = heat.temperature_c().min(i32::MAX as u32) as i32;
@@ -254,6 +296,7 @@ pub(crate) fn tick(host: &mut dyn ServerHost, event: &mut BlockEntityTickEvent<'
     for index in 0..6 {
         data[11 + index] = port_mode(host, level, event.pos, &event.entity.nbt, index) as i32;
     }
+    data[17] = redstone_mode as i32;
     if event.entity.data.as_slice() != data.as_slice() {
         event.entity.data = data.into();
         changed = true;
@@ -378,6 +421,7 @@ pub(crate) fn draw_screen(event: &mut mod_api::ScreenDrawEvent<'_>) {
     let ports = (0..6)
         .map(|index| PortMode::from_value(data.get(11 + index).copied().unwrap_or_default()))
         .collect::<Vec<_>>();
+    let redstone_mode = RedstoneMode::from_value(data.get(17).copied().unwrap_or_default());
     let draw = &mut *event.draw;
     draw.text(
         "Thermoelectric Plant",
@@ -454,13 +498,53 @@ pub(crate) fn draw_screen(event: &mut mod_api::ScreenDrawEvent<'_>) {
         0xFFBBBBBB,
         true,
     );
+    draw.text("Redstone:", [ox + 8.0, oy + 141.0], 0xFFBBBBBB, true);
+    for (mode, x, width) in [
+        (RedstoneMode::Ignore, 62.0, 35.0),
+        (RedstoneMode::High, 99.0, 28.0),
+        (RedstoneMode::Low, 129.0, 27.0),
+    ] {
+        let selected = mode == redstone_mode;
+        draw.fill(
+            [ox + x, oy + 138.0, width, 12.0],
+            if selected { 0xFF526A7A } else { 0xFF343434 },
+        );
+        draw.text(mode.label(), [ox + x + 3.0, oy + 140.0], 0xFFFFFFFF, true);
+    }
     draw.text("Speed", [ox + 40.0, oy + 154.0], 0xFFBBBBBB, true);
     draw.text("Heat", [ox + 80.0, oy + 154.0], 0xFFBBBBBB, true);
     draw.text("Efficiency", [ox + 120.0, oy + 154.0], 0xFFBBBBBB, true);
 }
 
+pub(crate) fn screen_click(at: [f32; 2], right: bool) -> Option<i32> {
+    if right || !(138.0..150.0).contains(&at[1]) {
+        return None;
+    }
+    if (62.0..97.0).contains(&at[0]) {
+        Some(RedstoneMode::Ignore as i32)
+    } else if (99.0..127.0).contains(&at[0]) {
+        Some(RedstoneMode::High as i32)
+    } else if (129.0..156.0).contains(&at[0]) {
+        Some(RedstoneMode::Low as i32)
+    } else {
+        None
+    }
+}
+
+pub(crate) fn select_redstone_mode(nbt: &mut Compound, button: i32) {
+    if (0..=2).contains(&button) {
+        let _ = set_i32(
+            nbt,
+            REDSTONE_MODE_KEY,
+            RedstoneMode::from_value(button) as i32,
+        );
+    }
+}
+
 pub(crate) fn screen_tooltip(at: [f32; 2], lines: &mut Vec<String>) {
-    if (33.0..41.0).contains(&at[1]) && (8.0..168.0).contains(&at[0]) {
+    if screen_click(at, false).is_some() {
+        lines.push("Select Ignore, High, or Low redstone control".to_owned());
+    } else if (33.0..41.0).contains(&at[1]) && (8.0..168.0).contains(&at[0]) {
         lines.push("Stored heat HU / capacity".to_owned());
     } else if (87.0..95.0).contains(&at[1]) && (8.0..168.0).contains(&at[0]) {
         lines.push("Stored Forge Energy / capacity".to_owned());
