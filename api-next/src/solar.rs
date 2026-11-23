@@ -13,7 +13,9 @@ const HEIGHT: i32 = 4;
 const HEAT_CAPACITY: u64 = 16_000;
 const MAX_TEMPERATURE_C: u32 = 1_100;
 const SCAN_INTERVAL_TICKS: i32 = 40;
+const REDSTONE_CHECK_INTERVAL_TICKS: i64 = 10;
 const COOLING_SHARE: u64 = 200;
+const REDSTONE_MODE_KEY: &str = "SolarRedstoneMode";
 const DIRECTIONS: [(&str, [i32; 3]); 6] = [
     ("up", [0, 1, 0]),
     ("down", [0, -1, 0]),
@@ -22,6 +24,39 @@ const DIRECTIONS: [(&str, [i32; 3]); 6] = [
     ("west", [-1, 0, 0]),
     ("east", [1, 0, 0]),
 ];
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum RedstoneMode {
+    Ignore = 0,
+    High = 1,
+    Low = 2,
+}
+
+impl RedstoneMode {
+    fn from_value(value: i32) -> Self {
+        match value {
+            1 => Self::High,
+            2 => Self::Low,
+            _ => Self::Ignore,
+        }
+    }
+
+    fn label(self) -> &'static str {
+        match self {
+            Self::Ignore => "Ignore",
+            Self::High => "High",
+            Self::Low => "Low",
+        }
+    }
+
+    fn can_run(self, powered: bool) -> bool {
+        match self {
+            Self::Ignore => true,
+            Self::High => powered,
+            Self::Low => !powered,
+        }
+    }
+}
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) struct Tower {
@@ -533,16 +568,31 @@ pub(crate) fn tick(host: &mut dyn ServerHost, event: &mut BlockEntityTickEvent<'
         has_sky,
     );
 
+    let redstone_mode = RedstoneMode::from_value(get_i32(&event.entity.nbt, REDSTONE_MODE_KEY));
+    changed |= set_i32(
+        &mut event.entity.nbt,
+        REDSTONE_MODE_KEY,
+        redstone_mode as i32,
+    );
+    let time = level.game_time(host).unwrap_or_default();
+    let mut powered = get_i32(&event.entity.nbt, "SolarPowered") != 0;
+    if time % REDSTONE_CHECK_INTERVAL_TICKS == 0 {
+        powered = tower.is_some_and(|tower| {
+            tower
+                .positions()
+                .any(|pos| level.has_neighbor_signal(host, pos))
+        });
+        changed |= set_i32(&mut event.entity.nbt, "SolarPowered", bool_i32(powered));
+    }
+    let enabled = redstone_mode.can_run(powered);
+    let heat_per_tick = if enabled { result.heat_per_tick } else { 0 };
+
     let safe_temperature = result.temperature.min(MAX_TEMPERATURE_C);
     let temperature_limit = heat_at_temperature(HEAT_CAPACITY, MAX_TEMPERATURE_C, safe_temperature);
-    if result.heat_per_tick > 0 && heat.stored_hu() < temperature_limit {
-        heat.add_hu(
-            result
-                .heat_per_tick
-                .min(temperature_limit - heat.stored_hu()),
-        );
+    if heat_per_tick > 0 && heat.stored_hu() < temperature_limit {
+        heat.add_hu(heat_per_tick.min(temperature_limit - heat.stored_hu()));
     }
-    heat.set_source_temperature(if result.heat_per_tick > 0 {
+    heat.set_source_temperature(if heat_per_tick > 0 {
         safe_temperature
     } else {
         20
@@ -558,10 +608,10 @@ pub(crate) fn tick(host: &mut dyn ServerHost, event: &mut BlockEntityTickEvent<'
             tower,
             &event.entity.nbt,
             &mut heat,
-            result.heat_per_tick,
+            heat_per_tick,
         );
     }
-    let lit = tower.is_some() && result.heat_per_tick > 0;
+    let lit = tower.is_some() && heat_per_tick > 0;
     changed |= host.set_block_property(event.pos, "lit", if lit { "true" } else { "false" });
 
     changed |= set_i32(
@@ -577,7 +627,7 @@ pub(crate) fn tick(host: &mut dyn ServerHost, event: &mut BlockEntityTickEvent<'
     changed |= set_i32(
         &mut event.entity.nbt,
         "HeatPerTick",
-        result.heat_per_tick.min(i32::MAX as u64) as i32,
+        heat_per_tick.min(i32::MAX as u64) as i32,
     );
     changed |= set_i32(&mut event.entity.nbt, "SkyCollectors", sky_count as i32);
     changed |= set_i32(&mut event.entity.nbt, "Stowed", bool_i32(result.stowed));
@@ -593,13 +643,15 @@ pub(crate) fn tick(host: &mut dyn ServerHost, event: &mut BlockEntityTickEvent<'
         (heat.stored_hu() / 10).min(i16::MAX as u64) as i32,
         (HEAT_CAPACITY / 10) as i32,
         heat.temperature_c().min(i16::MAX as u32) as i32,
-        result.heat_per_tick.min(i16::MAX as u64) as i32,
+        heat_per_tick.min(i16::MAX as u64) as i32,
         safe_temperature.min(i16::MAX as u32) as i32,
         sky_count as i32,
         bool_i32(result.stowed),
         bool_i32(tower.is_some()),
         weather_index,
         axis,
+        redstone_mode as i32,
+        bool_i32(enabled),
     ];
     if event.entity.data.as_slice() != data.as_slice() {
         event.entity.data = data.into();
@@ -686,6 +738,8 @@ pub(crate) fn draw_screen(event: &mut mod_api::ScreenDrawEvent<'_>) {
     } else {
         "East/West"
     };
+    let redstone_mode = RedstoneMode::from_value(data.get(10).copied().unwrap_or_default());
+    let enabled = data.get(11).copied().unwrap_or(1) != 0;
     let draw = &mut *event.draw;
     draw.text(
         "Solar Thermal Array",
@@ -758,9 +812,62 @@ pub(crate) fn draw_screen(event: &mut mod_api::ScreenDrawEvent<'_>) {
         0xFFBBBBBB,
         true,
     );
+    draw.text("Redstone:", [ox + 8.0, oy + 141.0], 0xFFBBBBBB, true);
+    for (mode, x, width) in [
+        (RedstoneMode::Ignore, 62.0, 35.0),
+        (RedstoneMode::High, 99.0, 28.0),
+        (RedstoneMode::Low, 129.0, 27.0),
+    ] {
+        draw.fill(
+            [ox + x, oy + 138.0, width, 12.0],
+            if mode == redstone_mode {
+                0xFF526A7A
+            } else {
+                0xFF343434
+            },
+        );
+        draw.text(mode.label(), [ox + x + 3.0, oy + 140.0], 0xFFFFFFFF, true);
+    }
+    if formed && !enabled {
+        draw.text(
+            "Paused by redstone",
+            [ox + 8.0, oy + 155.0],
+            0xFFFF7777,
+            true,
+        );
+    }
 }
 
-pub(crate) fn screen_tooltip(_at: [f32; 2], _lines: &mut Vec<String>) {}
+pub(crate) fn screen_click(at: [f32; 2], right: bool) -> Option<i32> {
+    if right || !(138.0..150.0).contains(&at[1]) {
+        return None;
+    }
+    if (62.0..97.0).contains(&at[0]) {
+        Some(RedstoneMode::Ignore as i32)
+    } else if (99.0..127.0).contains(&at[0]) {
+        Some(RedstoneMode::High as i32)
+    } else if (129.0..156.0).contains(&at[0]) {
+        Some(RedstoneMode::Low as i32)
+    } else {
+        None
+    }
+}
+
+pub(crate) fn select_redstone_mode(nbt: &mut Compound, button: i32) {
+    if (0..=2).contains(&button) {
+        let _ = set_i32(
+            nbt,
+            REDSTONE_MODE_KEY,
+            RedstoneMode::from_value(button) as i32,
+        );
+    }
+}
+
+pub(crate) fn screen_tooltip(at: [f32; 2], lines: &mut Vec<String>) {
+    if screen_click(at, false).is_some() {
+        lines.push("Select Ignore, High, or Low redstone control".to_owned());
+    }
+}
 
 fn heat_at_temperature(capacity: u64, maximum: u32, temperature: u32) -> u64 {
     capacity.saturating_mul(u64::from(temperature.saturating_sub(20)))
