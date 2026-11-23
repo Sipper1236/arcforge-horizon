@@ -10,7 +10,7 @@ use mod_api::{
     MenuPart, MenuSlotRulesEvent, ModContainer, ModFluidTanks, Registrar, RegistrationContext,
     ServerHost,
 };
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 mod cracking_unit;
 mod firebox;
@@ -343,7 +343,7 @@ impl Hooks for Arcforge {
 
         let faces = ["up", "down", "north", "south", "west", "east"];
         let mut solar_controller = Block::new(SOLAR_CONTROLLER, "minecraft:blast_furnace");
-        let mut controller_properties: HashMap<String, BlockStateProperty> = [
+        let mut controller_properties: BTreeMap<String, BlockStateProperty> = [
             (
                 "facing".into(),
                 BlockStateProperty::Enum {
@@ -358,7 +358,7 @@ impl Hooks for Arcforge {
             ("base".into(), BlockStateProperty::Boolean),
         ]
         .into();
-        let mut controller_defaults: HashMap<String, String> = [
+        let mut controller_defaults: BTreeMap<String, String> = [
             ("facing".into(), "north".into()),
             ("lit".into(), "false".into()),
             ("formed".into(), "false".into()),
@@ -374,7 +374,7 @@ impl Hooks for Arcforge {
         event.blocks.push(solar_controller);
 
         let mut solar_casing = Block::new(SOLAR_CASING, "minecraft:stone");
-        let mut casing_properties: HashMap<String, BlockStateProperty> = [
+        let mut casing_properties: BTreeMap<String, BlockStateProperty> = [
             ("formed".into(), BlockStateProperty::Boolean),
             (
                 "part".into(),
@@ -387,7 +387,7 @@ impl Hooks for Arcforge {
             ),
         ]
         .into();
-        let mut casing_defaults: HashMap<String, String> = [
+        let mut casing_defaults: BTreeMap<String, String> = [
             ("formed".into(), "false".into()),
             ("part".into(), "none".into()),
         ]
@@ -401,9 +401,9 @@ impl Hooks for Arcforge {
         event.blocks.push(solar_casing);
 
         let mut solar_collector = Block::new(SOLAR_COLLECTOR, "minecraft:glass");
-        let mut collector_properties: HashMap<String, BlockStateProperty> =
+        let mut collector_properties: BTreeMap<String, BlockStateProperty> =
             [("formed".into(), BlockStateProperty::Boolean)].into();
-        let mut collector_defaults: HashMap<String, String> =
+        let mut collector_defaults: BTreeMap<String, String> =
             [("formed".into(), "false".into())].into();
         for face in faces {
             collector_properties.insert(format!("port_{face}"), BlockStateProperty::Boolean);

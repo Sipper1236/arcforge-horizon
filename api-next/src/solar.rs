@@ -82,7 +82,7 @@ pub(crate) fn controller_for_part(
                 let Some(entity) = host.block_entity(level, controller) else {
                     continue;
                 };
-                if entity.id != CONTROLLER {
+                if entity.kind(host).map(|kind| kind.id(host)).as_deref() != Some(CONTROLLER) {
                     continue;
                 }
                 let Some(nbt) = entity.data(host) else {
@@ -285,7 +285,7 @@ pub(crate) fn unform_near(host: &mut dyn ServerHost, level: mod_api::LevelRef, b
                 let Some(entity) = host.block_entity(level, controller) else {
                     continue;
                 };
-                if entity.id != CONTROLLER {
+                if entity.kind(&*host).map(|kind| kind.id(&*host)).as_deref() != Some(CONTROLLER) {
                     continue;
                 }
                 let Some(nbt) = entity.data(&*host) else {
@@ -476,11 +476,11 @@ pub(crate) fn tick(host: &mut dyn ServerHost, event: &mut BlockEntityTickEvent<'
         let found = if faces_in { None } else { found };
         if found != previous {
             if let Some(old) = previous {
-                changed |= set_formed(host, old, event.pos, false);
+                set_formed(host, old, event.pos, false);
             }
             if let Some(found) = found {
-                changed |= set_formed(host, found, event.pos, true);
-                changed |= sync_port_properties(host, found, &event.entity.nbt);
+                set_formed(host, found, event.pos, true);
+                sync_port_properties(host, found, &event.entity.nbt);
             }
             write_tower(&mut event.entity.nbt, found);
             changed = true;
