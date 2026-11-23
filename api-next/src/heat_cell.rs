@@ -654,25 +654,12 @@ pub(crate) fn tick(host: &mut dyn ServerHost, event: &mut BlockEntityTickEvent<'
             ];
             let before = heat.stored_hu();
             let input_face = opposite_face_index(direction_index);
-            let mut moved = accept_heat(
-                host,
-                level,
-                neighbor,
-                input_face,
-                &mut heat,
-                budget,
-            );
+            let mut moved = accept_heat(host, level, neighbor, input_face, &mut heat, budget);
             let remaining = budget.saturating_sub(moved);
             moved += super::cracking_unit::accept_heat(host, level, neighbor, &mut heat, remaining);
             let remaining = budget.saturating_sub(moved);
-            moved += super::thermal::accept_heat(
-                host,
-                level,
-                neighbor,
-                event.pos,
-                &mut heat,
-                remaining,
-            );
+            moved +=
+                super::thermal::accept_heat(host, level, neighbor, event.pos, &mut heat, remaining);
             let remaining = budget.saturating_sub(moved);
             moved += super::thermoelectric::accept_heat(
                 host,

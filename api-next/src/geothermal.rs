@@ -599,8 +599,7 @@ fn transfer_heat(
             super::heat_cell::opposite_face_index(index),
             heat,
             limit,
-        )
-            + super::cracking_unit::accept_heat(host, level, neighbor, heat, limit)
+        ) + super::cracking_unit::accept_heat(host, level, neighbor, heat, limit)
             + super::thermal::accept_heat(host, level, neighbor, pos, heat, limit)
             + super::thermoelectric::accept_heat(
                 host,
