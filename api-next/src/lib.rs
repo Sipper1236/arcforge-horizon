@@ -267,7 +267,13 @@ impl MenuPart for GeothermalPlant {
 }
 
 #[mod_api::horizon_part]
-impl MenuPart for SolarThermalArray {}
+impl MenuPart for SolarThermalArray {
+    fn menu_slot_rules(&self, _: &dyn Host, event: &mut MenuSlotRulesEvent<'_>) {
+        if event.container == MenuContainer::Main && event.slot == 0 {
+            event.may_place = false;
+        }
+    }
+}
 
 #[mod_api::horizon_mod]
 impl Hooks for Arcforge {
@@ -672,7 +678,7 @@ impl Hooks for Arcforge {
         registrar.block_container(
             &solar_key,
             ModContainer {
-                slots: 0,
+                slots: 1,
                 faces: std::array::from_fn(|_| Vec::new()),
                 inputs: vec![],
                 outputs: vec![],
