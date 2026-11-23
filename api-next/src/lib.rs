@@ -7,8 +7,8 @@
 use mod_api::{
     Block, BlockEntityPart, BlockEntityTickEvent, BlockEntityTicksEvent, BlockKey, BlockPart,
     BlockStateProperty, Flow, Hooks, Host, HostSide, InteractionResult, Item, MenuContainer,
-    MenuPart, MenuSlotRulesEvent, ModContainer, ModFluidTanks, Registrar, RegistrationContext,
-    ServerHost,
+    MenuPart, MenuSlotRulesEvent, ModContainer, ModEnergyBuffer, ModFluidTanks, Registrar,
+    RegistrationContext, ServerHost,
 };
 use std::collections::BTreeMap;
 
@@ -17,12 +17,14 @@ mod firebox;
 mod geothermal;
 mod heat_cell;
 mod solar;
+mod thermoelectric;
 
 const CONTROLLER: &str = "arcforge:cracking_unit_controller";
 const CASING: &str = "arcforge:cracking_unit_casing";
 const CATALYST: &str = "arcforge:cracking_catalyst";
 const SPEED_UPGRADE: &str = "arcforge:speed_upgrade";
 const HEAT_UPGRADE: &str = "arcforge:heat_upgrade";
+const THERMOELECTRIC_UPGRADE: &str = "arcforge:thermoelectric_upgrade";
 const WRENCH: &str = "arcforge:wrench";
 const MACHINE_MENU: &str = "arcforge:cracking_unit";
 const FIREBOX: &str = "arcforge:firebox";
@@ -33,6 +35,8 @@ const SOLAR_CONTROLLER: &str = solar::CONTROLLER;
 const SOLAR_CASING: &str = solar::CASING;
 const SOLAR_COLLECTOR: &str = solar::COLLECTOR;
 const SOLAR_MENU: &str = "arcforge:solar_thermal_array";
+const THERMOELECTRIC_PLANT: &str = "arcforge:thermoelectric_plant";
+const THERMOELECTRIC_MENU: &str = "arcforge:thermoelectric_plant";
 const BIO_COAL: &str = "arcforge:bio_coal";
 const BIO_COAL_BLOCK: &str = "arcforge:bio_coal_block";
 const WOOD_ASH: &str = "arcforge:wood_ash";
@@ -55,6 +59,8 @@ struct GeothermalPlant;
 
 struct SolarThermalArray;
 
+struct ThermoelectricPlant;
+
 #[mod_api::horizon_part]
 impl BlockPart for HeatCell {}
 
@@ -66,6 +72,9 @@ impl BlockPart for GeothermalPlant {}
 
 #[mod_api::horizon_part]
 impl BlockPart for SolarThermalArray {}
+
+#[mod_api::horizon_part]
+impl BlockPart for ThermoelectricPlant {}
 
 #[mod_api::horizon_part]
 impl BlockPart for CrackingUnit {}
@@ -202,6 +211,33 @@ impl BlockEntityPart for SolarThermalArray {
 }
 
 #[mod_api::horizon_part]
+impl BlockEntityPart for ThermoelectricPlant {
+    fn screen(&self, _: &dyn Host, _: &mut mod_api::ScreenEvent<'_>) -> Option<mod_api::Screen> {
+        Some(thermoelectric::screen())
+    }
+
+    fn screen_draw(&self, _: &dyn mod_api::ClientHost, event: &mut mod_api::ScreenDrawEvent<'_>) {
+        thermoelectric::draw_screen(event);
+    }
+
+    fn screen_tooltip(
+        &self,
+        _: &dyn mod_api::ClientHost,
+        event: &mut mod_api::ScreenTooltipEvent<'_>,
+    ) {
+        thermoelectric::screen_tooltip(event.at, event.lines);
+    }
+
+    fn block_entity_ticks(&self, _: &dyn Host, event: &mut BlockEntityTicksEvent<'_>) {
+        event.ticks = true;
+    }
+
+    fn block_entity_tick(&self, host: &mut dyn ServerHost, event: &mut BlockEntityTickEvent<'_>) {
+        thermoelectric::tick(host, event);
+    }
+}
+
+#[mod_api::horizon_part]
 impl MenuPart for CrackingUnit {
     fn menu_slot_rules(&self, host: &dyn Host, event: &mut MenuSlotRulesEvent<'_>) {
         if event.container != MenuContainer::Main {
@@ -263,6 +299,24 @@ impl MenuPart for GeothermalPlant {
             }
             _ => event.may_place = false,
         }
+    }
+}
+
+#[mod_api::horizon_part]
+impl MenuPart for ThermoelectricPlant {
+    fn menu_slot_rules(&self, host: &dyn Host, event: &mut MenuSlotRulesEvent<'_>) {
+        if event.container != MenuContainer::Main {
+            return;
+        }
+        event.max_stack = 8;
+        let item = event.stack.item().id(host);
+        let expected = match event.slot {
+            0 => SPEED_UPGRADE,
+            1 => HEAT_UPGRADE,
+            2 => THERMOELECTRIC_UPGRADE,
+            _ => return,
+        };
+        event.may_place &= item == expected;
     }
 }
 
@@ -346,6 +400,27 @@ impl Hooks for Arcforge {
         ]
         .into();
         event.blocks.push(geothermal);
+
+        let mut thermoelectric = Block::new(THERMOELECTRIC_PLANT, "minecraft:blast_furnace");
+        thermoelectric.state_properties = [
+            (
+                "facing".into(),
+                BlockStateProperty::Enum {
+                    values: ["north", "east", "south", "west"]
+                        .into_iter()
+                        .map(str::to_owned)
+                        .collect(),
+                },
+            ),
+            ("lit".into(), BlockStateProperty::Boolean),
+        ]
+        .into();
+        thermoelectric.default_state = [
+            ("facing".into(), "north".into()),
+            ("lit".into(), "false".into()),
+        ]
+        .into();
+        event.blocks.push(thermoelectric);
 
         let faces = ["up", "down", "north", "south", "west", "east"];
         let mut solar_controller = Block::new(SOLAR_CONTROLLER, "minecraft:blast_furnace");
@@ -450,6 +525,9 @@ impl Hooks for Arcforge {
         event
             .items
             .push(Item::new(HEAT_UPGRADE, "minecraft:magma_cream"));
+        event
+            .items
+            .push(Item::new(THERMOELECTRIC_UPGRADE, "minecraft:lightning_rod"));
         let mut wrench = Item::new(WRENCH, "minecraft:iron_pickaxe");
         wrench.max_stack_size = Some(1);
         event.items.push(wrench);
@@ -482,6 +560,7 @@ impl Hooks for Arcforge {
             id == CONTROLLER
                 || id == FIREBOX
                 || id == GEOTHERMAL_PLANT
+                || id == THERMOELECTRIC_PLANT
                 || id == SOLAR_CONTROLLER
                 || id == SOLAR_CASING
                 || id == SOLAR_COLLECTOR
@@ -507,6 +586,13 @@ impl Hooks for Arcforge {
                         event.click.player,
                     ),
                     Some(GEOTHERMAL_PLANT) => geothermal::wrench(
+                        host,
+                        level,
+                        event.click.pos,
+                        event.click.hit.face,
+                        event.click.player,
+                    ),
+                    Some(THERMOELECTRIC_PLANT) => thermoelectric::wrench(
                         host,
                         level,
                         event.click.pos,
@@ -584,6 +670,38 @@ impl Hooks for Arcforge {
         registrar
             .block_entity_part(&geothermal, GeothermalPlant)
             .expect("Arcforge's Geothermal Plant block-entity Part should register");
+
+        let thermoelectric_key = registrar.block_key(THERMOELECTRIC_PLANT);
+        let thermoelectric = registrar
+            .block_entity_type("thermoelectric_plant")
+            .blocks(&["thermoelectric_plant"])
+            .build();
+        registrar
+            .block_entity_part(&thermoelectric, ThermoelectricPlant)
+            .expect("Arcforge's Thermoelectric Plant block-entity Part should register");
+        registrar.block_container(
+            &thermoelectric_key,
+            ModContainer {
+                slots: 3,
+                faces: std::array::from_fn(|_| vec![0, 1, 2]),
+                inputs: vec![0, 1, 2],
+                outputs: vec![],
+                menu: Some(THERMOELECTRIC_MENU.into()),
+            },
+        );
+        registrar.block_energy(
+            &thermoelectric_key,
+            ModEnergyBuffer {
+                capacity: thermoelectric::FE_CAPACITY as i32,
+                max_insert: 0,
+                max_extract: thermoelectric::MAX_FE_OUTPUT as i32,
+                insert_faces: [false; 6],
+                // The current storage declaration has static faces; Wrench-selected ports still
+                // govern the plant's scripted adjacent transfer.
+                extract_faces: [true; 6],
+            },
+        );
+        registrar.menu_part(THERMOELECTRIC_MENU, ThermoelectricPlant);
 
         registrar.block_container(
             &controller,

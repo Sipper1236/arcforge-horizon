@@ -622,7 +622,7 @@ fn transfer_heat_ports(
     let rate = heat_per_tick.max(100);
     let mut changed = false;
     for part in tower.positions() {
-        for (face, offset) in DIRECTIONS {
+        for (face_index, (face, offset)) in DIRECTIONS.into_iter().enumerate() {
             if heat.temperature_c() <= 20 || heat.stored_hu() == 0 {
                 return changed;
             }
@@ -638,7 +638,15 @@ fn transfer_heat_ports(
                 continue;
             }
             let moved = super::heat_cell::accept_heat(host, level, neighbor, heat, rate)
-                + super::cracking_unit::accept_heat(host, level, neighbor, heat, rate);
+                + super::cracking_unit::accept_heat(host, level, neighbor, heat, rate)
+                + super::thermoelectric::accept_heat(
+                    host,
+                    level,
+                    neighbor,
+                    super::thermoelectric::opposite_face_index(face_index),
+                    heat,
+                    rate,
+                );
             changed |= moved > 0;
         }
     }

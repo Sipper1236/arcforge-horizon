@@ -224,14 +224,23 @@ pub(crate) fn tick(host: &mut dyn ServerHost, event: &mut BlockEntityTickEvent<'
         if budget == 0 || heat.stored_hu() == 0 || heat.temperature_c() <= 20 {
             break;
         }
-        let offset = DIRECTIONS[(start + index) % DIRECTIONS.len()];
+        let direction_index = (start + index) % DIRECTIONS.len();
+        let offset = DIRECTIONS[direction_index];
         let neighbor = [
             event.pos[0] + offset[0],
             event.pos[1] + offset[1],
             event.pos[2] + offset[2],
         ];
         let before = heat.stored_hu();
-        let moved = super::cracking_unit::accept_heat(host, level, neighbor, &mut heat, budget);
+        let moved = super::cracking_unit::accept_heat(host, level, neighbor, &mut heat, budget)
+            + super::thermoelectric::accept_heat(
+                host,
+                level,
+                neighbor,
+                super::thermoelectric::opposite_face_index(direction_index),
+                &mut heat,
+                budget,
+            );
         output_used = output_used.saturating_add(moved);
         changed |= before != heat.stored_hu();
     }
