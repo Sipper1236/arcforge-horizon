@@ -71,7 +71,22 @@ struct ThermoelectricPlant;
 impl BlockPart for HeatCell {}
 
 #[mod_api::horizon_part]
-impl MenuPart for HeatCell {}
+impl MenuPart for HeatCell {
+    fn menu_slot_rules(&self, host: &dyn Host, event: &mut MenuSlotRulesEvent<'_>) {
+        if event.container != MenuContainer::Main {
+            return;
+        }
+        let item = event.stack.item().id(host);
+        match event.slot {
+            0 | 1 => event.may_place &= heat_cell::is_capsule(&item),
+            2 => {
+                event.max_stack = 8;
+                event.may_place &= item == heat_cell::INSULATION_UPGRADE;
+            }
+            _ => event.may_place = false,
+        }
+    }
+}
 
 #[mod_api::horizon_part]
 impl BlockPart for Firebox {}
@@ -681,6 +696,14 @@ impl Hooks for Arcforge {
         event.items.push(Item::new(CATALYST, "minecraft:clay_ball"));
         event.items.push(Item::new(BIO_COAL, "minecraft:coal"));
         event.items.push(Item::new(WOOD_ASH, "minecraft:bone_meal"));
+        for id in heat_cell::capsule_ids() {
+            let mut capsule = Item::new(id, "minecraft:fire_charge");
+            capsule.max_stack_size = Some(1);
+            event.items.push(capsule);
+        }
+        let mut insulation = Item::new(heat_cell::INSULATION_UPGRADE, "minecraft:white_wool");
+        insulation.max_stack_size = Some(8);
+        event.items.push(insulation);
         event
             .items
             .push(Item::new(SPEED_UPGRADE, "minecraft:sugar"));
@@ -830,10 +853,10 @@ impl Hooks for Arcforge {
             registrar.block_container(
                 &heat_cell_key,
                 ModContainer {
-                    slots: 1,
-                    faces: std::array::from_fn(|_| Vec::new()),
-                    inputs: vec![],
-                    outputs: vec![],
+                    slots: 3,
+                    faces: std::array::from_fn(|_| vec![0, 1]),
+                    inputs: vec![0],
+                    outputs: vec![1],
                     menu: Some(HEAT_CELL_MENU.into()),
                 },
             );

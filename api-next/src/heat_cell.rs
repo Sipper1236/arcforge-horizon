@@ -1,12 +1,26 @@
 //! Current-API heat cells and the first heat-network consumer path.
 
-use mod_api::{BlockEntityTickEvent, BlockEntityTickReply, Compound, ServerHost, Tag};
+use mod_api::{
+    BlockEntityTickEvent, BlockEntityTickReply, Component, Compound, Host, ItemStack, ServerHost,
+    Tag,
+};
 
 const WROUGHT: &str = "arcforge:wrought_heat_cell";
 const TEMPERED: &str = "arcforge:tempered_heat_cell";
 const HARDENED: &str = "arcforge:hardened_heat_cell";
 const ARCFORGED: &str = "arcforge:arcforged_heat_cell";
+const WROUGHT_CAPSULE: &str = "arcforge:wrought_thermal_capsule";
+const TEMPERED_CAPSULE: &str = "arcforge:tempered_thermal_capsule";
+const HARDENED_CAPSULE: &str = "arcforge:hardened_thermal_capsule";
+const ARCFORGED_CAPSULE: &str = "arcforge:arcforged_thermal_capsule";
+pub(crate) const INSULATION_UPGRADE: &str = "arcforge:insulation_upgrade";
 const REDSTONE_MODE_KEY: &str = "redstone_mode";
+const INPUT_SLOT: usize = 0;
+const OUTPUT_SLOT: usize = 1;
+const INSULATION_SLOT: usize = 2;
+const MAX_INSULATION: u32 = 8;
+const INPUT_TICK_KEY: &str = "HeatCellInputTick";
+const INPUT_USED_KEY: &str = "HeatCellInputUsed";
 
 const DIRECTIONS: [[i32; 3]; 6] = [
     [0, 1, 0],
@@ -16,6 +30,29 @@ const DIRECTIONS: [[i32; 3]; 6] = [
     [-1, 0, 0],
     [1, 0, 0],
 ];
+
+struct HeatItemData;
+
+impl Component for HeatItemData {
+    type Value = Compound;
+
+    fn id(&self) -> &str {
+        "minecraft:custom_data"
+    }
+
+    fn decode(&self, value: &Tag) -> Option<Self::Value> {
+        match value {
+            Tag::Compound(data) => Some(data.clone()),
+            _ => None,
+        }
+    }
+
+    fn encode(&self, value: Self::Value) -> Tag {
+        Tag::Compound(value)
+    }
+}
+
+const HEAT_ITEM_DATA: HeatItemData = HeatItemData;
 
 #[derive(Clone, Copy)]
 struct Spec {
@@ -138,6 +175,63 @@ pub(crate) fn ids() -> [&'static str; 4] {
     [WROUGHT, TEMPERED, HARDENED, ARCFORGED]
 }
 
+pub(crate) fn capsule_ids() -> [&'static str; 4] {
+    [
+        WROUGHT_CAPSULE,
+        TEMPERED_CAPSULE,
+        HARDENED_CAPSULE,
+        ARCFORGED_CAPSULE,
+    ]
+}
+
+pub(crate) fn is_capsule(id: &str) -> bool {
+    capsule_ids().contains(&id)
+}
+
+fn capsule_spec(id: &str) -> Option<Spec> {
+    match id {
+        WROUGHT_CAPSULE => spec(WROUGHT),
+        TEMPERED_CAPSULE => spec(TEMPERED),
+        HARDENED_CAPSULE => spec(HARDENED),
+        ARCFORGED_CAPSULE => spec(ARCFORGED),
+        _ => None,
+    }
+}
+
+fn item_heat(stack: &ItemStack, spec: Spec) -> u64 {
+    let Some(data) = stack.get(&HEAT_ITEM_DATA) else {
+        return 0;
+    };
+    match data.get(&"horizon_heat".into()) {
+        Some(Tag::Int(amount)) => (*amount).max(0) as u64,
+        _ => 0,
+    }
+    .min(spec.capacity)
+}
+
+fn set_item_heat(stack: &mut ItemStack, amount: u64) -> bool {
+    let mut data = stack.get(&HEAT_ITEM_DATA).unwrap_or_default();
+    let key = "horizon_heat".into();
+    if amount == 0 {
+        data.remove(&key);
+        if data.is_empty() {
+            stack.remove(&HEAT_ITEM_DATA);
+            return true;
+        }
+    } else {
+        data.insert(key, Tag::Int(amount.min(i32::MAX as u64) as i32));
+    }
+    stack.set(&HEAT_ITEM_DATA, data).is_ok()
+}
+
+fn insulation_count(host: &dyn Host, items: &[Option<ItemStack>]) -> u32 {
+    items
+        .get(INSULATION_SLOT)
+        .and_then(Option::as_ref)
+        .filter(|stack| stack.item().id(host) == INSULATION_UPGRADE)
+        .map_or(0, |stack| stack.count().min(MAX_INSULATION))
+}
+
 pub(crate) fn accept_heat(
     host: &mut dyn ServerHost,
     level: mod_api::LevelRef,
@@ -166,7 +260,13 @@ pub(crate) fn accept_heat(
         spec.max_temperature,
         get_i32(&nbt, "HeatHU").max(0) as u64,
     );
-    let moved = source.transfer_to(&mut sink, rate.min(spec.rate));
+    let tick = level.game_time(host).unwrap_or_default();
+    let used = if get_i64(&nbt, INPUT_TICK_KEY) == tick {
+        get_i32(&nbt, INPUT_USED_KEY).max(0) as u64
+    } else {
+        0
+    };
+    let moved = source.transfer_to(&mut sink, rate.min(spec.rate.saturating_sub(used)));
     if moved > 0 {
         let mut updates = Compound::new();
         set_i32(
@@ -178,6 +278,12 @@ pub(crate) fn accept_heat(
             &mut updates,
             "TemperatureC",
             sink.temperature_c().min(i32::MAX as u32) as i32,
+        );
+        set_i64(&mut updates, INPUT_TICK_KEY, tick);
+        set_i32(
+            &mut updates,
+            INPUT_USED_KEY,
+            used.saturating_add(moved).min(i32::MAX as u64) as i32,
         );
         let _ = entity.merge_data(host, updates);
         let heat_state = match sink.temperature_c() {
@@ -245,13 +351,15 @@ pub(crate) fn tick(host: &mut dyn ServerHost, event: &mut BlockEntityTickEvent<'
     let tick = level.game_time(host).unwrap_or_default();
     let redstone_mode = RedstoneMode::from_value(get_i32(&event.entity.nbt, REDSTONE_MODE_KEY));
     let enabled = redstone_mode.can_run(level.has_neighbor_signal(host, event.pos));
+    let insulation = insulation_count(host, &event.entity.items);
+    let leak_percent_per_minute = spec.leak_percent_per_minute * 0.8_f64.powi(insulation as i32);
     changed |= set_i32(
         &mut event.entity.nbt,
         REDSTONE_MODE_KEY,
         redstone_mode as i32,
     );
     if tick.rem_euclid(20) == 0 && heat.stored_hu() > 0 {
-        let per_second = heat.stored_hu() as f64 * spec.leak_percent_per_minute / 6_000.0;
+        let per_second = heat.stored_hu() as f64 * leak_percent_per_minute / 6_000.0;
         let total = per_second + get_double(&event.entity.nbt, "HeatCellLeakRemainder");
         let lost = total.floor().min(i32::MAX as f64) as u64;
         let remainder = if heat.stored_hu() <= lost {
@@ -263,9 +371,81 @@ pub(crate) fn tick(host: &mut dyn ServerHost, event: &mut BlockEntityTickEvent<'
         heat.remove_hu(lost);
     }
 
+    let mut input_used = if get_i64(&event.entity.nbt, INPUT_TICK_KEY) == tick {
+        get_i32(&event.entity.nbt, INPUT_USED_KEY).max(0) as u64
+    } else {
+        0
+    };
+    let input_stack = event
+        .entity
+        .items
+        .get(INPUT_SLOT)
+        .and_then(Option::as_ref)
+        .cloned();
+    if let Some(stack) = input_stack {
+        let item_id = stack.item().id(host).to_owned();
+        if let Some(capsule_spec) = capsule_spec(&item_id) {
+            let held = item_heat(&stack, capsule_spec);
+            let mut capsule =
+                HeatStore::new(capsule_spec.capacity, capsule_spec.max_temperature, held);
+            let mut cell_after = heat;
+            let budget = capsule_spec
+                .rate
+                .min(spec.rate.saturating_sub(input_used))
+                .min(held);
+            let moved = capsule.transfer_to(&mut cell_after, budget);
+            if moved > 0 {
+                let mut updated = stack;
+                if set_item_heat(&mut updated, capsule.stored_hu()) {
+                    event.entity.items[INPUT_SLOT] = Some(updated);
+                    heat = cell_after;
+                    input_used = input_used.saturating_add(moved);
+                    changed = true;
+                    changed |= set_i64(&mut event.entity.nbt, INPUT_TICK_KEY, tick);
+                    changed |= set_i32(
+                        &mut event.entity.nbt,
+                        INPUT_USED_KEY,
+                        input_used.min(i32::MAX as u64) as i32,
+                    );
+                }
+            }
+        }
+    }
+
+    let mut output_used = 0_u64;
     if enabled {
+        let output_stack = event
+            .entity
+            .items
+            .get(OUTPUT_SLOT)
+            .and_then(Option::as_ref)
+            .cloned();
+        if let Some(stack) = output_stack {
+            let item_id = stack.item().id(host).to_owned();
+            if let Some(capsule_spec) = capsule_spec(&item_id) {
+                let held = item_heat(&stack, capsule_spec);
+                let mut capsule =
+                    HeatStore::new(capsule_spec.capacity, capsule_spec.max_temperature, held);
+                let mut cell_after = heat;
+                let room = capsule_spec.capacity.saturating_sub(held);
+                let budget = capsule_spec
+                    .rate
+                    .min(spec.rate.saturating_sub(output_used))
+                    .min(room);
+                let moved = cell_after.transfer_to(&mut capsule, budget);
+                if moved > 0 {
+                    let mut updated = stack;
+                    if set_item_heat(&mut updated, capsule.stored_hu()) {
+                        event.entity.items[OUTPUT_SLOT] = Some(updated);
+                        heat = cell_after;
+                        output_used = output_used.saturating_add(moved);
+                        changed = true;
+                    }
+                }
+            }
+        }
+
         let start = tick.rem_euclid(DIRECTIONS.len() as i64) as usize;
-        let mut output_used = 0_u64;
         for index in 0..DIRECTIONS.len() {
             let budget = spec.rate.saturating_sub(output_used);
             if budget == 0 || heat.stored_hu() == 0 || heat.temperature_c() <= 20 {
@@ -279,16 +459,20 @@ pub(crate) fn tick(host: &mut dyn ServerHost, event: &mut BlockEntityTickEvent<'
                 event.pos[2] + offset[2],
             ];
             let before = heat.stored_hu();
-            let moved = super::cracking_unit::accept_heat(host, level, neighbor, &mut heat, budget)
-                + super::thermal::accept_heat(host, level, neighbor, event.pos, &mut heat, budget)
-                + super::thermoelectric::accept_heat(
-                    host,
-                    level,
-                    neighbor,
-                    super::thermoelectric::opposite_face_index(direction_index),
-                    &mut heat,
-                    budget,
-                );
+            let mut moved =
+                super::cracking_unit::accept_heat(host, level, neighbor, &mut heat, budget);
+            let remaining = budget.saturating_sub(moved);
+            moved +=
+                super::thermal::accept_heat(host, level, neighbor, event.pos, &mut heat, remaining);
+            let remaining = budget.saturating_sub(moved);
+            moved += super::thermoelectric::accept_heat(
+                host,
+                level,
+                neighbor,
+                super::thermoelectric::opposite_face_index(direction_index),
+                &mut heat,
+                remaining,
+            );
             output_used = output_used.saturating_add(moved);
             changed |= before != heat.stored_hu();
         }
@@ -318,7 +502,7 @@ pub(crate) fn tick(host: &mut dyn ServerHost, event: &mut BlockEntityTickEvent<'
         (spec.capacity / 10).min(i32::MAX as u64) as i32,
         heat.temperature_c().min(i32::MAX as u32) as i32,
         spec.rate.min(i32::MAX as u64) as i32,
-        (spec.leak_percent_per_minute * 100.0).round() as i32,
+        (leak_percent_per_minute * 100.0).round() as i32,
         redstone_mode as i32,
         if enabled { 1 } else { 0 },
         match spec.tier_name {
@@ -327,6 +511,7 @@ pub(crate) fn tick(host: &mut dyn ServerHost, event: &mut BlockEntityTickEvent<'
             "Hardened" => 2,
             _ => 3,
         },
+        insulation as i32,
     ];
     if event.entity.data.as_slice() != data.as_slice() {
         event.entity.data = data.into();
@@ -345,11 +530,26 @@ fn get_i32(nbt: &Compound, name: &str) -> i32 {
     }
 }
 
+fn get_i64(nbt: &Compound, name: &str) -> i64 {
+    match nbt.get(&name.into()) {
+        Some(Tag::Long(value)) => *value,
+        _ => 0,
+    }
+}
+
 fn set_i32(nbt: &mut Compound, name: &str, value: i32) -> bool {
     if get_i32(nbt, name) == value {
         return false;
     }
     nbt.insert(name.into(), Tag::Int(value));
+    true
+}
+
+fn set_i64(nbt: &mut Compound, name: &str, value: i64) -> bool {
+    if get_i64(nbt, name) == value {
+        return false;
+    }
+    nbt.insert(name.into(), Tag::Long(value));
     true
 }
 
@@ -371,8 +571,14 @@ fn set_double(nbt: &mut Compound, name: &str, value: f64) -> bool {
 pub(crate) fn screen() -> mod_api::Screen {
     mod_api::Screen {
         width: 176.0,
-        height: 180.0,
-        slots: Vec::new(),
+        height: 254.0,
+        slots: vec![
+            Some([16.0, 110.0]),
+            Some([16.0, 140.0]),
+            Some([136.0, 126.0]),
+        ],
+        inventory_y: 168.0,
+        inventory_x: 8.0,
         own_labels: true,
         own_background: false,
         ..mod_api::Screen::default()
@@ -395,6 +601,7 @@ pub(crate) fn draw_screen(event: &mut mod_api::ScreenDrawEvent<'_>) {
         2 => "Hardened",
         _ => "Arcforged",
     };
+    let insulation = data.get(8).copied().unwrap_or_default().clamp(0, 8);
     let draw = &mut *event.draw;
     draw.text(
         &format!("{tier} Heat Cell"),
@@ -433,6 +640,12 @@ pub(crate) fn draw_screen(event: &mut mod_api::ScreenDrawEvent<'_>) {
         0xFFBBBBBB,
         true,
     );
+    draw.text(
+        &format!("Insulation: {insulation} / 8"),
+        [ox + 8.0, oy + 81.0],
+        0xFFBBBBBB,
+        true,
+    );
     draw.text("Redstone:", [ox + 8.0, oy + 94.0], 0xFFBBBBBB, true);
     for (mode, x, width) in [
         (RedstoneMode::Ignore, 62.0, 35.0),
@@ -449,6 +662,9 @@ pub(crate) fn draw_screen(event: &mut mod_api::ScreenDrawEvent<'_>) {
         );
         draw.text(mode.label(), [ox + x + 3.0, oy + 93.0], 0xFFFFFFFF, true);
     }
+    draw.text("Capsule in", [ox + 39.0, oy + 113.0], 0xFFBBBBBB, true);
+    draw.text("Capsule out", [ox + 39.0, oy + 143.0], 0xFFBBBBBB, true);
+    draw.text("Insulation", [ox + 106.0, oy + 132.0], 0xFFBBBBBB, true);
 }
 
 pub(crate) fn screen_click(at: [f32; 2], right: bool) -> Option<i32> {
