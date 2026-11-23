@@ -283,7 +283,11 @@ pub(crate) fn inventory_tick_capsule(
     let per_second = held as f64 * spec.leak_percent_per_minute / 6_000.0;
     let total = per_second + item_leak_remainder(&event.stack);
     let lost = total.floor().min(held as f64) as u64;
-    let remainder = if held <= lost { 0.0 } else { total - lost as f64 };
+    let remainder = if held <= lost {
+        0.0
+    } else {
+        total - lost as f64
+    };
     let place = mod_api::ItemPlace::PlayerSlot {
         player: event.player,
         slot: event.slot,
