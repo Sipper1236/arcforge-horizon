@@ -12,6 +12,7 @@ const LAVA_BUCKET: &str = "minecraft:lava_bucket";
 const EMPTY_BUCKET: &str = "minecraft:bucket";
 const SPEED_UPGRADE: &str = "arcforge:speed_upgrade";
 const HEAT_UPGRADE: &str = "arcforge:heat_upgrade";
+const REDSTONE_MODE_KEY: &str = "GeothermalRedstoneMode";
 const CAPACITY: u64 = 60_000;
 const MAX_TEMPERATURE_C: u32 = 1_400;
 pub(crate) const LAVA_TANK_CAPACITY: u32 = 8_000;
@@ -64,6 +65,39 @@ impl PortMode {
             Self::None => "None",
             Self::Input => "Input",
             Self::Heat => "Heat",
+        }
+    }
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum RedstoneMode {
+    Ignore = 0,
+    High = 1,
+    Low = 2,
+}
+
+impl RedstoneMode {
+    fn from_value(value: i32) -> Self {
+        match value {
+            1 => Self::High,
+            2 => Self::Low,
+            _ => Self::Ignore,
+        }
+    }
+
+    fn label(self) -> &'static str {
+        match self {
+            Self::Ignore => "Ignore",
+            Self::High => "High",
+            Self::Low => "Low",
+        }
+    }
+
+    fn can_run(self, powered: bool) -> bool {
+        match self {
+            Self::Ignore => true,
+            Self::High => powered,
+            Self::Low => !powered,
         }
     }
 }
@@ -352,8 +386,15 @@ pub(crate) fn tick(host: &mut dyn ServerHost, event: &mut BlockEntityTickEvent<'
     let mut lava_burning_milli = get_i32(&event.entity.nbt, "LavaBurningMilli").max(0) as u32;
     let mut lava_burn_total = get_i32(&event.entity.nbt, "LavaBurnTotal").max(0) as u32;
     let mut heat_per_tick = 0_u64;
+    let redstone_mode = RedstoneMode::from_value(get_i32(&event.entity.nbt, REDSTONE_MODE_KEY));
+    let enabled = redstone_mode.can_run(level.has_neighbor_signal(host, event.pos));
+    changed |= set_i32(
+        &mut event.entity.nbt,
+        REDSTONE_MODE_KEY,
+        redstone_mode as i32,
+    );
 
-    if heat.stored_hu() < CAPACITY {
+    if enabled && heat.stored_hu() < CAPACITY {
         if lava_burning_milli == 0 {
             let taken = fluid_extract(&mut event.entity.nbt, LAVA_TANK, LAVA, LAVA_PER_BURN);
             lava_burning_milli = taken.saturating_mul(1000);
@@ -451,6 +492,8 @@ pub(crate) fn tick(host: &mut dyn ServerHost, event: &mut BlockEntityTickEvent<'
         modes[3],
         modes[4],
         modes[5],
+        redstone_mode as i32,
+        if enabled { 1 } else { 0 },
     ];
     if event.entity.data.as_slice() != data.as_slice() {
         event.entity.data = data.into();
@@ -602,6 +645,8 @@ pub(crate) fn draw_screen(event: &mut mod_api::ScreenDrawEvent<'_>) {
     let ports = (0..6)
         .map(|index| PortMode::from_value(data.get(12 + index).copied().unwrap_or_default()))
         .collect::<Vec<_>>();
+    let redstone_mode = RedstoneMode::from_value(data.get(18).copied().unwrap_or_default());
+    let enabled = data.get(19).copied().unwrap_or(1) != 0;
     let draw = &mut *event.draw;
     draw.text("Geothermal Plant", [ox + 8.0, oy + 6.0], 0xFFFFFFFF, true);
     draw.text(
@@ -637,12 +682,12 @@ pub(crate) fn draw_screen(event: &mut mod_api::ScreenDrawEvent<'_>) {
         0xFFFFFFFF,
         true,
     );
-    draw.text(
-        &format!("Heat output: {heat_per_tick} HU/t"),
-        [ox + 8.0, oy + 83.0],
-        0xFFFFFFFF,
-        true,
-    );
+    let output_status = if enabled {
+        format!("Heat output: {heat_per_tick} HU/t")
+    } else {
+        "Paused by redstone".to_owned()
+    };
+    draw.text(&output_status, [ox + 8.0, oy + 83.0], 0xFFFFFFFF, true);
     draw.text(
         &format!("Touching: {lava_sources} lava, {magma_blocks} magma"),
         [ox + 8.0, oy + 95.0],
@@ -671,26 +716,67 @@ pub(crate) fn draw_screen(event: &mut mod_api::ScreenDrawEvent<'_>) {
         0xFFBBBBBB,
         true,
     );
+    draw.text("Redstone:", [ox + 8.0, oy + 141.0], 0xFFBBBBBB, true);
+    for (mode, x, width) in [
+        (RedstoneMode::Ignore, 62.0, 35.0),
+        (RedstoneMode::High, 99.0, 28.0),
+        (RedstoneMode::Low, 129.0, 27.0),
+    ] {
+        draw.fill(
+            [ox + x, oy + 138.0, width, 12.0],
+            if mode == redstone_mode {
+                0xFF526A7A
+            } else {
+                0xFF343434
+            },
+        );
+        draw.text(mode.label(), [ox + x + 3.0, oy + 140.0], 0xFFFFFFFF, true);
+    }
+    draw.text("Lava", [ox + 16.0, oy + 154.0], 0xFFBBBBBB, true);
+    draw.text("Bucket", [ox + 40.0, oy + 154.0], 0xFFBBBBBB, true);
     draw.text(
         &format!("S:{speed_upgrades}/{MAX_UPGRADES}"),
-        [ox + 8.0, oy + 138.0],
+        [ox + 92.0, oy + 154.0],
         0xFFBBBBBB,
         true,
     );
     draw.text(
         &format!("H:{heat_upgrades}/{MAX_UPGRADES}"),
-        [ox + 88.0, oy + 138.0],
+        [ox + 132.0, oy + 154.0],
         0xFFBBBBBB,
         true,
     );
-    draw.text("Lava", [ox + 16.0, oy + 154.0], 0xFFBBBBBB, true);
-    draw.text("Bucket", [ox + 40.0, oy + 154.0], 0xFFBBBBBB, true);
-    draw.text("Speed", [ox + 104.0, oy + 154.0], 0xFFBBBBBB, true);
-    draw.text("Heat", [ox + 128.0, oy + 154.0], 0xFFBBBBBB, true);
+}
+
+pub(crate) fn screen_click(at: [f32; 2], right: bool) -> Option<i32> {
+    if right || !(138.0..150.0).contains(&at[1]) {
+        return None;
+    }
+    if (62.0..97.0).contains(&at[0]) {
+        Some(RedstoneMode::Ignore as i32)
+    } else if (99.0..127.0).contains(&at[0]) {
+        Some(RedstoneMode::High as i32)
+    } else if (129.0..156.0).contains(&at[0]) {
+        Some(RedstoneMode::Low as i32)
+    } else {
+        None
+    }
+}
+
+pub(crate) fn select_redstone_mode(nbt: &mut Compound, button: i32) {
+    if (0..=2).contains(&button) {
+        let _ = set_i32(
+            nbt,
+            REDSTONE_MODE_KEY,
+            RedstoneMode::from_value(button) as i32,
+        );
+    }
 }
 
 pub(crate) fn screen_tooltip(at: [f32; 2], lines: &mut Vec<String>) {
-    if (33.0..41.0).contains(&at[1]) && (8.0..168.0).contains(&at[0]) {
+    if screen_click(at, false).is_some() {
+        lines.push("Select Ignore, High, or Low redstone control".to_owned());
+    } else if (33.0..41.0).contains(&at[1]) && (8.0..168.0).contains(&at[0]) {
         lines.push("Stored heat HU / capacity".to_owned());
     } else if (59.0..69.0).contains(&at[1]) && (8.0..168.0).contains(&at[0]) {
         lines.push("Lava stored in the input tank".to_owned());
