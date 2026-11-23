@@ -19,6 +19,7 @@ const CONTROLLER: &str = "arcforge:cracking_unit_controller";
 const CASING: &str = "arcforge:cracking_unit_casing";
 const CATALYST: &str = "arcforge:cracking_catalyst";
 const SPEED_UPGRADE: &str = "arcforge:speed_upgrade";
+const HEAT_UPGRADE: &str = "arcforge:heat_upgrade";
 const WRENCH: &str = "arcforge:wrench";
 const MACHINE_MENU: &str = "arcforge:cracking_unit";
 const FIREBOX: &str = "arcforge:firebox";
@@ -102,6 +103,22 @@ impl BlockEntityPart for HeatCell {
 
 #[mod_api::horizon_part]
 impl BlockEntityPart for Firebox {
+    fn screen(&self, _: &dyn Host, _: &mut mod_api::ScreenEvent<'_>) -> Option<mod_api::Screen> {
+        Some(firebox::screen())
+    }
+
+    fn screen_draw(&self, _: &dyn mod_api::ClientHost, event: &mut mod_api::ScreenDrawEvent<'_>) {
+        firebox::draw_screen(event);
+    }
+
+    fn screen_tooltip(
+        &self,
+        _: &dyn mod_api::ClientHost,
+        event: &mut mod_api::ScreenTooltipEvent<'_>,
+    ) {
+        firebox::screen_tooltip(event.at, event.lines);
+    }
+
     fn block_entity_ticks(&self, _: &dyn Host, event: &mut BlockEntityTicksEvent<'_>) {
         event.ticks = true;
     }
@@ -137,7 +154,19 @@ impl MenuPart for Firebox {
             return;
         }
         let item = event.stack.item().id(host);
-        event.may_place &= event.slot == 0 && firebox::accepts_fuel(&item);
+        match event.slot {
+            0 => event.may_place &= firebox::accepts_fuel(&item),
+            1 => event.may_place = false,
+            2 => {
+                event.max_stack = 8;
+                event.may_place &= item == SPEED_UPGRADE;
+            }
+            3 => {
+                event.max_stack = 8;
+                event.may_place &= item == HEAT_UPGRADE;
+            }
+            _ => event.may_place = false,
+        }
     }
 }
 
@@ -220,6 +249,9 @@ impl Hooks for Arcforge {
         event
             .items
             .push(Item::new(SPEED_UPGRADE, "minecraft:sugar"));
+        event
+            .items
+            .push(Item::new(HEAT_UPGRADE, "minecraft:magma_cream"));
         let mut wrench = Item::new(WRENCH, "minecraft:iron_pickaxe");
         wrench.max_stack_size = Some(1);
         event.items.push(wrench);
@@ -327,9 +359,16 @@ impl Hooks for Arcforge {
         registrar.block_container(
             &firebox_key,
             ModContainer {
-                slots: 2,
-                faces: [vec![1], vec![0], vec![0], vec![0], vec![0], vec![0]],
-                inputs: vec![0],
+                slots: 4,
+                faces: [
+                    vec![1],
+                    vec![0, 2, 3],
+                    vec![0, 2, 3],
+                    vec![0, 2, 3],
+                    vec![0, 2, 3],
+                    vec![0, 2, 3],
+                ],
+                inputs: vec![0, 2, 3],
                 outputs: vec![1],
                 menu: Some(FIREBOX_MENU.into()),
             },
