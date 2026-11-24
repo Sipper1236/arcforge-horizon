@@ -36,7 +36,7 @@ The source Naphtha-to-Gasoline Catalytic Reformer recipe now has an alpha implem
 
 Commit `07b59a7` adds the Lubricant Blender alpha: Heavy Oil → Lubricant, FE and Speed/Energy Upgrade handling, bounded tanks, crafting, and a processing screen. GitHub Actions run [45325717893](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45325717893) passed; all-face capabilities and missing automatic 500 mB/t product ejection/configurable side modes remain alpha gaps. Gameplay verification is pending.
 
-The Hydrotreater alpha now has the two pinned sour-fuel recipes, Hydrogen input, clean-fuel and Hydrogen Sulfide products, heat and FE processing, upgrades, bounded tanks, crafting/loot, and a screen. GitHub Actions verification and all gameplay checks are pending. Tank/energy capabilities remain all-sided, and automatic output ejection and configurable side modes are not implemented.
+Commits `8711736` and `8cbd807` add the Hydrotreater alpha with the two pinned sour-fuel recipes, Hydrogen input, clean-fuel and Hydrogen Sulfide products, heat and FE processing, upgrades, bounded tanks, crafting/loot, and a screen. GitHub Actions run [45331449362](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45331449362) passed both jobs; gameplay checks are pending. Tank/energy capabilities remain all-sided, and automatic output ejection and configurable side modes are not implemented.
 
 Build water/steam loops, turbines, deposit-based extraction, refining, chemical processing, lithium/battery materials, and agricultural/biofuel chains in the order of the source chapters.
 
