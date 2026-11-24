@@ -547,7 +547,21 @@ fn network_output_endpoints(
                     endpoints.push((*pos, neighbor));
                 }
             } else if is_energy_target(&target.id) {
-                endpoints.push((*pos, neighbor));
+                let accepts = if is_energy_cell(&target.id) {
+                    NEIGHBORS
+                        .iter()
+                        .find(|other| other.offset == side.opposite)
+                        .is_some_and(|other| {
+                            can_input(
+                                get_string(&target.nbt, &setting_key(other.name)).as_deref(),
+                            )
+                        })
+                } else {
+                    true
+                };
+                if accepts {
+                    endpoints.push((*pos, neighbor));
+                }
             }
         }
     }
@@ -642,7 +656,19 @@ fn connection_state(setting: &str, neighbor_id: Option<&str>) -> &'static str {
 fn is_energy_source(id: &str) -> bool {
     matches!(
         id,
-        "arcforge:combustion_plant" | "arcforge:thermoelectric_plant"
+        "arcforge:combustion_plant"
+            | "arcforge:thermoelectric_plant"
+            | "arcforge:steam_turbine_array_controller"
+    )
+}
+
+fn is_energy_cell(id: &str) -> bool {
+    matches!(
+        id,
+        "arcforge:wrought_energy_cell"
+            | "arcforge:tempered_energy_cell"
+            | "arcforge:hardened_energy_cell"
+            | "arcforge:arcforged_energy_cell"
     )
 }
 
@@ -657,6 +683,10 @@ fn is_energy_target(id: &str) -> bool {
             | "arcforge:infuser"
             | "arcforge:sifter"
             | "arcforge:fiberizer"
+            | "arcforge:wrought_energy_cell"
+            | "arcforge:tempered_energy_cell"
+            | "arcforge:hardened_energy_cell"
+            | "arcforge:arcforged_energy_cell"
     )
 }
 

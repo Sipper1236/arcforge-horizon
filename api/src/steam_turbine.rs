@@ -1,6 +1,7 @@
 //! Steam Turbine Array alpha. Shell dimensions and generation follow the pinned
 //! Arcforge defaults. Horizon declares energy/fluid capabilities by block ID,
 //! so this uses a separate controller and fixed capability capacities.
+use crate::energy::EnergyStore;
 use horizon_client::{
     containers::ModBlockEntity,
     mod_api::{Compound, Host, Tag},
@@ -23,7 +24,8 @@ const MAX_LENGTH: u32 = 27;
 const FLOW_PER_SECTION: f64 = 60.0;
 const MAX_SECTIONS: f64 = 7.0 * 7.0 / 9.0 * 27.0;
 const MAX_FLOW: u32 = (FLOW_PER_SECTION * MAX_SECTIONS) as u32;
-const MAX_OUTPUT_FE: u32 = 582_826;
+// ceil(8,820 mB/t * 56 FE/mB * (1 + 12% premium lubricant + 10% exhaust vacuum)).
+const MAX_OUTPUT_FE: u32 = 602_583;
 const ENERGY_BUFFER_CAPACITY: u32 = 4_762_560;
 const MAX_RPM: u32 = 3_600;
 const SPIN_UP: f64 = 0.01;
@@ -212,6 +214,26 @@ pub(crate) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
             consume_lubricant(&mut entity.nbt, sections);
         }
     }
+
+    let output_rate = if formed {
+        (f64::from(max_flow) * 56.0 * (1.0 + PREMIUM_LUBRICANT_BONUS + VACUUM_BONUS))
+            .ceil()
+            .min(f64::from(MAX_OUTPUT_FE)) as u64
+    } else {
+        0
+    };
+    let mut stored_energy =
+        EnergyStore::new(u64::from(ENERGY_BUFFER_CAPACITY), u64::from(energy));
+    super::push_adjacent_arcforge_energy_with_context(
+        host,
+        pos,
+        &mut stored_energy,
+        output_rate,
+        false,
+        Some(&entity.nbt),
+        false,
+    );
+    energy = stored_energy.stored_fe().min(u64::from(u32::MAX)) as u32;
 
     set_i32(&mut entity.nbt, "energy", energy as i32);
     set_i32(&mut entity.nbt, "TurbineFlow", flow as i32);
@@ -436,6 +458,10 @@ pub(crate) fn energy_buffer() -> horizon_client::mod_api::ModEnergyBuffer {
         insert_faces: [false; 6],
         extract_faces: [true; 6],
     }
+}
+
+pub(crate) fn energy_source_spec() -> (u64, u64) {
+    (u64::from(ENERGY_BUFFER_CAPACITY), u64::from(MAX_OUTPUT_FE))
 }
 
 fn consume_lubricant(nbt: &mut Compound, sections: f64) {

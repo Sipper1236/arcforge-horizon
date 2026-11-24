@@ -4,10 +4,11 @@
 use horizon_client::{
     containers::{ModBlockEntity, ModContainer},
     mod_api::{
-        BlockEntityContainerEvent, BlockEntityEvent, BlockEntityTickEvent, BlockEntityTicksEvent,
-        BlocksEvent, ContainerAcceptsEvent, Direction, Flow, Hooks, Host, ItemEnergyBuffer,
-        ItemEnergyBufferEvent, ItemFluidTankEvent, ItemStack, ItemsEvent, LootDropsEvent,
-        MenuSlotRulesEvent, NativeScreen, RandomSource, Tag, Text, serde_json,
+        AnalogOutputEvent, BlockEntityContainerEvent, BlockEntityEvent, BlockEntityTickEvent,
+        BlockEntityTicksEvent, BlocksEvent, ContainerAcceptsEvent, Direction, Flow,
+        HasAnalogOutputEvent, Hooks, Host, ItemEnergyBuffer, ItemEnergyBufferEvent,
+        ItemFluidTankEvent, ItemStack, ItemsEvent, LootDropsEvent, MenuSlotRulesEvent,
+        NativeScreen, RandomSource, Tag, Text, serde_json,
     },
 };
 use std::{
@@ -334,6 +335,7 @@ impl Hooks for Arcforge {
                     }
                 });
                 host.block_entity_sync(event.pos);
+                record_cell_charge(host, event.pos, &item, energy as i32);
             }
         }
         if matches!(
@@ -523,6 +525,13 @@ impl Hooks for Arcforge {
     }
 
     fn container_accepts(&self, host: &dyn Host, event: &mut ContainerAcceptsEvent<'_>) -> Flow {
+        if energy_cell_spec(&event.entity.id).is_some() {
+            return if event.slot < 2 && portable_energy_item_buffer(&event.stack.item).is_some() {
+                Flow::Continue
+            } else {
+                Flow::Cancel
+            };
+        }
         if event.entity.id == CRACKING_CONTROLLER {
             return if cracking_unit::item_allowed(
                 event.slot,
@@ -674,6 +683,11 @@ impl Hooks for Arcforge {
     }
 
     fn menu_slot_rules(&self, event: &mut MenuSlotRulesEvent<'_>) {
+        if event.menu == "arcforge:energy_cell" && event.slot < 2 {
+            event.may_place &= portable_energy_item_buffer(&event.stack.item).is_some();
+            event.max_stack = 1;
+            return;
+        }
         if event.menu != "arcforge:arcforge_furnace" || event.slot > 3 {
             return;
         }
@@ -698,6 +712,32 @@ impl Hooks for Arcforge {
         event.may_place &= accepts;
         if !accepts {
             event.max_stack = 1;
+        }
+    }
+
+    fn has_analog_output(
+        &self,
+        host: &dyn horizon_client::mod_api::LevelHost,
+        event: &mut HasAnalogOutputEvent,
+    ) {
+        if host
+            .state_with_property(event.state, "charge", "0")
+            .is_some()
+        {
+            event.output = true;
+        }
+    }
+
+    fn analog_output(
+        &self,
+        _host: &dyn horizon_client::mod_api::LevelHost,
+        event: &mut AnalogOutputEvent,
+    ) {
+        let pos = [event.pos.x, event.pos.y, event.pos.z];
+        if let Some((item, stored)) = cached_cell_charge(event.dimension.key().id(), pos)
+            && let Some((capacity, _)) = energy_cell_spec(&item)
+        {
+            event.output = ((stored.max(0) as u64 * 15) / capacity).min(15) as i32;
         }
     }
 
@@ -864,10 +904,29 @@ impl Hooks for Arcforge {
             show_cylinder_status(host, event.pos);
             return Flow::Cancel;
         }
-        if host
+        if let Some(cell) = host
             .mod_block_entity(event.pos)
-            .is_some_and(|entity| energy_cell_spec(&entity.id).is_some())
+            .filter(|entity| energy_cell_spec(&entity.id).is_some())
         {
+            if host.acting_player().is_some_and(|player| player.sneaking) {
+                let Some(side) = energy_conduit_side(event.face) else {
+                    show_energy_cell_status(host, event.pos);
+                    return Flow::Cancel;
+                };
+                let Some(player) = host.acting_player() else {
+                    return Flow::Continue;
+                };
+                let current = get_string(&cell.nbt, &conduit_side_setting_key(side.name))
+                    .unwrap_or_else(|| "auto".into());
+                let next = next_conduit_setting(&current);
+                set_conduit_side_setting(host, event.pos, side, next);
+                host.block_entity_sync(event.pos);
+                host.action_bar(
+                    player.uuid,
+                    Text::literal(format!("Energy Cell {}: {next}", side.name)),
+                );
+                return Flow::Cancel;
+            }
             show_energy_cell_status(host, event.pos);
             return Flow::Cancel;
         }
@@ -2270,6 +2329,7 @@ impl Hooks for Arcforge {
             || event.block == TEMPERED_ENERGY_CONDUIT
             || event.block == HARDENED_ENERGY_CONDUIT
             || event.block == ARCFORGED_ENERGY_CONDUIT
+            || energy_cell_spec(event.block).is_some()
             || item_conduit::spec(event.block).is_some()
             || thermal::spec(event.block).is_some()
             || event.block == WROUGHT_ENERGY_CELL
@@ -2326,6 +2386,7 @@ impl Hooks for Arcforge {
             || event.block == ARCFORGED_ENERGY_CONDUIT
             || item_conduit::spec(event.block).is_some()
             || thermal::spec(event.block).is_some()
+            || energy_cell_spec(event.block).is_some()
             || heat_cell::spec(event.block).is_some()
             || pressurized_cylinder::cylinder_capacity(event.block).is_some()
         {
@@ -2344,6 +2405,21 @@ impl Hooks for Arcforge {
             Some(cracking_unit::container())
         } else if event.block == COKER {
             Some(coker::container())
+        } else if energy_cell_spec(event.block).is_some() {
+            Some(ModContainer {
+                slots: 2,
+                faces: [
+                    vec![0, 1],
+                    vec![0, 1],
+                    vec![0, 1],
+                    vec![0, 1],
+                    vec![0, 1],
+                    vec![0, 1],
+                ],
+                inputs: vec![0],
+                outputs: vec![1],
+                menu: Some("arcforge:energy_cell".into()),
+            })
         } else if event.block == STEAM_BOILER_ARRAY_CONTROLLER {
             Some(ModContainer {
                 slots: 2,
@@ -3294,10 +3370,28 @@ impl Hooks for Arcforge {
             | TEMPERED_ENERGY_CELL
             | HARDENED_ENERGY_CELL
             | ARCFORGED_ENERGY_CELL => {
-                let (capacity, _) = energy_cell_spec(&event.entity.id).unwrap();
-                let stored =
-                    (get_i32(&event.entity.nbt, "energy").max(0) as u64).min(capacity) as i32;
-                cache_cell_charge(host.dimension(), event.pos, &event.entity.id, stored);
+                let (capacity, max_output) = energy_cell_spec(&event.entity.id).unwrap();
+                let stored = (get_i32(&event.entity.nbt, "energy").max(0) as u64).min(capacity);
+                let mut energy = energy::EnergyStore::new(capacity, stored);
+                event.entity.items.resize_with(2, || None);
+                if let Some(stack) = event.entity.items[0].as_mut() {
+                    transfer_energy_item_into_cell(stack, &mut energy, max_output);
+                }
+                if let Some(stack) = event.entity.items[1].as_mut() {
+                    transfer_cell_into_energy_item(stack, &mut energy, max_output);
+                }
+                push_adjacent_arcforge_energy_with_context(
+                    host,
+                    event.pos,
+                    &mut energy,
+                    max_output,
+                    false,
+                    Some(&event.entity.nbt),
+                    true,
+                );
+                let stored = energy.stored_fe().min(capacity) as i32;
+                set_i32(&mut event.entity.nbt, "energy", stored);
+                record_cell_charge(host, event.pos, &event.entity.id, stored);
                 let charge = energy_cell_charge_level(stored as u64, capacity).to_string();
                 if host.block_property(event.pos, "charge").as_deref() != Some(&charge) {
                     host.set_block_property(event.pos, "charge", &charge);
@@ -7143,7 +7237,15 @@ fn tick_thermoelectric_plant(host: &mut dyn Host, pos: [i32; 3], entity: &mut Mo
         speed_upgrade_multiplier(speed_upgrades),
     );
 
-    push_adjacent_arcforge_energy(host, pos, &mut energy, THERMOELECTRIC_MAX_OUTPUT_FE, false);
+    push_adjacent_arcforge_energy_with_context(
+        host,
+        pos,
+        &mut energy,
+        THERMOELECTRIC_MAX_OUTPUT_FE,
+        false,
+        Some(&entity.nbt),
+        false,
+    );
     set_i32(
         &mut entity.nbt,
         "HeatHU",
@@ -7865,6 +7967,51 @@ fn portable_energy_item_buffer(item: &str) -> Option<ItemEnergyBuffer> {
     })
 }
 
+fn transfer_energy_item_into_cell(
+    stack: &mut ItemStack,
+    cell: &mut energy::EnergyStore,
+    cell_rate: u64,
+) {
+    if stack.count != 1 {
+        return;
+    }
+    let Some(buffer) = portable_energy_item_buffer(&stack.item) else {
+        return;
+    };
+    let item_energy = item_energy_amount(stack, buffer.capacity as u64);
+    let offered = item_energy
+        .min(buffer.max_extract.max(0) as u64)
+        .min(cell_rate);
+    let moved = cell.insert(offered, cell_rate);
+    if moved > 0 {
+        set_item_energy(stack, (item_energy - moved) as i32);
+    }
+}
+
+fn transfer_cell_into_energy_item(
+    stack: &mut ItemStack,
+    cell: &mut energy::EnergyStore,
+    cell_rate: u64,
+) {
+    if stack.count != 1 {
+        return;
+    }
+    let Some(buffer) = portable_energy_item_buffer(&stack.item) else {
+        return;
+    };
+    let item_energy = item_energy_amount(stack, buffer.capacity as u64);
+    let room = (buffer.capacity as u64).saturating_sub(item_energy);
+    let offered = cell
+        .stored_fe()
+        .min(buffer.max_insert.max(0) as u64)
+        .min(cell_rate)
+        .min(room);
+    let moved = cell.extract(offered, cell_rate);
+    if moved > 0 {
+        set_item_energy(stack, (item_energy + moved) as i32);
+    }
+}
+
 fn portable_battery_spec(item: &str) -> Option<(u64, u64)> {
     match item {
         WROUGHT_BATTERY => Some((250_000, 1_000)),
@@ -7892,6 +8039,38 @@ fn cache_cell_charge(dimension: &str, pos: [i32; 3], item: &str, energy: i32) {
     pending
         .entries
         .insert((dimension.to_owned(), pos), (item.to_owned(), energy, now));
+}
+
+fn cached_cell_charge(dimension: &str, pos: [i32; 3]) -> Option<(String, i32)> {
+    let now = Instant::now();
+    let mut pending = PENDING_CELL_CHARGES
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    let key = (dimension.to_owned(), pos);
+    if pending
+        .entries
+        .get(&key)
+        .is_some_and(|(_, _, captured)| now.duration_since(*captured) > PENDING_CELL_CHARGE_LIFETIME)
+    {
+        pending.entries.remove(&key);
+        return None;
+    }
+    pending
+        .entries
+        .get(&key)
+        .map(|(item, energy, _)| (item.clone(), *energy))
+}
+
+fn record_cell_charge(host: &mut dyn Host, pos: [i32; 3], item: &str, energy: i32) {
+    let dimension = host.dimension().to_owned();
+    let changed = cached_cell_charge(&dimension, pos)
+        .is_none_or(|(previous_item, previous_energy)| {
+            previous_item != item || previous_energy != energy
+        });
+    cache_cell_charge(&dimension, pos, item, energy);
+    if changed {
+        host.update_output_neighbors(&dimension, pos);
+    }
 }
 
 fn item_energy_amount(stack: &ItemStack, capacity: u64) -> u64 {
@@ -7989,6 +8168,7 @@ fn use_energy_item_on_cell(
         return Flow::Continue;
     }
     host.block_entity_sync(pos);
+    record_cell_charge(host, pos, &cell.id, new_cell_energy as i32);
     host.set_block_property(
         pos,
         "charge",
@@ -8126,6 +8306,7 @@ fn arcforge_energy_source(id: &str) -> Option<(u64, u64)> {
     match id {
         COMBUSTION => Some((COMBUSTION_CAPACITY_FE, COMBUSTION_MAX_EXTRACT_FE as u64)),
         THERMOELECTRIC_PLANT => Some((THERMOELECTRIC_FE_CAPACITY, THERMOELECTRIC_MAX_OUTPUT_FE)),
+        STEAM_TURBINE_ARRAY_CONTROLLER => Some(steam_turbine::energy_source_spec()),
         _ => None,
     }
 }
@@ -8199,7 +8380,7 @@ fn wrench_rotatable_machine(id: &str) -> bool {
 }
 
 fn wrench_energy_output_machine(id: &str) -> bool {
-    matches!(id, COMBUSTION | THERMOELECTRIC_PLANT)
+    matches!(id, COMBUSTION | THERMOELECTRIC_PLANT | STEAM_TURBINE_ARRAY_CONTROLLER)
 }
 
 fn next_machine_facing(current: &str) -> Option<&'static str> {
@@ -8288,13 +8469,19 @@ fn conduit_connection_for(setting: &str, neighbor_id: Option<&str>) -> &'static 
 fn set_conduit_side_setting(host: &mut dyn Host, pos: [i32; 3], side: ConduitSide, setting: &str) {
     let key = conduit_side_setting_key(side.name);
     host.change_mod_block_entity(pos, &mut |entity| {
-        if energy_conduit_spec(&entity.id).is_some() || wrench_energy_output_machine(&entity.id) {
+        if energy_conduit_spec(&entity.id).is_some()
+            || wrench_energy_output_machine(&entity.id)
+            || energy_cell_spec(&entity.id).is_some()
+        {
             set_string(&mut entity.nbt, &key, setting);
         }
     });
 }
 
 fn arcforge_energy_target(id: &str) -> Option<(u64, u64)> {
+    if let Some(spec) = energy_cell_spec(id) {
+        return Some(spec);
+    }
     match id {
         ARC_CRUSHER | METAL_PRESS | INDUCTION_FURNACE | INFUSER | FIBERIZER => Some((20_000, 200)),
         ARC_CRUSHING_ARRAY | ARC_CRUSHING_ARRAY_CASING => Some((100_000, 1000)),
@@ -8332,6 +8519,7 @@ fn transfer_energy_to_neighbor(
         return 0;
     }
     let mut accepted = 0;
+    let mut stored_after = 0;
     host.change_mod_block_entity(neighbor, &mut |recipient| {
         if recipient.id != target.id {
             return;
@@ -8339,13 +8527,17 @@ fn transfer_energy_to_neighbor(
         let stored = get_i32(&recipient.nbt, "energy").max(0) as u64;
         accepted = offered.min(capacity.saturating_sub(stored));
         if accepted > 0 {
+            stored_after = stored.saturating_add(accepted);
             set_i32(
                 &mut recipient.nbt,
                 "energy",
-                stored.saturating_add(accepted).min(i32::MAX as u64) as i32,
+                stored_after.min(i32::MAX as u64) as i32,
             );
         }
     });
+    if accepted > 0 {
+        sync_energy_cell_charge(host, neighbor, &target.id, stored_after);
+    }
     energy.extract(accepted, accepted);
     accepted
 }
@@ -8357,6 +8549,26 @@ fn push_adjacent_arcforge_energy(
     max_output_per_tick: u64,
     source_is_conduit: bool,
 ) {
+    push_adjacent_arcforge_energy_with_context(
+        host,
+        pos,
+        energy,
+        max_output_per_tick,
+        source_is_conduit,
+        None,
+        false,
+    );
+}
+
+fn push_adjacent_arcforge_energy_with_context(
+    host: &mut dyn Host,
+    pos: [i32; 3],
+    energy: &mut energy::EnergyStore,
+    max_output_per_tick: u64,
+    source_is_conduit: bool,
+    current_nbt: Option<&horizon_client::mod_api::Compound>,
+    source_is_energy_cell: bool,
+) {
     const NEIGHBORS: [[i32; 3]; 6] = [
         [0, 1, 0],
         [0, -1, 0],
@@ -8367,12 +8579,14 @@ fn push_adjacent_arcforge_energy(
     ];
     let mut output_left = max_output_per_tick;
     let owner = host.mod_block_entity(pos);
-    let owner_nbt = (source_is_conduit
-        || owner
-            .as_ref()
-            .is_some_and(|owner| wrench_energy_output_machine(&owner.id)))
-    .then(|| owner.map(|owner| owner.nbt.clone()))
-    .flatten();
+    let owner_nbt = current_nbt.cloned().or_else(|| {
+        (source_is_conduit
+            || owner
+                .as_ref()
+                .is_some_and(|owner| wrench_energy_output_machine(&owner.id)))
+        .then(|| owner.map(|owner| owner.nbt.clone()))
+        .flatten()
+    });
     // Drain into machines before forwarding to another conduit. This reduces
     // energy bouncing around loops while still allowing a simple multi-block line.
     for conduits_only in [false, true] {
@@ -8388,6 +8602,9 @@ fn push_adjacent_arcforge_energy(
             let Some(target) = host.mod_block_entity(neighbor) else {
                 continue;
             };
+            if source_is_energy_cell && energy_cell_spec(&target.id).is_some() {
+                continue;
+            }
             if energy_conduit_spec(&target.id).is_some() != conduits_only {
                 continue;
             }
@@ -8397,17 +8614,19 @@ fn push_adjacent_arcforge_energy(
             let owner_side = energy_conduit_side(direction).expect("six neighbor direction");
             let target_side = energy_conduit_side(owner_side.opposite).expect("opposite direction");
             let target_is_conduit = energy_conduit_spec(&target.id).is_some();
+            let owner_setting = owner_nbt
+                .as_ref()
+                .and_then(|nbt| get_string(nbt, &conduit_side_setting_key(owner_side.name)));
+            let owner_can_output = if source_is_energy_cell && target_is_conduit {
+                matches!(owner_setting.as_deref(), Some("output"))
+            } else if source_is_conduit || owner_nbt.is_some() {
+                source_side_can_output(owner_setting.as_deref())
+            } else {
+                true
+            };
             if target_is_conduit {
                 let target_setting =
                     get_string(&target.nbt, &conduit_side_setting_key(target_side.name));
-                let owner_setting = owner_nbt
-                    .as_ref()
-                    .and_then(|nbt| get_string(nbt, &conduit_side_setting_key(owner_side.name)));
-                let owner_can_output = if source_is_conduit || owner_nbt.is_some() {
-                    source_side_can_output(owner_setting.as_deref())
-                } else {
-                    true
-                };
                 let target_can_input = matches!(
                     target_setting.as_deref(),
                     None | Some("auto") | Some("input")
@@ -8415,11 +8634,18 @@ fn push_adjacent_arcforge_energy(
                 if !owner_can_output || !target_can_input {
                     continue;
                 }
-            } else if source_is_conduit || owner_nbt.is_some() {
-                let setting = owner_nbt
-                    .as_ref()
-                    .and_then(|nbt| get_string(nbt, &conduit_side_setting_key(owner_side.name)));
-                if !source_side_can_output(setting.as_deref()) {
+            } else {
+                if energy_cell_spec(&target.id).is_some() {
+                    let target_setting =
+                        get_string(&target.nbt, &conduit_side_setting_key(target_side.name));
+                    if !matches!(
+                        target_setting.as_deref(),
+                        None | Some("auto") | Some("input")
+                    ) {
+                        continue;
+                    }
+                }
+                if !owner_can_output {
                     continue;
                 }
             }
@@ -8444,6 +8670,7 @@ fn push_adjacent_arcforge_energy(
                 continue;
             }
             let mut accepted = 0;
+            let mut stored_after = 0;
             host.change_mod_block_entity(neighbor, &mut |recipient| {
                 if recipient.id != target.id {
                     return;
@@ -8451,14 +8678,16 @@ fn push_adjacent_arcforge_energy(
                 let stored = get_i32(&recipient.nbt, "energy").max(0) as u64;
                 accepted = offered.min(capacity.saturating_sub(stored));
                 if accepted > 0 {
+                    stored_after = stored.saturating_add(accepted);
                     set_i32(
                         &mut recipient.nbt,
                         "energy",
-                        stored.saturating_add(accepted).min(i32::MAX as u64) as i32,
+                        stored_after.min(i32::MAX as u64) as i32,
                     );
                 }
             });
             if accepted > 0 {
+                sync_energy_cell_charge(host, neighbor, &target.id, stored_after);
                 energy.extract(accepted, accepted);
                 output_left -= accepted;
             }

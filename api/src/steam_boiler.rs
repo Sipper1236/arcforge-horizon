@@ -31,6 +31,7 @@ const CLIMB_SHARE: f64 = 0.5;
 const CLIMB_SHARE_GROWTH: f64 = 0.005;
 const HEAT_IN_SMOOTHING: f64 = 0.1;
 const CEILING_MARGIN_C: u32 = 10;
+const SCAN_INTERVAL_TICKS: i32 = 20;
 
 #[derive(Clone, Copy, Debug, Default)]
 struct ShellSize {
@@ -196,7 +197,25 @@ pub(crate) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
     let facing = host
         .block_property(pos, "facing")
         .unwrap_or_else(|| "north".to_owned());
-    let shell = find_shell(host, pos, &facing);
+    let elapsed = get_i32(&entity.nbt, "BoilerScan")
+        .max(0)
+        .saturating_add(1);
+    let previous_facing = get_string(&entity.nbt, "BoilerFacing").unwrap_or_default();
+    let facing_changed = previous_facing != facing;
+    let initialized = get_i32(&entity.nbt, "BoilerInitialized") != 0;
+    let should_scan = !initialized || facing_changed || elapsed >= SCAN_INTERVAL_TICKS;
+    let previous_shell = (get_i32(&entity.nbt, "BoilerFormed") != 0)
+        .then(|| saved_shell(&entity.nbt));
+    let shell = if should_scan {
+        set_i32(&mut entity.nbt, "BoilerScan", 0);
+        set_i32(&mut entity.nbt, "BoilerInitialized", 1);
+        let shell = find_shell(host, pos, &facing);
+        set_string(&mut entity.nbt, "BoilerFacing", &facing);
+        shell
+    } else {
+        set_i32(&mut entity.nbt, "BoilerScan", elapsed);
+        previous_shell
+    };
     let formed = shell.is_some();
     let shell_size = shell.unwrap_or(ShellSize {
         width: 3,
@@ -706,6 +725,17 @@ fn get_i32(nbt: &Compound, key: &str) -> i32 {
 
 fn set_i32(nbt: &mut Compound, key: &str, value: i32) {
     nbt.insert(key.into(), Tag::Int(value));
+}
+
+fn get_string(nbt: &Compound, key: &str) -> Option<String> {
+    match nbt.get(&key.into()) {
+        Some(Tag::String(value)) => Some(value.to_string_lossy()),
+        _ => None,
+    }
+}
+
+fn set_string(nbt: &mut Compound, key: &str, value: &str) {
+    nbt.insert(key.into(), Tag::String(value.into()));
 }
 
 fn get_f64(nbt: &Compound, key: &str) -> f64 {
