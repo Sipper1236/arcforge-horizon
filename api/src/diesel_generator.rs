@@ -610,10 +610,12 @@ pub(crate) fn energy_source_spec() -> (u64, u64) {
 
 pub(crate) fn container() -> ModContainer {
     ModContainer {
-        slots: 0,
+        // Horizon menu types require at least one slot. This output-only
+        // sentinel keeps the fluid-and-energy GUI itemless.
+        slots: 1,
         faces: [vec![], vec![], vec![], vec![], vec![], vec![]],
         inputs: vec![],
-        outputs: vec![],
+        outputs: vec![0],
         menu: Some("arcforge:diesel_generator".into()),
     }
 }
