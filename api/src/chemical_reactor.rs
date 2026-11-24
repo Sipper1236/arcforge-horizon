@@ -127,19 +127,22 @@ fn recipe_from_json(json: &Value) -> Option<Recipe> {
         return None;
     }
 
-    let item_output = json
-        .get("item_output")
-        .map(item_product)
-        .transpose_option()?;
-    let fluid_output = json
-        .get("fluid_output")
-        .map(fluid_product)
-        .transpose_option()?;
-    let item_byproduct = json.get("byproduct").map(item_product).transpose_option()?;
-    let fluid_byproduct = json
-        .get("fluid_byproduct")
-        .map(fluid_product)
-        .transpose_option()?;
+    let item_output = match json.get("item_output") {
+        Some(value) => Some(item_product(value)?),
+        None => None,
+    };
+    let fluid_output = match json.get("fluid_output") {
+        Some(value) => Some(fluid_product(value)?),
+        None => None,
+    };
+    let item_byproduct = match json.get("byproduct") {
+        Some(value) => Some(item_product(value)?),
+        None => None,
+    };
+    let fluid_byproduct = match json.get("fluid_byproduct") {
+        Some(value) => Some(fluid_product(value)?),
+        None => None,
+    };
     if item_output.is_none() && fluid_output.is_none() {
         return None;
     }
@@ -166,16 +169,6 @@ fn recipe_from_json(json: &Value) -> Option<Recipe> {
         heat_per_tick: number(json, "heat_per_tick", 0),
         min_temperature: number(json, "min_temperature", 0),
     })
-}
-
-trait OptionTranspose<T> {
-    fn transpose_option(self) -> Option<T>;
-}
-
-impl<T> OptionTranspose<T> for Option<Option<T>> {
-    fn transpose_option(self) -> Option<T> {
-        self.flatten()
-    }
 }
 
 fn get_i32(nbt: &Compound, name: &str) -> i32 {
@@ -378,6 +371,8 @@ fn add_item(entity: &mut ModBlockEntity, slot: usize, product: &ItemProduct) {
         *target = Some(ItemStack {
             item: product.item.clone().into(),
             count: product.count,
+            damage: 0,
+            extra: None,
         });
     }
 }
@@ -490,11 +485,8 @@ pub(crate) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
         set_lit(host, pos, false);
         return;
     }
-    let energy_cost = crate::scaled_upgrade_cost(
-        u64::from(recipe.energy_per_tick),
-        speed_upgrades,
-        energy_upgrades,
-    );
+    let energy_cost =
+        crate::scaled_upgrade_cost(u64::from(recipe.energy_per_tick), speed, energy_upgrades);
     let mut energy = crate::energy::EnergyStore::new(ENERGY_CAPACITY, stored_energy);
     if energy.stored_fe() < energy_cost {
         set_status(entity, 5, 0, 0, total);
