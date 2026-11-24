@@ -87,6 +87,8 @@
   "item.arcforge.haber_reactor": "Haber Reactor",
   "block.arcforge.chemical_reactor": "Chemical Reactor",
   "item.arcforge.chemical_reactor": "Chemical Reactor",
+  "block.arcforge.chemical_reactor_array_casing": "Chemical Reactor Array Casing",
+  "item.arcforge.chemical_reactor_array_casing": "Chemical Reactor Array Casing",
   "block.arcforge.electrolyzer": "Electrolyzer",
   "item.arcforge.electrolyzer": "Electrolyzer",
   "block.arcforge.air_separator": "Air Separator",

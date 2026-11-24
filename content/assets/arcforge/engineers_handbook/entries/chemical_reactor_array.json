@@ -7,11 +7,11 @@
   "pages": [
     {
       "type": "text",
-      "text": "Every Chemical Reactor recipe in three lanes at once, each twice as fast as a reactor, for 80% of the FE an operation.\nBuild a solid 3x3x3 cube of casings and set its ports with the Wrench: Input, Output, By-product, Energy and Heat."
+      "text": "Every Chemical Reactor recipe in three lanes at once, each twice as fast as a reactor, for 80% of the FE per operation.\nBuild a solid 3x3x3 cube of casings. The Wrench reports status at the centre casing. On Horizon, ports are fixed north-facing: item/fluid inputs up and east, item/fluid products west and down, by-products south, FE south, and heat enters any face."
     },
     {
       "type": "text",
-      "text": "# Lanes and tanks\n- Each lane has three input slots, an output slot and a by-product slot. Items through Input ports go to the lane holding the fewest.\n- The lanes share three input tanks, an output tank and a by-product tank of 32,000 mB each, so several lanes can run on the same fluids.\n# Heat\nHeated recipes (Polysilicon) take HU through Heat ports, and only run while the array is hot enough.\nSpeed and Energy upgrades work as in the reactor."
+      "text": "# Lanes and tanks\n- Each lane has three input slots, an output slot and a by-product slot. Items through Input ports go to the lane holding the fewest.\n- The lanes share three input tanks, an output tank and a by-product tank of 32,000 mB each, so several lanes can run on the same fluids.\n# Heat\nHeated recipes (Polysilicon) take HU through Heat ports, and only run while the array is hot enough.\nSpeed and Energy upgrades work as in the reactor and fit in the two rightmost array inventory slots. Horizon stores capabilities on every casing, so items, fluids, FE and HU inserted on outer casings move into the centre over following ticks."
     },
     {
       "type": "multiblock",

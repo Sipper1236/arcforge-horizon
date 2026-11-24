@@ -36,6 +36,7 @@ fn default_registry_entry<T: Default>(_: &[T]) -> T {
 mod air_separator;
 mod area_tool;
 mod chemical_reactor;
+mod chemical_reactor_array;
 mod coker;
 mod cracking_unit;
 mod crushing_catalog;
@@ -127,6 +128,7 @@ const LUBRICANT_BLENDER: &str = lubricant_blender::BLOCK;
 const HYDROTREATER: &str = hydrotreater::BLOCK;
 const HABER_REACTOR: &str = haber_reactor::BLOCK;
 const CHEMICAL_REACTOR: &str = chemical_reactor::BLOCK;
+const CHEMICAL_REACTOR_ARRAY_CASING: &str = chemical_reactor_array::CASING;
 const ELECTROLYZER: &str = electrolyzer::BLOCK;
 const SULFUR_RECOVERY_UNIT: &str = sulfur_recovery::BLOCK;
 const AIR_SEPARATOR: &str = air_separator::BLOCK;
@@ -421,6 +423,12 @@ impl Hooks for Arcforge {
         {
             form_crushing_array_near(host, event.pos);
         }
+        if host
+            .mod_block_entity(event.pos)
+            .is_some_and(|entity| entity.id == CHEMICAL_REACTOR_ARRAY_CASING)
+        {
+            chemical_reactor_array::notify_placed(host, event.pos);
+        }
     }
 
     fn destroy_block(
@@ -493,6 +501,9 @@ impl Hooks for Arcforge {
             }
             if entity.id == ARC_CRUSHING_ARRAY_CASING {
                 unform_crushing_array_near(host, event.pos);
+            }
+            if entity.id == CHEMICAL_REACTOR_ARRAY_CASING {
+                chemical_reactor_array::unform_near(host, event.pos);
             }
             if entity.id == FIREBOX_ARRAY_CONTROLLER {
                 unform_firebox_array(host, &entity.nbt);
@@ -657,6 +668,13 @@ impl Hooks for Arcforge {
         }
         if event.entity.id == CHEMICAL_REACTOR {
             return if chemical_reactor::item_allowed(host, event.slot, event.stack) {
+                Flow::Continue
+            } else {
+                Flow::Cancel
+            };
+        }
+        if event.entity.id == CHEMICAL_REACTOR_ARRAY_CASING {
+            return if chemical_reactor_array::item_allowed(host, event.slot, event.stack) {
                 Flow::Continue
             } else {
                 Flow::Cancel
@@ -1040,6 +1058,22 @@ impl Hooks for Arcforge {
         }
         if event.stack.item.as_ref() != WRENCH {
             return Flow::Continue;
+        }
+        if host
+            .mod_block_entity(event.pos)
+            .is_some_and(|entity| entity.id == CHEMICAL_REACTOR_ARRAY_CASING)
+        {
+            if chemical_reactor_array::is_center(host, event.pos) {
+                if let (Some(player), Some(entity)) =
+                    (host.acting_player(), host.mod_block_entity(event.pos))
+                {
+                    host.action_bar(
+                        player.uuid,
+                        Text::literal(chemical_reactor_array::status(&entity)),
+                    );
+                }
+            }
+            return Flow::Cancel;
         }
         if host
             .mod_block_entity(event.pos)
@@ -1561,6 +1595,13 @@ impl Hooks for Arcforge {
         if host
             .mod_block_entity(event.pos)
             .is_some_and(|entity| entity.id == ARC_CRUSHING_ARRAY_CASING)
+            && host.block_property(event.pos, "part").as_deref() != Some("center")
+        {
+            return Flow::Cancel;
+        }
+        if host
+            .mod_block_entity(event.pos)
+            .is_some_and(|entity| entity.id == CHEMICAL_REACTOR_ARRAY_CASING)
             && host.block_property(event.pos, "part").as_deref() != Some("center")
         {
             return Flow::Cancel;
@@ -2227,6 +2268,26 @@ impl Hooks for Arcforge {
             .into_iter()
             .collect();
         }
+        register_content!(&mut event.blocks, id: CHEMICAL_REACTOR_ARRAY_CASING.into(), template: "minecraft:stone".into(), item: true);
+        if let Some(block) = event
+            .blocks
+            .iter_mut()
+            .find(|block| block.id == CHEMICAL_REACTOR_ARRAY_CASING)
+        {
+            block.state_properties = serde_json::from_value(serde_json::json!({
+                "facing": { "type": "enum", "values": ["north", "east", "south", "west"] },
+                "lit": { "type": "boolean" },
+                "part": { "type": "enum", "values": ["none", "center", "other"] }
+            }))
+            .expect("valid Chemical Reactor Array casing block states");
+            block.default_state = [
+                ("facing".to_owned(), "north".to_owned()),
+                ("lit".to_owned(), "false".to_owned()),
+                ("part".to_owned(), "none".to_owned()),
+            ]
+            .into_iter()
+            .collect();
+        }
         register_content!(&mut event.blocks, id: INDUCTION_FURNACE.into(), template: "minecraft:blast_furnace".into(), item: true);
         register_content!(&mut event.blocks, id: METAL_PRESS.into(), template: "minecraft:blast_furnace".into(), item: true);
         register_content!(&mut event.blocks, id: SIFTER.into(), template: "minecraft:blast_furnace".into(), item: true);
@@ -2787,10 +2848,22 @@ impl Hooks for Arcforge {
         portable_energy_item_buffer(event.item)
     }
 
-    fn loot_drops(&self, _host: &mut dyn Host, event: &mut LootDropsEvent<'_>) {
+    fn loot_drops(&self, host: &mut dyn Host, event: &mut LootDropsEvent<'_>) {
         let Some((pos, _)) = event.context.block else {
             return;
         };
+        if let Some(entity) = host
+            .mod_block_entity(pos)
+            .filter(|entity| entity.id == CHEMICAL_REACTOR_ARRAY_CASING)
+        {
+            event.drops.extend(
+                entity
+                    .items
+                    .into_iter()
+                    .flatten()
+                    .filter(|stack| stack.count > 0),
+            );
+        }
         if let Some((item, energy)) = take_cell_charge(event.context.dimension, pos) {
             for drop in event
                 .drops
@@ -2854,6 +2927,7 @@ impl Hooks for Arcforge {
             || event.block == HYDROTREATER
             || event.block == HABER_REACTOR
             || event.block == CHEMICAL_REACTOR
+            || event.block == CHEMICAL_REACTOR_ARRAY_CASING
             || event.block == ELECTROLYZER
             || event.block == SULFUR_RECOVERY_UNIT
             || event.block == AIR_SEPARATOR
@@ -2948,6 +3022,7 @@ impl Hooks for Arcforge {
             || event.block == HYDROTREATER
             || event.block == HABER_REACTOR
             || event.block == CHEMICAL_REACTOR
+            || event.block == CHEMICAL_REACTOR_ARRAY_CASING
             || event.block == ELECTROLYZER
             || event.block == SULFUR_RECOVERY_UNIT
             || event.block == AIR_SEPARATOR
@@ -3003,6 +3078,8 @@ impl Hooks for Arcforge {
             Some(haber_reactor::container())
         } else if event.block == CHEMICAL_REACTOR {
             Some(chemical_reactor::container())
+        } else if event.block == CHEMICAL_REACTOR_ARRAY_CASING {
+            Some(chemical_reactor_array::container())
         } else if event.block == ELECTROLYZER {
             Some(electrolyzer::container())
         } else if event.block == SULFUR_RECOVERY_UNIT {
@@ -3546,6 +3623,10 @@ impl Hooks for Arcforge {
             chemical_reactor::draw_screen(host, event);
             return;
         }
+        if event.block == CHEMICAL_REACTOR_ARRAY_CASING {
+            chemical_reactor_array::draw_screen(host, event);
+            return;
+        }
         if event.block == ELECTROLYZER {
             electrolyzer::draw_screen(host, event);
             return;
@@ -3824,6 +3905,10 @@ impl Hooks for Arcforge {
             && !chemical_reactor::accepts(host, event.tank, event.fluid)
         {
             Flow::Cancel
+        } else if event.block == CHEMICAL_REACTOR_ARRAY_CASING
+            && !chemical_reactor_array::accepts(host, event.tank, event.fluid)
+        {
+            Flow::Cancel
         } else if event.block == ELECTROLYZER
             && !electrolyzer::accepts(host, event.tank, event.fluid)
         {
@@ -3900,6 +3985,9 @@ impl Hooks for Arcforge {
         }
         if event.block == CHEMICAL_REACTOR {
             return Some(chemical_reactor::energy_buffer());
+        }
+        if event.block == CHEMICAL_REACTOR_ARRAY_CASING {
+            return Some(chemical_reactor_array::energy_buffer());
         }
         if event.block == ELECTROLYZER {
             return Some(electrolyzer::energy_buffer());
@@ -4039,6 +4127,8 @@ impl Hooks for Arcforge {
             Some(haber_reactor::fluid_tanks())
         } else if event.block == CHEMICAL_REACTOR {
             Some(chemical_reactor::fluid_tanks())
+        } else if event.block == CHEMICAL_REACTOR_ARRAY_CASING {
+            Some(chemical_reactor_array::fluid_tanks())
         } else if event.block == ELECTROLYZER {
             Some(electrolyzer::fluid_tanks())
         } else if event.block == SULFUR_RECOVERY_UNIT {
@@ -4199,6 +4289,9 @@ impl Hooks for Arcforge {
             HYDROTREATER => hydrotreater::tick(host, event.pos, event.entity),
             HABER_REACTOR => haber_reactor::tick(host, event.pos, event.entity),
             CHEMICAL_REACTOR => chemical_reactor::tick(host, event.pos, event.entity),
+            CHEMICAL_REACTOR_ARRAY_CASING => {
+                chemical_reactor_array::tick(host, event.pos, event.entity)
+            }
             ELECTROLYZER => electrolyzer::tick(host, event.pos, event.entity),
             SULFUR_RECOVERY_UNIT => sulfur_recovery::tick(host, event.pos, event.entity),
             AIR_SEPARATOR => air_separator::tick(host, event.pos, event.entity),
@@ -7730,6 +7823,9 @@ fn transfer_supported_heat_to_neighbor(
     }
     if target.id == CHEMICAL_REACTOR {
         return chemical_reactor::accept_heat(host, neighbor, source_pos, heat, rate);
+    }
+    if target.id == CHEMICAL_REACTOR_ARRAY_CASING {
+        return chemical_reactor_array::accept_heat(host, neighbor, heat, rate);
     }
     if target.id == SULFUR_RECOVERY_UNIT {
         return sulfur_recovery::accept_heat(host, neighbor, heat, rate);
