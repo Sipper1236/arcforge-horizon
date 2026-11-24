@@ -1,5 +1,5 @@
 # Current implementation
-**Current source:** Catalytic Reformer commit `d2ef69f` on branch `agent/energy-cell-output` passed GitHub Actions run [45319393207](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45319393207). The client archive, package, and checksums are recorded in [verification.md](verification.md). Build and package only are verified; in-game behavior remains unverified.
+**Current source:** the Lubricant Blender alpha is on `agent/energy-cell-output` and is awaiting GitHub Actions verification. The latest verified source remains Catalytic Reformer commit `d2ef69f`, built by run [45319393207](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45319393207); its client archive, package, and checksums are recorded in [verification.md](verification.md). Build/package verification does not establish in-game behavior.
 
 
 ## Energy Cell and Steam Power routing — GitHub Actions verified (2026-11-24)
@@ -18,6 +18,9 @@ Commit `81b9018` adds the source Bitumen-to-Petroleum-Coke recipe, Refinery Gas 
 
 ## Catalytic Reformer alpha — GitHub Actions verified (gameplay pending)
 `api/src/reformer.rs` registers the single-block machine and implements the source Naphtha recipe: 100 mB input becomes 85 mB Gasoline and 60 mB Hydrogen over 40 ticks at 20 HU/t and at least 450°C. It has a 20,000 HU buffer, 16,000 mB feed tank, two fixed 8,000 mB product tanks, a Speed Upgrade slot, Thermal Conduit input, and Wrench status/facing. Source crafting, loot and recipe data plus the handbook entry are packaged. Horizon's fluid tank declaration is fixed per block ID, so all three tanks currently accept access on every face; source-style separate output faces, automatic product ejection, configurable side modes, and gameplay verification remain outstanding. GitHub Actions run [45319393207](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45319393207) passed both build jobs.
+
+## Lubricant Blender alpha — GitHub Actions build pending
+`api/src/lubricant_blender.rs` adds the pinned Heavy Oil recipe (100 mB → 90 mB Lubricant, 40 ticks, 20 FE/t), 50,000 FE storage with 1,000 FE/t input, 16,000/8,000 mB feed/product tanks, Speed and Energy Upgrade slots, Wrench status, and a progress screen. Source crafting and loot data are included. All tank and FE capability faces are exposed because Horizon's declarations are block-wide; source-style automatic product ejection capped at 500 mB/t and configurable side modes are not implemented. The source/content change awaits its GitHub Actions run; no local compilation or gameplay verification is claimed.
 
 ## Distillation Array alpha — GitHub Actions build (2026-11-18)
 Commits 3b3d201 and 81d12b7 add and integrate the source-shaped Distillation Array. It forms a 2x2 or 3x3 column, 4–16 blocks high, with one controller and optional tray layers. Creosote, Crude Oil, and Sour Crude Oil recipes split into fluids and Pitch using source batch amounts, temperatures, heat costs, height tiers, and steam stripping. Thermal conduits supply HU; Speed and Heat Upgrades occupy the machine inventory; the Wrench reports structure, feed progress, stored heat, and steam. The controller exposes fluid tanks and all-side routing.
@@ -39,11 +42,11 @@ Four battery items expose Horizon's native item-energy capability with source ca
 
 ## Native crate and registered content
 
-`api/src/lib.rs` registers a Metal Press, Sifter, Arc Crusher, a three-lane Arc Crushing Array controller and its formed casing multiblock, Carbonizer, Induction Furnace, Infuser, Resin Tap, Firebox, Firebox Array controller and casing, Pressure Glass, Solar Thermal Array controller/casing/collectors, Fuel Burner, all four Fluid Tank tiers, four Pressurized Cylinder tiers, Thermoelectric Plant, four Energy Conduit tiers, four Item Conduit tiers, four Fluid Conduit tiers, four thermal conduit tiers, four Energy Cell tiers, four Heat Cell tiers, four portable FE Battery items, a Wrench that rotates supported single-block machines and configures conduit, Solar heat-port, and energy-generator faces, seven Steel tools, four Steel armor pieces, Fiberizer, Vulcanizer, Grain Dryer, Arcforge Furnace port, Steelworks prototype, Combustion Plant, coke block, treated wood, Arcforge furnace bricks, Creosote/Latex buckets, four liquid Canisters and four Gas Cartridges, the tungsten heating coil, processing materials, the Distillation Array controller/casing/tray, and the 3×5 Pumpjack with a craftable Well Head stand-in.
+`api/src/lib.rs` registers a Metal Press, Sifter, Arc Crusher, a three-lane Arc Crushing Array controller and its formed casing multiblock, Carbonizer, Induction Furnace, Infuser, Resin Tap, Firebox, Firebox Array controller and casing, Pressure Glass, Solar Thermal Array controller/casing/collectors, Fuel Burner, all four Fluid Tank tiers, four Pressurized Cylinder tiers, Thermoelectric Plant, four Energy Conduit tiers, four Item Conduit tiers, four Fluid Conduit tiers, four thermal conduit tiers, four Energy Cell tiers, four Heat Cell tiers, four portable FE Battery items, a Wrench that rotates supported single-block machines and configures conduit, Solar heat-port, and energy-generator faces, seven Steel tools, four Steel armor pieces, Fiberizer, Vulcanizer, Grain Dryer, Arcforge Furnace port, Steelworks prototype, Combustion Plant, Lubricant Blender, coke block, treated wood, Arcforge furnace bricks, Creosote/Latex buckets, four liquid Canisters and four Gas Cartridges, the tungsten heating coil, processing materials, the Distillation Array controller/casing/tray, and the 3×5 Pumpjack with a craftable Well Head stand-in.
 
 ## Recipe data present
 
-The content directory contains 435 recipe JSON files (Arcforge machine recipes and vanilla recipe types):
+The content directory contains 437 recipe JSON files (Arcforge machine recipes and vanilla recipe types):
 
 | Recipe group | Files |
 |---|---:|
@@ -71,6 +74,7 @@ The content directory contains 435 recipe JSON files (Arcforge machine recipes a
 | Distillation Array distilling recipes | 3 |
 | Coker recipe and crafting | 2 |
 | Catalytic Reformer recipe and crafting | 2 |
+| Lubricant Blender recipe and crafting | 2 |
 | Cracking recipes and crafting | 5 |
 | Distillation Array controller, casing, and tray crafting | 3 |
 | Seismic Survey Tool crafting | 1 |
@@ -98,7 +102,7 @@ The content directory contains 435 recipe JSON files (Arcforge machine recipes a
 | Induction Furnace Arcforge smelting catalog | 32 |
 | Heat Cell crafting recipes | 4 |
 | Additional recipe files not itemized above | 19 |
-| **Total** | **435** |
+| **Total** | **437** |
 
 Files existing does not by itself prove the complete recipe graph or survival progression works.
 

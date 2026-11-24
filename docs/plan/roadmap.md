@@ -34,6 +34,8 @@ Add heat producers/consumers, conduits and cells; then storage and per-face tran
 
 The source Naphtha-to-Gasoline Catalytic Reformer recipe now has an alpha implementation with heat, speed upgrades, and separate bounded product tanks. GitHub Actions run [45319393207](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45319393207) passed the package and Linux client builds; in-world behavior remains unverified. Automatic ejection and separate configurable output faces remain unported.
 
+The current source adds the Lubricant Blender alpha: Heavy Oil → Lubricant, FE and Speed/Energy Upgrade handling, bounded tanks, crafting, and a processing screen. Its GitHub build is pending; all-face capabilities and missing automatic 500 mB/t product ejection/configurable side modes remain alpha gaps.
+
 Build water/steam loops, turbines, deposit-based extraction, refining, chemical processing, lithium/battery materials, and agricultural/biofuel chains in the order of the source chapters.
 
 **Acceptance:** each chain has an obtainable input, data-driven recipes, bounded output/byproduct handling, and survives save/reload.

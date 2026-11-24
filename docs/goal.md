@@ -6,7 +6,10 @@ Port the complete survival gameplay scope of the pinned Arcforge release to Hori
 
 The current code is an early prototype, not a complete port. Continue implementing real gameplay from the scope in the root [README](../README.md), preserve Arcforge's recognizable mechanics and progression, and update the as-built and remaining-work documents whenever implementation changes.
 
-### Current slice — Energy Cell and Steam Power routing (GitHub verified; gameplay pending)
+### Current slice — Lubricant Blender alpha (GitHub build pending)
+The current source adds the pinned 100 mB Heavy Oil → 90 mB Lubricant process, FE buffer/input, Speed and Energy Upgrade slots, bounded fluid tanks, Wrench status, crafting/loot data, and a screen. The source/content change awaits the normal GitHub Actions workflow; build and gameplay results must be recorded after the run. GitHub Actions use normal runner parallelism; the half-thread cap applies only to local builds. Source-style 500 mB/t automatic product ejection and configurable side modes remain unported.
+
+### Historical checkpoint — Energy Cell and Steam Power routing (GitHub verified; gameplay pending)
 Branch `agent/energy-cell-output` adds the two-slot Energy Cell menu, mod-side FE face routing, charge-scaled comparator output, Steam Turbine FE output routing, and 20-tick Steam Boiler rescans. Commits `cf81c82` and `c64d28c` passed both jobs in [GitHub Actions run 45311824901](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45311824901); the client ZIP and checksum manifests were verified. The pinned Horizon energy capability remains all-sided, so configured faces only govern the mod-side transfer path. In-game use and save/reload remain unverified. See [verification.md](status/verification.md).
 
 ### Current slice — Oil Pumpjack structure update (GitHub verified; gameplay pending)
