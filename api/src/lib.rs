@@ -45,6 +45,7 @@ mod fluid_conduit;
 mod fuel_burner;
 mod heat;
 mod heat_cell;
+mod hydrotreater;
 mod item_conduit;
 mod lubricant_blender;
 mod oil_deposit;
@@ -114,6 +115,7 @@ const DISTILLATION_TRAY: &str = distillation_array::TRAY;
 const COKER: &str = coker::BLOCK;
 const CATALYTIC_REFORMER: &str = reformer::BLOCK;
 const LUBRICANT_BLENDER: &str = lubricant_blender::BLOCK;
+const HYDROTREATER: &str = hydrotreater::BLOCK;
 const PETROLEUM_COKE: &str = coker::PETROLEUM_COKE;
 const CRACKING_CONTROLLER: &str = cracking_unit::CONTROLLER;
 const CRACKING_CASING: &str = cracking_unit::CASING;
@@ -568,6 +570,17 @@ impl Hooks for Arcforge {
         }
         if event.entity.id == LUBRICANT_BLENDER {
             return if lubricant_blender::item_allowed(
+                event.slot,
+                event.stack.item.as_ref(),
+                event.stack.count,
+            ) {
+                Flow::Continue
+            } else {
+                Flow::Cancel
+            };
+        }
+        if event.entity.id == HYDROTREATER {
+            return if hydrotreater::item_allowed(
                 event.slot,
                 event.stack.item.as_ref(),
                 event.stack.count,
@@ -1086,6 +1099,27 @@ impl Hooks for Arcforge {
                         player.uuid,
                         Text::literal(lubricant_blender::status(&entity)),
                     );
+                }
+            }
+            return Flow::Cancel;
+        }
+        if host
+            .mod_block_entity(event.pos)
+            .is_some_and(|entity| entity.id == HYDROTREATER)
+        {
+            let requested_facing = match event.face {
+                [0, 0, -1] => Some("north"),
+                [1, 0, 0] => Some("east"),
+                [0, 0, 1] => Some("south"),
+                [-1, 0, 0] => Some("west"),
+                _ => None,
+            };
+            if let Some(facing) = requested_facing {
+                hydrotreater::face(host, event.pos, facing);
+            }
+            if let Some(entity) = host.mod_block_entity(event.pos) {
+                if let Some(player) = host.acting_player() {
+                    host.action_bar(player.uuid, Text::literal(hydrotreater::status(&entity)));
                 }
             }
             return Flow::Cancel;
@@ -1652,6 +1686,24 @@ impl Hooks for Arcforge {
                 "lit": { "type": "boolean" }
             }))
             .expect("valid Lubricant Blender block states");
+            block.default_state = [
+                ("facing".to_owned(), "north".to_owned()),
+                ("lit".to_owned(), "false".to_owned()),
+            ]
+            .into_iter()
+            .collect();
+        }
+        register_content!(&mut event.blocks, id: HYDROTREATER.into(), template: "minecraft:blast_furnace".into(), item: true);
+        if let Some(block) = event
+            .blocks
+            .iter_mut()
+            .find(|block| block.id == HYDROTREATER)
+        {
+            block.state_properties = serde_json::from_value(serde_json::json!({
+                "facing": { "type": "enum", "values": ["north", "east", "south", "west"] },
+                "lit": { "type": "boolean" }
+            }))
+            .expect("valid Hydrotreater block states");
             block.default_state = [
                 ("facing".to_owned(), "north".to_owned()),
                 ("lit".to_owned(), "false".to_owned()),
@@ -2420,6 +2472,7 @@ impl Hooks for Arcforge {
             || event.block == COKER
             || event.block == CATALYTIC_REFORMER
             || event.block == LUBRICANT_BLENDER
+            || event.block == HYDROTREATER
             || event.block == CRACKING_CONTROLLER
             || event.block == SOLAR_ARRAY_CONTROLLER
             || event.block == GEOTHERMAL_PLANT
@@ -2481,6 +2534,7 @@ impl Hooks for Arcforge {
             || event.block == COKER
             || event.block == CATALYTIC_REFORMER
             || event.block == LUBRICANT_BLENDER
+            || event.block == HYDROTREATER
             || event.block == CRACKING_CONTROLLER
             || event.block == SOLAR_ARRAY_CONTROLLER
             || event.block == GEOTHERMAL_PLANT
@@ -2520,6 +2574,8 @@ impl Hooks for Arcforge {
             Some(reformer::container())
         } else if event.block == LUBRICANT_BLENDER {
             Some(lubricant_blender::container())
+        } else if event.block == HYDROTREATER {
+            Some(hydrotreater::container())
         } else if energy_cell_spec(event.block).is_some() {
             Some(ModContainer {
                 slots: 2,
@@ -2782,6 +2838,15 @@ impl Hooks for Arcforge {
                 own_labels: true,
                 own_background: false,
             }),
+            HYDROTREATER => Some(NativeScreen {
+                width: 176.0,
+                height: 286.0,
+                slots: vec![Some([38.0, 30.0]), Some([122.0, 30.0])],
+                inventory_y: 200.0,
+                inventory_x: 8.0,
+                own_labels: true,
+                own_background: false,
+            }),
             SIFTER => Some(NativeScreen {
                 width: 176.0,
                 height: 202.0,
@@ -2963,6 +3028,10 @@ impl Hooks for Arcforge {
                 blender_fill!([8.0, 120.0, 160.0 * fraction, 6.0], 0xFF62B64F);
             }
             blender_text!("Inventory", 8.0, 130.0, 0xFFFFFFFF);
+            return;
+        }
+        if event.block == HYDROTREATER {
+            hydrotreater::draw_screen(host, event);
             return;
         }
         if event.block == FIBERIZER {
@@ -3205,6 +3274,10 @@ impl Hooks for Arcforge {
             && !lubricant_blender::accepts(event.tank, event.fluid)
         {
             Flow::Cancel
+        } else if event.block == HYDROTREATER
+            && !hydrotreater::accepts(event.tank, event.fluid)
+        {
+            Flow::Cancel
         } else if event.block == DISTILLATION_CONTROLLER
             && !distillation_array::accepts(event.tank, event.fluid)
         {
@@ -3262,6 +3335,9 @@ impl Hooks for Arcforge {
     ) -> Option<horizon_client::mod_api::ModEnergyBuffer> {
         if event.block == LUBRICANT_BLENDER {
             return Some(lubricant_blender::energy_buffer());
+        }
+        if event.block == HYDROTREATER {
+            return Some(hydrotreater::energy_buffer());
         }
         if let Some((capacity, rate)) = energy_conduit_spec(event.block) {
             return Some(horizon_client::mod_api::ModEnergyBuffer {
@@ -3381,6 +3457,8 @@ impl Hooks for Arcforge {
             Some(reformer::fluid_tanks())
         } else if event.block == LUBRICANT_BLENDER {
             Some(lubricant_blender::fluid_tanks())
+        } else if event.block == HYDROTREATER {
+            Some(hydrotreater::fluid_tanks())
         } else if event.block == STEAM_TURBINE_ARRAY_CONTROLLER {
             Some(steam_turbine::fluid_tanks())
         } else if event.block == STEAM_CONDENSER_ARRAY_CONTROLLER {
@@ -3532,6 +3610,7 @@ impl Hooks for Arcforge {
             COKER => coker::tick(host, event.pos, event.entity),
             CATALYTIC_REFORMER => reformer::tick(host, event.pos, event.entity),
             LUBRICANT_BLENDER => lubricant_blender::tick(host, event.pos, event.entity),
+            HYDROTREATER => hydrotreater::tick(host, event.pos, event.entity),
             CRACKING_CONTROLLER => cracking_unit::tick(host, event.pos, event.entity),
             SOLAR_ARRAY_CONTROLLER => tick_solar_array(host, event.pos, event.entity),
             GEOTHERMAL_PLANT => tick_geothermal_plant(host, event.pos, event.entity),
@@ -7045,6 +7124,9 @@ fn transfer_supported_heat_to_neighbor(
     }
     if target.id == CATALYTIC_REFORMER {
         return reformer::accept_heat(host, neighbor, heat, rate);
+    }
+    if target.id == HYDROTREATER {
+        return hydrotreater::accept_heat(host, neighbor, heat, rate);
     }
     let (min_temperature, capacity, max_temperature) = match target.id.as_str() {
         FIBERIZER => (800, 10_000, 1100),

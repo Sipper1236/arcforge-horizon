@@ -1,5 +1,8 @@
 # Verification record
 
+## Hydrotreater alpha — GitHub Actions pending (gameplay pending)
+The Hydrotreater source, content, and screen changes are in progress on `agent/energy-cell-output`. CI has not yet been run for this slice. Do not treat the previous Blender build as verification for the Hydrotreater. Local compilation and tests are not part of this workflow; use GitHub Actions with normal runner parallelism.
+
 ## Lubricant Blender alpha — GitHub Actions verified (gameplay pending)
 Source commit `898bb6a` plus formatting commit `07b59a7` on `agent/energy-cell-output` add the 100 mB Heavy Oil → 90 mB Lubricant machine. GitHub Actions run [45325717893](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45325717893) passed Rust formatting, the locked native crate check, Horizon content build/check, HMOD/HNMOD packaging, and the pinned Linux client build/package. Initial run [45325623133](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45325623133) stopped at the Rust formatting check; its reported layout changes were applied before the passing run.
 
