@@ -1,5 +1,8 @@
 # Verification record
 
+## Sulfur Recovery Unit alpha — pending GitHub Actions
+The working branch adds the source Hydrogen Sulfide/Oxygen recipe, crafting recipe, block loot, and a native heat-processing machine with bounded tanks, sulfur output, Speed Upgrade support, Wrench status, and a screen. The process is 100 mB Hydrogen Sulfide + 50 mB Oxygen → 100 mB Steam + 1 Sulfur Dust over 10 ticks at 15 HU/t and 250°C. No Actions build has run yet; Hydrotreater run [45331449362](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45331449362) remains the latest verified build. Gameplay is unverified.
+
 ## Hydrotreater alpha — GitHub Actions verified (gameplay pending)
 Commits `8711736` and `8cbd807` on `agent/energy-cell-output` add the source sour kerosene/diesel recipes, Hydrogen input, two products, heat/FE processing, upgrades, bounded tanks, Wrench status, and a screen. Initial run [45331276459](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45331276459) stopped at Rust formatting; the formatter changes were applied in `8cbd807`. Run [45331449362](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45331449362) passed both the package and Linux client jobs, including Rust formatting, the locked native crate check, Horizon content build/check, HMOD/HNMOD packaging, and client assembly.
 

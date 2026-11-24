@@ -7,6 +7,8 @@ Latest build-verified client: commit `8cbd807`, run [45331449362](https://github
 
 Build only with GitHub Actions. GitHub runners use their normal parallelism; the half-thread cap applies only to local compiling. No local compilation or tests were run for the Blender slice. The workflow checks Rust and content, packages the mod, then builds the pinned Linux client on pushes and manual dispatches.
 
+The Sulfur Recovery Unit slice is awaiting its first Actions run. Hydrotreater run [45331449362](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45331449362) remains the latest verified client and package build; its archived paths and checksums are recorded in [verification.md](status/verification.md).
+
 Run [45331449362](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45331449362) verifies the Hydrotreater source and full Linux client. GitHub Actions runners used normal parallelism; no local compilation or tests were run. The run's archive paths and checksums are recorded in [verification.md](status/verification.md).
 ## Historical hybrid remote build (inactive)
 `tools/build_hybrid_client.sh` builds the Rust crate, checks the `.hmod`, packages the `.hnmod`, prepares the pinned Horizon Nightly, and creates an importable Linux client ZIP. Run it from the project root through the hybrid runner:
