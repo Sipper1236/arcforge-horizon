@@ -96,7 +96,9 @@ fn matches_fluid(input: &Input, fluid: &str) -> bool {
 fn matching_recipes(host: &dyn Host) -> Vec<(Value, Recipe)> {
     host.recipes_of_type(RECIPE_TYPE)
         .into_iter()
-        .filter_map(|source| recipe_from_json(&source.json).map(|recipe| (source.json, recipe)))
+        .filter_map(|source| {
+            recipe_from_json(&source.json).map(|recipe| (source.json.as_ref().clone(), recipe))
+        })
         .collect()
 }
 
