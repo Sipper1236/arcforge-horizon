@@ -243,7 +243,14 @@ pub(crate) fn fluid_tanks() -> ModFluidTanks {
 pub(crate) fn container() -> ModContainer {
     ModContainer {
         slots: 1,
-        faces: [vec![SPEED_SLOT]; 6],
+        faces: [
+            vec![SPEED_SLOT],
+            vec![SPEED_SLOT],
+            vec![SPEED_SLOT],
+            vec![SPEED_SLOT],
+            vec![SPEED_SLOT],
+            vec![SPEED_SLOT],
+        ],
         inputs: vec![SPEED_SLOT],
         outputs: vec![],
         menu: Some("arcforge:machine_1_slot".into()),
