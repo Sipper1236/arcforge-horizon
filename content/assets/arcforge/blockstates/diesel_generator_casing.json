@@ -4,7 +4,7 @@
       "model": "arcforge:block/refinery/diesel_generator_casing"
     },
     "formed=true": {
-      "model": "arcforge:block/refinery/diesel_generator_casing"
+      "model": "arcforge:block/refinery/diesel_generator_hidden"
     }
   }
 }

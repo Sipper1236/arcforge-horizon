@@ -6,7 +6,10 @@
 
 use horizon_client::{
     containers::{ModBlockEntity, ModContainer},
-    mod_api::{Compound, Host, ModEnergyBuffer, ModFluidTanks, Tag},
+    mod_api::{
+        BlockEntityDraw, BlockEntityRenderBoundingBoxEvent, BlockEntitySubmitEvent, Compound,
+        CubeFace, Host, ModEnergyBuffer, ModFluidTanks, Tag,
+    },
 };
 
 pub(crate) const CONTROLLER: &str = "arcforge:diesel_generator_controller";
@@ -33,6 +36,10 @@ const GASOLINE: &str = "arcforge:gasoline";
 const KEROSENE: &str = "arcforge:kerosene";
 const BIODIESEL: &str = "arcforge:biodiesel";
 const REFINERY_GAS: &str = "arcforge:refinery_gas";
+const CASING_SPRITE: &str = "arcforge:block/refinery/diesel_generator_casing";
+const METAL_SPRITE: &str = "arcforge:block/refinery/diesel_generator_casing_top";
+const PANEL_SPRITE: &str = "arcforge:block/refinery/diesel_generator_controller";
+const PANEL_LIT_SPRITE: &str = "arcforge:block/refinery/diesel_generator_controller_on";
 
 #[derive(Clone, Copy)]
 struct Facing {
@@ -132,6 +139,334 @@ fn set_bool(host: &mut dyn Host, pos: [i32; 3], property: &str, value: bool) {
     if host.block_property(pos, property).as_deref() != Some(value) {
         host.set_block_property(pos, property, value);
     }
+}
+
+fn draw_box(
+    host: &dyn Host,
+    draw: &mut BlockEntityDraw,
+    from: [f32; 3],
+    to: [f32; 3],
+    sprite: &str,
+) {
+    let face = CubeFace { sprite, uv: None };
+    let from = [from[0] - 16.0, from[1], from[2]];
+    let to = [to[0] - 16.0, to[1], to[2]];
+    let _ = host.draw_cube(draw, from, to, [Some(face); 6], 0x00FF_FFFF);
+}
+
+fn render_yaw(direction: Facing) -> f32 {
+    match direction.name {
+        "east" => -90.0,
+        "south" => 180.0,
+        "west" => 90.0,
+        _ => 0.0,
+    }
+}
+
+pub(crate) fn render_bounds(event: &mut BlockEntityRenderBoundingBoxEvent<'_>) {
+    if !is_formed(event.entity) {
+        return;
+    }
+    let Some((direction, length)) = save_facing_length(&event.entity.nbt) else {
+        return;
+    };
+    let length = length as f32;
+    let bounds = match direction.name {
+        "north" => [-2.0, -1.0, -1.0, 3.0, 4.0, length + 1.0],
+        "south" => [-2.0, -1.0, -length, 3.0, 4.0, 2.0],
+        "east" => [-length, -1.0, -2.0, 2.0, 4.0, 3.0],
+        "west" => [-2.0, -1.0, -2.0, length + 1.0, 4.0, 3.0],
+        _ => return,
+    };
+    event.bounds.copy_from_slice(&bounds);
+}
+
+pub(crate) fn draw_model(host: &dyn Host, event: &mut BlockEntitySubmitEvent<'_>) {
+    if !is_formed(event.entity) {
+        return;
+    }
+    let Some((direction, length)) = save_facing_length(&event.entity.nbt) else {
+        return;
+    };
+    let run_speed = get_i32(&event.entity.nbt, "DieselGeneratorSpeed").clamp(0, 120);
+    let lit = get_i32(&event.entity.nbt, "DieselGeneratorOutput") > 0;
+    let length_px = length as f32 * 16.0;
+    let alternator_length = match length {
+        5 => 22.0,
+        7 => 32.0,
+        _ => 40.0,
+    };
+    let bell_u1 = length_px - 3.0 - alternator_length - 3.0 - 3.0;
+    let bell_u0 = bell_u1 - 6.0;
+    let engine_u0 = 15.0;
+    let engine_u1 = bell_u0;
+    let coupling_u0 = bell_u1;
+    let coupling_u1 = coupling_u0 + 3.0;
+    let alternator_u0 = coupling_u1;
+    let alternator_u1 = alternator_u0 + alternator_length;
+    let alternator_bell_u1 = alternator_u1 + 3.0;
+
+    let draw = &mut *event.draw;
+    draw.push();
+    draw.rotate_about([0.0, 1.0, 0.0], render_yaw(direction), [0.5, 0.5, 0.5]);
+
+    // Fuel tank and rails form the 3-wide base of the genset.
+    draw_box(
+        host,
+        draw,
+        [2.0, 0.0, 1.0],
+        [46.0, 7.0, length_px - 1.0],
+        CASING_SPRITE,
+    );
+    draw_box(
+        host,
+        draw,
+        [5.0, 7.0, 0.0],
+        [10.0, 11.0, length_px],
+        METAL_SPRITE,
+    );
+    draw_box(
+        host,
+        draw,
+        [38.0, 7.0, 0.0],
+        [43.0, 11.0, length_px],
+        METAL_SPRITE,
+    );
+
+    // Radiator core, headers, side channels, and the guarded fan behind it.
+    draw_box(
+        host,
+        draw,
+        [7.0, 11.0, 2.0],
+        [41.0, 38.0, 8.0],
+        METAL_SPRITE,
+    );
+    draw_box(
+        host,
+        draw,
+        [5.0, 13.0, 2.0],
+        [8.0, 37.0, 9.0],
+        CASING_SPRITE,
+    );
+    draw_box(
+        host,
+        draw,
+        [40.0, 13.0, 2.0],
+        [43.0, 37.0, 9.0],
+        CASING_SPRITE,
+    );
+    draw_box(
+        host,
+        draw,
+        [11.0, 39.0, 2.0],
+        [37.0, 41.0, 9.0],
+        METAL_SPRITE,
+    );
+    draw_box(
+        host,
+        draw,
+        [11.0, 9.0, 2.0],
+        [37.0, 11.0, 9.0],
+        METAL_SPRITE,
+    );
+    for (from, to) in [
+        ([11.0, 12.0, 9.0], [13.0, 39.0, 14.0]),
+        ([35.0, 12.0, 9.0], [37.0, 39.0, 14.0]),
+        ([12.0, 12.0, 9.0], [36.0, 14.0, 14.0]),
+        ([12.0, 37.0, 9.0], [36.0, 39.0, 14.0]),
+    ] {
+        draw_box(host, draw, from, to, CASING_SPRITE);
+    }
+    let fan_speed = 30.0 * run_speed as f32 / 120.0;
+    let fan_turn = (draw.game_time as f32 + draw.partial) * fan_speed;
+    let fan_pivot = [0.5, 22.0 / 16.0, 11.0 / 16.0];
+    for blade in 0..6 {
+        draw.push();
+        draw.rotate_about([0.0, 0.0, 1.0], fan_turn + blade as f32 * 60.0, fan_pivot);
+        draw_box(
+            host,
+            draw,
+            [24.0, 20.5, 10.0],
+            [35.0, 23.5, 12.0],
+            METAL_SPRITE,
+        );
+        draw.pop();
+    }
+    draw_box(
+        host,
+        draw,
+        [21.0, 19.0, 9.0],
+        [27.0, 25.0, 13.0],
+        CASING_SPRITE,
+    );
+    draw_box(
+        host,
+        draw,
+        [23.0, 21.0, 13.0],
+        [25.0, 23.0, engine_u0],
+        METAL_SPRITE,
+    );
+
+    // Crankcase, oil pan, V banks, rocker covers and intake manifold.
+    draw_box(
+        host,
+        draw,
+        [13.0, 13.0, engine_u0],
+        [35.0, 25.0, engine_u1],
+        CASING_SPRITE,
+    );
+    draw_box(
+        host,
+        draw,
+        [16.0, 8.0, engine_u0 + 2.0],
+        [32.0, 13.0, engine_u1 - 2.0],
+        METAL_SPRITE,
+    );
+    draw_box(
+        host,
+        draw,
+        [10.0, 25.0, engine_u0 + 1.0],
+        [21.0, 41.0, engine_u1 - 1.0],
+        METAL_SPRITE,
+    );
+    draw_box(
+        host,
+        draw,
+        [27.0, 25.0, engine_u0 + 1.0],
+        [38.0, 41.0, engine_u1 - 1.0],
+        METAL_SPRITE,
+    );
+    let cylinders_per_bank = (length - 1) as usize;
+    let pitch = (engine_u1 - engine_u0 - 4.0) / cylinders_per_bank as f32;
+    for cylinder in 0..cylinders_per_bank {
+        let u0 = engine_u0 + 2.0 + pitch * cylinder as f32 + 0.5;
+        let u1 = engine_u0 + 2.0 + pitch * (cylinder + 1) as f32 - 0.5;
+        draw_box(
+            host,
+            draw,
+            [10.0, 40.0, u0],
+            [20.0, 43.0, u1],
+            CASING_SPRITE,
+        );
+        draw_box(
+            host,
+            draw,
+            [28.0, 40.0, u0],
+            [38.0, 43.0, u1],
+            CASING_SPRITE,
+        );
+    }
+    draw_box(
+        host,
+        draw,
+        [20.5, 25.0, engine_u0],
+        [27.5, 31.0, engine_u1],
+        CASING_SPRITE,
+    );
+    draw_box(
+        host,
+        draw,
+        [8.0, 29.0, engine_u0 + 4.0],
+        [12.0, 37.0, engine_u1 - 4.0],
+        METAL_SPRITE,
+    );
+    draw_box(
+        host,
+        draw,
+        [36.0, 29.0, engine_u0 + 4.0],
+        [40.0, 37.0, engine_u1 - 4.0],
+        METAL_SPRITE,
+    );
+    let turbo_pairs = if length == 9 { 2 } else { 1 };
+    for pair in 0..turbo_pairs {
+        let u = engine_u1 - 6.0 - pair as f32 * 18.0;
+        draw_box(
+            host,
+            draw,
+            [9.0, 35.0, u],
+            [17.0, 43.0, u + 6.0],
+            CASING_SPRITE,
+        );
+        draw_box(
+            host,
+            draw,
+            [31.0, 35.0, u],
+            [39.0, 43.0, u + 6.0],
+            CASING_SPRITE,
+        );
+    }
+
+    // Flywheel, coupling, alternator, terminal end bell and control panel.
+    draw_box(
+        host,
+        draw,
+        [11.0, 9.0, bell_u0],
+        [37.0, 35.0, bell_u1],
+        CASING_SPRITE,
+    );
+    draw_box(
+        host,
+        draw,
+        [19.5, 17.5, coupling_u0],
+        [28.5, 26.5, coupling_u1],
+        METAL_SPRITE,
+    );
+    draw_box(
+        host,
+        draw,
+        [10.0, 11.0, alternator_u0],
+        [38.0, 37.0, alternator_u1],
+        CASING_SPRITE,
+    );
+    draw_box(
+        host,
+        draw,
+        [13.0, 13.0, alternator_u1],
+        [35.0, 34.0, alternator_bell_u1],
+        METAL_SPRITE,
+    );
+    draw_box(
+        host,
+        draw,
+        [41.0, 20.0, alternator_u0 + 3.0],
+        [47.0, 33.0, alternator_u0 + 13.0],
+        if lit { PANEL_LIT_SPRITE } else { PANEL_SPRITE },
+    );
+
+    // Silencer, exhaust riser and rain hood rise just above the 3-block shell.
+    let silencer_start = engine_u0 + 5.0;
+    let silencer_end = (engine_u1 - 5.0).max(silencer_start + 6.0);
+    draw_box(
+        host,
+        draw,
+        [20.5, 40.0, silencer_start],
+        [27.5, 47.0, silencer_end],
+        CASING_SPRITE,
+    );
+    draw_box(
+        host,
+        draw,
+        [22.0, 43.0, silencer_start + 2.0],
+        [26.0, 52.0, silencer_start + 6.0],
+        METAL_SPRITE,
+    );
+    draw_box(
+        host,
+        draw,
+        [21.0, 50.0, silencer_start + 1.0],
+        [27.0, 52.0, silencer_start + 7.0],
+        CASING_SPRITE,
+    );
+
+    // Keep an interactive-looking panel on the controller face, visible at the front end.
+    draw_box(
+        host,
+        draw,
+        [16.0, 3.0, 0.0],
+        [32.0, 13.0, 2.0],
+        if lit { PANEL_LIT_SPRITE } else { PANEL_SPRITE },
+    );
+    draw.pop();
 }
 
 fn is_formed(entity: &ModBlockEntity) -> bool {

@@ -4,7 +4,8 @@
 use horizon_client::{
     containers::{ModBlockEntity, ModContainer},
     mod_api::{
-        AnalogOutputEvent, BlockEntityContainerEvent, BlockEntityEvent, BlockEntityTickEvent,
+        AnalogOutputEvent, BlockEntityContainerEvent, BlockEntityEvent,
+        BlockEntityRenderBoundingBoxEvent, BlockEntitySubmitEvent, BlockEntityTickEvent,
         BlockEntityTicksEvent, BlocksEvent, ContainerAcceptsEvent, Direction, Flow,
         HasAnalogOutputEvent, Hooks, Host, ItemEnergyBuffer, ItemEnergyBufferEvent,
         ItemFluidTankEvent, ItemStack, ItemsEvent, LootDropsEvent, MenuSlotRulesEvent,
@@ -2679,6 +2680,22 @@ impl Hooks for Arcforge {
             Some((event.block.to_owned(), Default::default()))
         } else {
             None
+        }
+    }
+
+    fn block_entity_submit(&self, host: &dyn Host, event: &mut BlockEntitySubmitEvent<'_>) {
+        if event.block == DIESEL_GENERATOR_CONTROLLER {
+            diesel_generator::draw_model(host, event);
+        }
+    }
+
+    fn block_entity_render_bounding_box(
+        &self,
+        _host: &dyn Host,
+        event: &mut BlockEntityRenderBoundingBoxEvent<'_>,
+    ) {
+        if event.block == DIESEL_GENERATOR_CONTROLLER {
+            diesel_generator::render_bounds(event);
         }
     }
 
