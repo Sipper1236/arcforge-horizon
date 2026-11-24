@@ -9,6 +9,9 @@
   "item.arcforge.steel_ingot": "Steel Ingot",
   "item.arcforge.coal_coke": "Coal Coke",
   "item.arcforge.slag": "Slag",
+  "item.arcforge.basic_slag": "Basic Slag",
+  "item.arcforge.wood_ash": "Wood Ash",
+  "item.arcforge.npk_fertilizer": "NPK Fertilizer",
   "item.arcforge.carbon_dust": "Carbon Dust",
   "item.arcforge.iron_dust": "Iron Dust",
   "item.arcforge.copper_dust": "Copper Dust",
@@ -82,6 +85,8 @@
   "item.arcforge.steam_cracker_casing": "Steam Cracker Casing",
   "block.arcforge.haber_reactor": "Haber Reactor",
   "item.arcforge.haber_reactor": "Haber Reactor",
+  "block.arcforge.chemical_reactor": "Chemical Reactor",
+  "item.arcforge.chemical_reactor": "Chemical Reactor",
   "block.arcforge.air_separator": "Air Separator",
   "item.arcforge.air_separator": "Air Separator",
   "item.arcforge.cracking_catalyst": "Cracking Catalyst"
