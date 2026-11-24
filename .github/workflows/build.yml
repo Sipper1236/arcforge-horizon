@@ -169,6 +169,28 @@ jobs:
             --minecraft "$PWD/ci-minecraft" \
             --version "$HORIZON_BASE_VERSION"
 
+      - name: Use the pinned Horizon source revision for native-build
+        run: |
+          set -euo pipefail
+          horizon_revision="$(sed -n 's/^horizon_revision = \"\(.*\)\"$/\1/p' horizon-mixin.toml)"
+          source_revision="$(git -C horizon-source rev-parse HEAD)"
+          if [ -z "$horizon_revision" ] || [ "$horizon_revision" != "$source_revision" ]; then
+            echo "horizon-mixin.toml and the Horizon source checkout must use the same revision." >&2
+            exit 1
+          fi
+          revision_short="${horizon_revision:0:7}"
+          revision_date="$(git -C horizon-source show -s --format=%cs "$horizon_revision")"
+          pinned_version="nightly-${revision_date}-${revision_short}"
+          resource_version_dir="$HORIZON_LAUNCHER_HOME/versions/$HORIZON_BASE_VERSION"
+          pinned_version_dir="$HORIZON_LAUNCHER_HOME/versions/$pinned_version"
+          if [ "$HORIZON_BASE_VERSION" != "$pinned_version" ]; then
+            test -d "$resource_version_dir"
+            test ! -e "$pinned_version_dir"
+            mv "$resource_version_dir" "$pinned_version_dir"
+          fi
+          echo "HORIZON_BUILD_VERSION=$pinned_version" >> "$GITHUB_ENV"
+          horizon-source/launcher/target/debug/horizon-launcher instance version arcforge-ci "$pinned_version"
+
       - name: Stage the native mod source for Horizon's symlink-safe packer
         run: |
           mkdir -p target/native-build/arcforge/api
@@ -179,7 +201,7 @@ jobs:
         run: |
           horizon-source/launcher/target/debug/horizon-launcher native-build "$PWD/target/native-build/arcforge" \
             --instance arcforge-ci \
-            --version "$HORIZON_BASE_VERSION" \
+            --version "$HORIZON_BUILD_VERSION" \
             --profile performance \
             --trust-native-code
 
