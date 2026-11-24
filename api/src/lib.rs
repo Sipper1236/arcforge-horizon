@@ -8491,6 +8491,18 @@ fn arcforge_energy_target(id: &str) -> Option<(u64, u64)> {
     }
 }
 
+fn sync_energy_cell_charge(host: &mut dyn Host, pos: [i32; 3], id: &str, stored: u64) {
+    let Some((capacity, _)) = energy_cell_spec(id) else {
+        return;
+    };
+    record_cell_charge(host, pos, id, stored.min(capacity) as i32);
+    let level = energy_cell_charge_level(stored, capacity).to_string();
+    if host.block_property(pos, "charge").as_deref() != Some(&level) {
+        host.set_block_property(pos, "charge", &level);
+        host.block_entity_sync(pos);
+    }
+}
+
 fn tick_arcforge_energy_conduit(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity) {
     energy_conduit::tick(host, pos, entity, transfer_energy_to_neighbor);
 }
