@@ -243,14 +243,14 @@ pub(crate) fn accepts(_tank: usize, _fluid: &str) -> bool {
 pub(crate) fn fluid_tanks() -> ModFluidTanks {
     ModFluidTanks {
         tanks: vec![GAS_CAPACITY as i32, GAS_CAPACITY as i32],
-        // Fixed to the source default facing (north): Oxygen leaves west and Nitrogen east.
+        // Fixed to the source default facing (north): Nitrogen leaves west and Oxygen east.
         faces: [
             vec![],
             vec![],
             vec![],
             vec![],
-            vec![OXYGEN_TANK],
             vec![NITROGEN_TANK],
+            vec![OXYGEN_TANK],
         ],
         inputs: vec![],
         outputs: vec![NITROGEN_TANK, OXYGEN_TANK],
