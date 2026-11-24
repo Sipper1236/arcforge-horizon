@@ -3059,9 +3059,7 @@ impl Hooks for Arcforge {
             Flow::Cancel
         } else if event.block == COKER && !coker::accepts(event.tank, event.fluid) {
             Flow::Cancel
-        } else if event.block == CATALYTIC_REFORMER
-            && !reformer::accepts(event.tank, event.fluid)
-        {
+        } else if event.block == CATALYTIC_REFORMER && !reformer::accepts(event.tank, event.fluid) {
             Flow::Cancel
         } else if event.block == DISTILLATION_CONTROLLER
             && !distillation_array::accepts(event.tank, event.fluid)

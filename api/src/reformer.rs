@@ -32,10 +32,7 @@ struct Recipe {
 fn recipe_from_json(json: &Value) -> Option<Recipe> {
     let input = json.get("input")?;
     let input_fluid = input.get("fluid")?.as_str()?.to_owned();
-    let input_amount = input
-        .get("amount")?
-        .as_u64()?
-        .clamp(1, u64::from(u32::MAX)) as u32;
+    let input_amount = input.get("amount")?.as_u64()?.clamp(1, u64::from(u32::MAX)) as u32;
     let products = json
         .get("fluids")?
         .as_array()?
@@ -43,10 +40,7 @@ fn recipe_from_json(json: &Value) -> Option<Recipe> {
         .map(|value| {
             Some(Product {
                 fluid: value.get("id")?.as_str()?.to_owned(),
-                amount: value
-                    .get("amount")?
-                    .as_u64()?
-                    .clamp(1, u64::from(u32::MAX)) as u32,
+                amount: value.get("amount")?.as_u64()?.clamp(1, u64::from(u32::MAX)) as u32,
             })
         })
         .collect::<Option<Vec<_>>>()?;
@@ -119,18 +113,14 @@ fn total(recipe: &Recipe, entity: &ModBlockEntity) -> u32 {
 
 fn products_fit(entity: &ModBlockEntity, recipe: &Recipe) -> bool {
     recipe.products.len() <= 2
-        && recipe
-            .products
-            .iter()
-            .enumerate()
-            .all(|(index, product)| {
-                let tank = FIRST_PRODUCT_TANK + index;
-                let name = crate::fluid::name(&entity.nbt, tank);
-                let amount = crate::fluid::amount(&entity.nbt, tank);
-                name.as_deref()
-                    .is_none_or(|existing| existing == product.fluid)
-                    && amount.saturating_add(product.amount) <= PRODUCT_CAPACITY
-            })
+        && recipe.products.iter().enumerate().all(|(index, product)| {
+            let tank = FIRST_PRODUCT_TANK + index;
+            let name = crate::fluid::name(&entity.nbt, tank);
+            let amount = crate::fluid::amount(&entity.nbt, tank);
+            name.as_deref()
+                .is_none_or(|existing| existing == product.fluid)
+                && amount.saturating_add(product.amount) <= PRODUCT_CAPACITY
+        })
 }
 
 fn set_status(entity: &mut ModBlockEntity, status: i32, rate: u32, total: u32) {
