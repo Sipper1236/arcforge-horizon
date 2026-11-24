@@ -1,11 +1,11 @@
-# Build and compile policy (updated 2026-11-23)
+# Build and compile policy (updated 2026-11-24)
 All Arcforge builds and compile verification run through GitHub Actions. Do not invoke the hybrid remote build script or compile locally. Previous hybrid results below are historical records only.
 
 ## Current build policy
 
-Latest playable client: commit `6a4b74a`, run [45304153554](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45304153554). Both the package and Linux client jobs passed. The workflow resolves an available Minecraft 26.3 Nightly for game resources, then uses the Horizon revision pinned in `horizon-mixin.toml` for native compilation. The downloaded client ZIP and package checksums were verified; its SHA-256 is `4ac4e86beec5f86aebb95f26199e6d65125b61f5157e1bcd28ecaeb38b5a6beb`.
+Latest build-verified client: commit `c64d28c`, run [45311824901](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45311824901). Both the package and Linux client jobs passed. The workflow resolves an available Minecraft 26.3 Nightly for game resources, then uses the Horizon revision pinned in `horizon-mixin.toml` for native compilation. Client ZIP: `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-run-45311824901/arcforge-playable-linux-x86_64-c64d28cad4e30848a3ef401c63947225437fadf3/arcforge-linux-x86_64.zip` (47,844,197 bytes; SHA-256 `57dcb8e2bf8a2082fa91a368f45b13c681edea5b924385285276e1b5e73e6414`). HMOD SHA-256 `6dae1bea6d2fe6b93f67ef3d9878dae8fe4c9b20359bc0dddb8fe81846d5931b`; HNMOD SHA-256 `9c50aa71705bac96dcedcde01245c94645b6dfba6761835775f69b0927b2e4ba`; package ZIP SHA-256 `530ec67eb4cbf344d01e170022398a53be4fc4d6cebbac6e181c55ee7811cd61`. ZIP integrity and package/client embedded checksums passed. Build success does not establish in-game behavior.
 
-Build only with GitHub Actions. GitHub runners use their normal parallelism; the half-thread cap applies only to local compiling. The workflow checks Rust and content, packages the mod, then builds the pinned Linux client on pushes and manual dispatches.
+Build only with GitHub Actions. GitHub runners use their normal parallelism; the half-thread cap applies only to local compiling. No local compilation or tests were run for this slice. The workflow checks Rust and content, packages the mod, then builds the pinned Linux client on pushes and manual dispatches.
 ## Historical hybrid remote build (inactive)
 `tools/build_hybrid_client.sh` builds the Rust crate, checks the `.hmod`, packages the `.hnmod`, prepares the pinned Horizon Nightly, and creates an importable Linux client ZIP. Run it from the project root through the hybrid runner:
 

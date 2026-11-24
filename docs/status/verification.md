@@ -1,3 +1,12 @@
+# Verification record
+
+## Energy Cell and Steam Power FE routing — GitHub Actions verified (2026-11-24)
+Commits `cf81c82` and `c64d28c` on `agent/energy-cell-output` add the Energy Cell menu and comparator, mod-side FE input/output routing, Steam Turbine FE output routing, and a Steam Boiler structure rescan interval. Run [45311824901](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45311824901) passed Rust formatting, the locked native crate check, Horizon content build/check, mod packaging, and the Linux client build/package.
+
+Client ZIP: `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-run-45311824901/arcforge-playable-linux-x86_64-c64d28cad4e30848a3ef401c63947225437fadf3/arcforge-linux-x86_64.zip` (47,844,197 bytes; SHA-256 `57dcb8e2bf8a2082fa91a368f45b13c681edea5b924385285276e1b5e73e6414`). Package ZIP SHA-256 `530ec67eb4cbf344d01e170022398a53be4fc4d6cebbac6e181c55ee7811cd61`; HMOD SHA-256 `6dae1bea6d2fe6b93f67ef3d9878dae8fe4c9b20359bc0dddb8fe81846d5931b`; HNMOD SHA-256 `9c50aa71705bac96dcedcde01245c94645b6dfba6761835775f69b0927b2e4ba`.
+
+Both ZIPs passed `unzip -t`; the package manifest and all four client-embedded SHA-256 entries matched. No local compilation or tests were run. This verifies build and packaging only; Energy Cell menu/transfer/comparator behavior and steam routing still need in-game verification.
+
 ## Arcforge 3×5 Pumpjack alpha — GitHub Actions build (2026-11-16)
 Commit af81fc5 replaces the temporary single-block extractor with Arcforge's 3×5 Pumpjack structure, visible formed controller/casing models, recipes and loot for the controller/casing/Well Head, and handbook instructions. GitHub Actions run 43783919669 passed Rust formatting, the native crate check, Horizon content build/check, HMOD/HNMOD packaging, and Linux client build/package.
 Playable client ZIP: /mnt/hdd2tb/arcforge-horizon-builds/arcforge-github-43783919669/arcforge-playable-linux-x86_64-af81fc59065c8189445ae0fe945651a7e49ca7d4/arcforge-linux-x86_64.zip
@@ -11,7 +20,7 @@ Commit `bb330aa` adds a powered single-block extractor, source-matched rate/depl
 
 Playable client ZIP: `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-github-43780024722/arcforge-playable-linux-x86_64-bb330aa0b74946df172be4d2741b019bc07a0374/arcforge-linux-x86_64.zip` (SHA-256 `7c688ea736e805af9489cf6a19a846380b4cf78f7572014d92b2c59c46ccd559`). Its embedded `SHA256SUMS` verifies `horizon-client`, `native-mods.json`, `arcforge.hmod`, and `arcforge.hnmod`; package and client ZIP integrity checks passed. HMOD SHA-256 `93804b2f1d735f636b898d303c9f6e082de22b32d6c5775f274924ba6ba2a9b8`; HNMOD SHA-256 `51322279068e619ea53940a16bdb72858bcda38e0178f3982890cfb4624e10fd`. This verifies builds and packaging only; Pumpjack gameplay has not been tested.
 
-# Verification record
+## Earlier build and recovery records
 ## Current continuation — GitHub client build recovery (2026-11-23)
 Run [45295887536](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45295887536) passed package creation but could not install the expired Horizon Nightly tag. Run [45300146574](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45300146574) resolved a current Nightly and prepared Minecraft 26.3, but native compilation used the newer Nightly source and failed before building Arcforge.
 

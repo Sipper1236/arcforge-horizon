@@ -6,6 +6,9 @@ Port the complete survival gameplay scope of the pinned Arcforge release to Hori
 
 The current code is an early prototype, not a complete port. Continue implementing real gameplay from the scope in the root [README](../README.md), preserve Arcforge's recognizable mechanics and progression, and update the as-built and remaining-work documents whenever implementation changes.
 
+### Current slice — Energy Cell and Steam Power routing (GitHub verified; gameplay pending)
+Branch `agent/energy-cell-output` adds the two-slot Energy Cell menu, mod-side FE face routing, charge-scaled comparator output, Steam Turbine FE output routing, and 20-tick Steam Boiler rescans. Commits `cf81c82` and `c64d28c` passed both jobs in [GitHub Actions run 45311824901](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45311824901); the client ZIP and checksum manifests were verified. The pinned Horizon energy capability remains all-sided, so configured faces only govern the mod-side transfer path. In-game use and save/reload remain unverified. See [verification.md](status/verification.md).
+
 ### Current slice — Oil Pumpjack structure update (GitHub verified; gameplay pending)
 The survey continues to use Arcforge’s deterministic ordinary-region deposit rolls. Commit af81fc5 replaces the prior single-block alpha with Arcforge’s 3×5 Pumpjack structure, visible controller/casing states, and a craftable Well Head stand-in. The Oil Derrick drilling operation is deferred because Horizon hooks cannot replace world block IDs. GitHub Actions run 43783919669 passed Rust/content checks, native package creation, and Linux client packaging. Gameplay verification is still needed. The extractor retains Arcforge’s 60 FE/t cost, full-field 30 mB/t rate, 25% minimum rate as the deposit depletes, 40 mB/s depleted trickle, 100,000 FE buffer, 16,000 mB tank, and shared saved depletion.
 ### Current slice — Distillation Array alpha (GitHub verified; gameplay pending)
