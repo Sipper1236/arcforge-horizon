@@ -42,6 +42,7 @@ mod distillation_array;
 mod electric_pump;
 mod energy;
 mod energy_conduit;
+mod flare_stack;
 mod fluid;
 mod fluid_conduit;
 mod fuel_burner;
@@ -129,6 +130,7 @@ const STEAM_CRACKER_CONTROLLER: &str = steam_cracker::CONTROLLER;
 const STEAM_CRACKER_CASING: &str = steam_cracker::CASING;
 const DIESEL_GENERATOR_CONTROLLER: &str = diesel_generator::CONTROLLER;
 const DIESEL_GENERATOR_CASING: &str = diesel_generator::CASING;
+const FLARE_STACK: &str = flare_stack::BLOCK;
 const STEAM_TURBINE_ARRAY_CASING: &str = steam_turbine::CASING;
 const FUEL_BURNER: &str = "arcforge:fuel_burner";
 const WROUGHT_FLUID_TANK: &str = "arcforge:wrought_fluid_tank";
@@ -1798,6 +1800,20 @@ impl Hooks for Arcforge {
                 .into_iter()
                 .collect();
         }
+        register_content!(&mut event.blocks, id: FLARE_STACK.into(), template: "minecraft:iron_block".into(), item: true);
+        if let Some(block) = event
+            .blocks
+            .iter_mut()
+            .find(|block| block.id == FLARE_STACK)
+        {
+            block.state_properties = serde_json::from_value(serde_json::json!({
+                "lit": { "type": "boolean" }
+            }))
+            .expect("valid Flare Stack block states");
+            block.default_state = [("lit".to_owned(), "false".to_owned())]
+                .into_iter()
+                .collect();
+        }
         register_content!(&mut event.blocks, id: COKER.into(), template: "minecraft:blast_furnace".into(), item: true);
         if let Some(block) = event.blocks.iter_mut().find(|block| block.id == COKER) {
             block.state_properties = serde_json::from_value(serde_json::json!({
@@ -2650,6 +2666,7 @@ impl Hooks for Arcforge {
             || event.block == CRACKING_CONTROLLER
             || event.block == STEAM_CRACKER_CONTROLLER
             || event.block == DIESEL_GENERATOR_CONTROLLER
+            || event.block == FLARE_STACK
             || event.block == SOLAR_ARRAY_CONTROLLER
             || event.block == GEOTHERMAL_PLANT
             || event.block == FUEL_BURNER
@@ -2686,6 +2703,8 @@ impl Hooks for Arcforge {
     fn block_entity_submit(&self, host: &dyn Host, event: &mut BlockEntitySubmitEvent<'_>) {
         if event.block == DIESEL_GENERATOR_CONTROLLER {
             diesel_generator::draw_model(host, event);
+        } else if event.block == FLARE_STACK {
+            flare_stack::draw_model(host, event);
         }
     }
 
@@ -2696,6 +2715,8 @@ impl Hooks for Arcforge {
     ) {
         if event.block == DIESEL_GENERATOR_CONTROLLER {
             diesel_generator::render_bounds(event);
+        } else if event.block == FLARE_STACK {
+            flare_stack::render_bounds(event);
         }
     }
 
@@ -2731,6 +2752,7 @@ impl Hooks for Arcforge {
             || event.block == CRACKING_CONTROLLER
             || event.block == STEAM_CRACKER_CONTROLLER
             || event.block == DIESEL_GENERATOR_CONTROLLER
+            || event.block == FLARE_STACK
             || event.block == SOLAR_ARRAY_CONTROLLER
             || event.block == GEOTHERMAL_PLANT
             || event.block == FUEL_BURNER
@@ -3514,6 +3536,8 @@ impl Hooks for Arcforge {
             && !diesel_generator::accepts(event.tank, event.fluid)
         {
             Flow::Cancel
+        } else if event.block == FLARE_STACK && !flare_stack::accepts(event.tank, event.fluid) {
+            Flow::Cancel
         } else if event.block == COKER && !coker::accepts(event.tank, event.fluid) {
             Flow::Cancel
         } else if event.block == CATALYTIC_REFORMER && !reformer::accepts(event.tank, event.fluid) {
@@ -3707,6 +3731,8 @@ impl Hooks for Arcforge {
             Some(steam_cracker::fluid_tanks())
         } else if event.block == DIESEL_GENERATOR_CONTROLLER {
             Some(diesel_generator::fluid_tanks())
+        } else if event.block == FLARE_STACK {
+            Some(flare_stack::fluid_tanks())
         } else if event.block == COKER {
             Some(coker::fluid_tanks())
         } else if event.block == CATALYTIC_REFORMER {
@@ -3873,6 +3899,7 @@ impl Hooks for Arcforge {
             CRACKING_CONTROLLER => cracking_unit::tick(host, event.pos, event.entity),
             STEAM_CRACKER_CONTROLLER => steam_cracker::tick(host, event.pos, event.entity),
             DIESEL_GENERATOR_CONTROLLER => diesel_generator::tick(host, event.pos, event.entity),
+            FLARE_STACK => flare_stack::tick(host, event.pos, event.entity),
             SOLAR_ARRAY_CONTROLLER => tick_solar_array(host, event.pos, event.entity),
             GEOTHERMAL_PLANT => tick_geothermal_plant(host, event.pos, event.entity),
             FUEL_BURNER => tick_fuel_burner(host, event.pos, event.entity),
