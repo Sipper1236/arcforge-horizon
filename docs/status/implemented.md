@@ -1,5 +1,8 @@
 # Current implementation
-**Current source:** Lubricant Blender alpha, commit `07b59a7` on `agent/energy-cell-output`, passed GitHub Actions run [45325717893](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45325717893). The client archive, package, and checksums are recorded in [verification.md](verification.md). Build/package verification does not establish in-game behavior.
+**Current source:** Steam Cracker alpha, commit `6395204` on `agent/energy-cell-output`, passed GitHub Actions run [45342469255](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45342469255). The client archive, package, and checksums are recorded in [verification.md](verification.md). Build/package verification does not establish in-game behavior.
+
+## Steam Cracker alpha — GitHub Actions verified (gameplay pending)
+Commits `3dd58fb`, `37ea780`, and `6395204` add the formed 3×3×3 casing, three source steam-cracking recipes, feed/Steam/four product tanks, 120,000 HU storage, Speed Upgrade support, Wrench status, and a processing screen. The recipe inputs and outputs follow upstream; processing uses 60 HU/t above 800°C. Horizon does not render Arcforge's custom multiblock renderer, so formed casing remains visible. All tank faces are exposed and automatic output routing/configurable faces are not implemented. GitHub Actions run [45342469255](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45342469255) passed both jobs and the downloaded artifact checks; gameplay remains unverified.
 
 
 ## Energy Cell and Steam Power routing — GitHub Actions verified (2026-11-24)
@@ -8,10 +11,10 @@ The Energy Cell has a two-slot menu for charging from or extracting into portabl
 ## Cracking Unit alpha — GitHub Actions verified
 Commits `c65e0e8` and `230b789` implement both source cracking modes, the 3×3×5 structure, five recipe/crafting JSON files, four output tanks, catalyst wear, heat input, and Wrench mode switching. It is included in the latest source build, run [45319393207](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45319393207), which passed the native/content/package and Linux client jobs. No in-game trial has been run; fixed box geometry, Wrench-based mode switching, and no automatic port routing remain alpha limits.
 
-**Latest build:** Lubricant Blender alpha, commit `07b59a7`, built by GitHub Actions run [45325717893](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45325717893).
-Playable client ZIP: `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-run-45325717893/arcforge-playable-linux-x86_64-07b59a77bc3fa3adc961b73f88e1e5ccc2ffe4ba/arcforge-linux-x86_64.zip` (47,864,473 bytes; SHA-256 `f2adc4375592e41913fb7a2d17cc9a1e43c572902caf9f47b23da0ad180efe2e`).
-Package bundle ZIP SHA-256: `775176063e113cc21948db007b965c81f5718b588555419cbab5d633389020b6`; HMOD SHA-256: `8e88545a63e91e4748ac29a99faa2a2e67b51e6ca5640407fa532c358b3f6eaa`; HNMOD SHA-256: `8e498f96903ec773f62adb5616a236818c2e3cc393b48230aa1ff3d40cdc77b8`.
-Both ZIPs passed integrity checks, the package manifest passed, and all four hashes embedded in the client matched. The initial run [45325623133](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45325623133) stopped at the Rust formatting check; commit `07b59a7` applied the reported layout changes, then run 45325717893 passed formatting, crate/content checks, packaging, and client compilation. Build/package verification only; Blender gameplay is unverified.
+**Latest build:** Steam Cracker alpha, commit `6395204`, built by GitHub Actions run [45342469255](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45342469255).
+Playable client ZIP: `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-run-45342469255/arcforge-linux-x86_64.zip` (47,919,061 bytes; SHA-256 `238f720a0da4a0b273e0d298e2995c786ed1ace28cbcbf38f0f2a0ab25c4ea`).
+Package bundle ZIP SHA-256: `370410ae728ad072dc202dc0f1a549ff48a8425ce13f4aa9c5c3f7aa2434eb0a`; HMOD SHA-256: `416c6d695ec237cf0959a6d0cb23a6f5a38f32ad077a99b1fe628637ab35cae4`; HNMOD SHA-256: `98955b041812fca4436c63695e65937162cb2e3990cdedcb748feaf0869db9aa`.
+Both ZIPs passed integrity checks, the package manifest passed, and all four hashes embedded in the client matched. The initial run stopped at formatting and the follow-up exposed a Rust array initialization error; commit `6395204` fixed it, and run 45342469255 passed formatting, crate/content checks, packaging, and client compilation. Build/package verification only; Steam Cracker gameplay is unverified.
 
 ## Coker alpha — GitHub Actions verified
 Commit `81b9018` adds the source Bitumen-to-Petroleum-Coke recipe, Refinery Gas and Heavy Oil byproducts, one speed-upgrade slot and one item-output slot, fixed tanks, Wrench status, crafting/loot data, and Petroleum Coke fuel/coke integration. Both GitHub jobs passed; package and client ZIP integrity and embedded hashes verified. Gameplay remains unverified. Reflux, automatic product routing, extra Coker recipes, and per-instance capacities are not implemented.
@@ -46,7 +49,7 @@ Four battery items expose Horizon's native item-energy capability with source ca
 
 ## Recipe data present
 
-The content directory contains 437 recipe JSON files (Arcforge machine recipes and vanilla recipe types):
+The content directory contains 447 recipe JSON files (Arcforge machine recipes and vanilla recipe types):
 
 | Recipe group | Files |
 |---|---:|
@@ -76,6 +79,7 @@ The content directory contains 437 recipe JSON files (Arcforge machine recipes a
 | Catalytic Reformer recipe and crafting | 2 |
 | Lubricant Blender recipe and crafting | 2 |
 | Cracking recipes and crafting | 5 |
+| Steam Cracker recipes and controller/casing crafting | 5 |
 | Distillation Array controller, casing, and tray crafting | 3 |
 | Seismic Survey Tool crafting | 1 |
 | Water Intake casing and controller crafting | 2 |
@@ -101,8 +105,8 @@ The content directory contains 437 recipe JSON files (Arcforge machine recipes a
 | Composite material crafting | 1 |
 | Induction Furnace Arcforge smelting catalog | 32 |
 | Heat Cell crafting recipes | 4 |
-| Additional recipe files not itemized above | 19 |
-| **Total** | **437** |
+| Additional recipe files not itemized above | 12 |
+| **Total** | **447** |
 
 Files existing does not by itself prove the complete recipe graph or survival progression works.
 
