@@ -55,10 +55,7 @@ fn recipe_from_json(json: &Value) -> Option<Recipe> {
         steam: fluid.get("id")?.as_str()?.to_owned(),
         steam_amount: parse_amount(fluid.get("amount")?)?,
         sulfur: item.get("id")?.as_str()?.to_owned(),
-        sulfur_amount: item
-            .get("count")
-            .and_then(parse_amount)
-            .unwrap_or(1),
+        sulfur_amount: item.get("count").and_then(parse_amount).unwrap_or(1),
         ticks: json
             .get("time")
             .and_then(Value::as_u64)
@@ -142,12 +139,9 @@ fn sync_screen(entity: &mut ModBlockEntity, heat_rate: u32, total: u32, status: 
     entity.data.resize(10, 0);
     let stored_heat = get_i32(&entity.nbt, "HeatHU").max(0);
     entity.data[0] = stored_heat;
-    entity.data[1] = crate::heat::HeatStore::new(
-        HEAT_CAPACITY,
-        MAX_TEMPERATURE_C,
-        stored_heat as u64,
-    )
-    .temperature_c() as i32;
+    entity.data[1] =
+        crate::heat::HeatStore::new(HEAT_CAPACITY, MAX_TEMPERATURE_C, stored_heat as u64)
+            .temperature_c() as i32;
     entity.data[2] = progress(entity).min(i32::MAX as u32) as i32;
     entity.data[3] = total.min(i32::MAX as u32) as i32;
     entity.data[4] = crate::fluid::amount(&entity.nbt, FEED_TANK).min(i32::MAX as u32) as i32;
@@ -202,8 +196,7 @@ pub(crate) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
         set_lit(host, pos, false);
         return;
     }
-    if crate::fluid::name(&entity.nbt, OXYGEN_TANK).as_deref()
-        != Some(recipe.second_input.as_str())
+    if crate::fluid::name(&entity.nbt, OXYGEN_TANK).as_deref() != Some(recipe.second_input.as_str())
         || crate::fluid::amount(&entity.nbt, OXYGEN_TANK) < recipe.second_input_amount
     {
         set_status(entity, 3, 0, total);
@@ -217,9 +210,8 @@ pub(crate) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
     }
 
     let upgrades = speed_upgrades(entity);
-    let heat_per_tick = (f64::from(recipe.heat_per_tick)
-        * crate::speed_upgrade_multiplier(upgrades))
-    .ceil() as u64;
+    let heat_per_tick =
+        (f64::from(recipe.heat_per_tick) * crate::speed_upgrade_multiplier(upgrades)).ceil() as u64;
     if heat.temperature_c() < recipe.min_temperature || stored_heat < heat_per_tick {
         set_status(entity, 5, 0, total);
         set_lit(host, pos, false);
@@ -371,12 +363,8 @@ pub(crate) fn face(host: &mut dyn Host, pos: [i32; 3], name: &str) {
 
 pub(crate) fn status(entity: &ModBlockEntity) -> String {
     let stored_heat = get_i32(&entity.nbt, "HeatHU").max(0) as u64;
-    let temperature = crate::heat::HeatStore::new(
-        HEAT_CAPACITY,
-        MAX_TEMPERATURE_C,
-        stored_heat,
-    )
-    .temperature_c();
+    let temperature =
+        crate::heat::HeatStore::new(HEAT_CAPACITY, MAX_TEMPERATURE_C, stored_heat).temperature_c();
     let sulfur = entity
         .items
         .get(SULFUR_SLOT)
