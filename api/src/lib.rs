@@ -2859,9 +2859,10 @@ impl Hooks for Arcforge {
             event.drops.extend(
                 entity
                     .items
-                    .into_iter()
+                    .iter()
                     .flatten()
-                    .filter(|stack| stack.count > 0),
+                    .filter(|stack| stack.count > 0)
+                    .cloned(),
             );
         }
         if let Some((item, energy)) = take_cell_charge(event.context.dimension, pos) {

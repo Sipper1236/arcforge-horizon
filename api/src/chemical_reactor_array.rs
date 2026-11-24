@@ -422,7 +422,10 @@ fn lane_total(entity: &ModBlockEntity, lane: usize) -> u32 {
 }
 
 fn lane_recipe(entity: &ModBlockEntity, lane: usize) -> Option<String> {
-    let key = Tag::String(format!("ChemicalArrayRecipe{lane}").into());
+    let key_name = format!("ChemicalArrayRecipe{lane}");
+    let Tag::String(key) = Tag::String(key_name.as_str().into()) else {
+        unreachable!()
+    };
     match entity.nbt.get(&key) {
         Some(Tag::String(value)) if !value.to_string_lossy().is_empty() => {
             Some(value.to_string_lossy())
@@ -432,7 +435,10 @@ fn lane_recipe(entity: &ModBlockEntity, lane: usize) -> Option<String> {
 }
 
 fn set_lane_recipe(entity: &mut ModBlockEntity, lane: usize, recipe: &str) {
-    let key = Tag::String(format!("ChemicalArrayRecipe{lane}").into());
+    let key_name = format!("ChemicalArrayRecipe{lane}");
+    let Tag::String(key) = Tag::String(key_name.as_str().into()) else {
+        unreachable!()
+    };
     entity.nbt.insert(key, Tag::String(recipe.into()));
 }
 
@@ -616,7 +622,7 @@ fn process(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity) {
         }
         usage = usage.saturating_add(lane_energy);
         if lane_heat > 0 {
-            heat_usage = heat_usage.saturating_add(heat.remove(lane_heat));
+            heat_usage = heat_usage.saturating_add(heat.remove_hu(lane_heat));
         }
         let next = lane_progress(entity, lane).saturating_add(1);
         set_lane_progress(entity, lane, next);
