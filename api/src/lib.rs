@@ -2705,6 +2705,8 @@ impl Hooks for Arcforge {
             diesel_generator::draw_model(host, event);
         } else if event.block == FLARE_STACK {
             flare_stack::draw_model(host, event);
+        } else if event.block == STEAM_CRACKER_CONTROLLER {
+            steam_cracker::draw_model(host, event);
         }
     }
 
@@ -2717,6 +2719,8 @@ impl Hooks for Arcforge {
             diesel_generator::render_bounds(event);
         } else if event.block == FLARE_STACK {
             flare_stack::render_bounds(event);
+        } else if event.block == STEAM_CRACKER_CONTROLLER {
+            steam_cracker::render_bounds(event);
         }
     }
 

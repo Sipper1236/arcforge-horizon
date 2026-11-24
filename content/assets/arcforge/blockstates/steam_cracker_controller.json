@@ -7,10 +7,10 @@
       "model": "arcforge:block/refinery/steam_cracker_controller_on"
     },
     "facing=north,formed=true,lit=false": {
-      "model": "arcforge:block/refinery/steam_cracker_controller"
+      "model": "arcforge:block/refinery/steam_cracker_hidden"
     },
     "facing=north,formed=true,lit=true": {
-      "model": "arcforge:block/refinery/steam_cracker_controller_on"
+      "model": "arcforge:block/refinery/steam_cracker_hidden"
     },
     "facing=east,formed=false,lit=false": {
       "model": "arcforge:block/refinery/steam_cracker_controller",
@@ -21,11 +21,11 @@
       "y": 90
     },
     "facing=east,formed=true,lit=false": {
-      "model": "arcforge:block/refinery/steam_cracker_controller",
+      "model": "arcforge:block/refinery/steam_cracker_hidden",
       "y": 90
     },
     "facing=east,formed=true,lit=true": {
-      "model": "arcforge:block/refinery/steam_cracker_controller_on",
+      "model": "arcforge:block/refinery/steam_cracker_hidden",
       "y": 90
     },
     "facing=south,formed=false,lit=false": {
@@ -37,11 +37,11 @@
       "y": 180
     },
     "facing=south,formed=true,lit=false": {
-      "model": "arcforge:block/refinery/steam_cracker_controller",
+      "model": "arcforge:block/refinery/steam_cracker_hidden",
       "y": 180
     },
     "facing=south,formed=true,lit=true": {
-      "model": "arcforge:block/refinery/steam_cracker_controller_on",
+      "model": "arcforge:block/refinery/steam_cracker_hidden",
       "y": 180
     },
     "facing=west,formed=false,lit=false": {
@@ -53,11 +53,11 @@
       "y": 270
     },
     "facing=west,formed=true,lit=false": {
-      "model": "arcforge:block/refinery/steam_cracker_controller",
+      "model": "arcforge:block/refinery/steam_cracker_hidden",
       "y": 270
     },
     "facing=west,formed=true,lit=true": {
-      "model": "arcforge:block/refinery/steam_cracker_controller_on",
+      "model": "arcforge:block/refinery/steam_cracker_hidden",
       "y": 270
     }
   }

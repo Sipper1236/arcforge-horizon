@@ -1,7 +1,10 @@
 //! Arcforge Steam Cracker: a formed 3x3x3 refinery that cracks feed gases with steam and heat.
 use horizon_client::{
     containers::{ModBlockEntity, ModContainer},
-    mod_api::{Compound, Host, ModFluidTanks, Tag, serde_json::Value},
+    mod_api::{
+        BlockEntityDraw, BlockEntityRenderBoundingBoxEvent, BlockEntitySubmitEvent, Compound,
+        CubeFace, Host, ModFluidTanks, Tag, serde_json::Value,
+    },
 };
 
 pub(crate) const CONTROLLER: &str = "arcforge:steam_cracker_controller";
@@ -753,4 +756,319 @@ pub(crate) fn draw_screen(
         fill!([8.0, 197.0, 160.0 * fraction, 6.0], 0xFF62B64F);
     }
     text!("Inventory", 8.0, 207.0, 0xFFFFFFFF);
+}
+
+const CASING_SPRITE: &str = "arcforge:block/refinery/steam_cracker_casing";
+const CONTROLLER_SPRITE: &str = "arcforge:block/refinery/steam_cracker_controller";
+const HOT_SPRITE: &str = "arcforge:block/refinery/steam_cracker_controller_on";
+
+fn draw_model_box(
+    host: &dyn Host,
+    draw: &mut BlockEntityDraw,
+    x0: f32,
+    y0: f32,
+    u0: f32,
+    x1: f32,
+    y1: f32,
+    u1: f32,
+    sprite: &str,
+) {
+    // Model coordinates use texels; the controller is centered across the
+    // three-block width, so shift that axis to the block-entity origin.
+    let face = CubeFace { sprite, uv: None };
+    let _ = host.draw_cube(
+        draw,
+        [x0 - 16.0, y0, u0],
+        [x1 - 16.0, y1, u1],
+        [Some(face); 6],
+        0x00FF_FFFF,
+    );
+}
+
+fn renderer_yaw(facing: Facing) -> f32 {
+    match facing.name {
+        "east" => -90.0,
+        "south" => 180.0,
+        "west" => 90.0,
+        _ => 0.0,
+    }
+}
+
+pub(crate) fn render_bounds(event: &mut BlockEntityRenderBoundingBoxEvent<'_>) {
+    if formed(event.entity) {
+        // This box includes the 3x3x3 model after it turns around the controller.
+        event
+            .bounds
+            .copy_from_slice(&[-2.0, 0.0, -2.0, 3.0, 3.0, 3.0]);
+    }
+}
+
+pub(crate) fn draw_model(host: &dyn Host, event: &mut BlockEntitySubmitEvent<'_>) {
+    if !formed(event.entity) {
+        return;
+    }
+    let Some(direction) =
+        get_string(&event.entity.nbt, "SteamCrackerFacing").and_then(|name| facing(&name))
+    else {
+        return;
+    };
+    let heat = get_i32(&event.entity.nbt, "HeatHU").clamp(0, HEAT_CAPACITY as i32) as u64;
+    let temperature = 20 + (heat * u64::from(MAX_TEMPERATURE_C - 20) / HEAT_CAPACITY) as u32;
+    let hot_sprite = if temperature >= 800 {
+        HOT_SPRITE
+    } else {
+        CONTROLLER_SPRITE
+    };
+
+    let draw = &mut *event.draw;
+    draw.push();
+    draw.rotate_about([0.0, 1.0, 0.0], renderer_yaw(direction), [0.5, 0.5, 0.5]);
+
+    // Deck, firebox and its structural bands.
+    draw_model_box(host, draw, 0.0, 0.0, 0.0, 48.0, 3.0, 48.0, CASING_SPRITE);
+    draw_model_box(host, draw, 3.0, 3.0, 4.0, 31.0, 34.0, 44.0, CASING_SPRITE);
+    draw_model_box(
+        host,
+        draw,
+        2.0,
+        3.0,
+        3.0,
+        32.0,
+        5.0,
+        45.0,
+        CONTROLLER_SPRITE,
+    );
+    draw_model_box(
+        host,
+        draw,
+        2.0,
+        32.5,
+        3.0,
+        32.0,
+        34.0,
+        45.0,
+        CONTROLLER_SPRITE,
+    );
+    draw_model_box(
+        host,
+        draw,
+        1.6,
+        18.0,
+        2.6,
+        32.4,
+        20.0,
+        45.4,
+        CONTROLLER_SPRITE,
+    );
+
+    for u in [12.0, 24.0, 36.0] {
+        draw_model_box(
+            host,
+            draw,
+            2.0,
+            5.0,
+            u - 1.0,
+            3.0,
+            32.5,
+            u + 1.0,
+            CONTROLLER_SPRITE,
+        );
+        draw_model_box(
+            host,
+            draw,
+            31.0,
+            5.0,
+            u - 1.0,
+            32.0,
+            32.5,
+            u + 1.0,
+            CONTROLLER_SPRITE,
+        );
+    }
+    for x in [10.0, 24.0] {
+        draw_model_box(
+            host,
+            draw,
+            x - 1.0,
+            5.0,
+            3.0,
+            x + 1.0,
+            32.5,
+            4.0,
+            CONTROLLER_SPRITE,
+        );
+        draw_model_box(
+            host,
+            draw,
+            x - 1.0,
+            5.0,
+            44.0,
+            x + 1.0,
+            32.5,
+            45.0,
+            CONTROLLER_SPRITE,
+        );
+    }
+
+    // Refractory peep holes on the front and left walls; the inner panel
+    // changes to the hot texture after the firebox reaches cracking heat.
+    for (y, x) in [(11.0, 17.0), (26.0, 17.0)] {
+        draw_model_box(
+            host,
+            draw,
+            x - 3.5,
+            y - 3.0,
+            3.0,
+            x + 3.5,
+            y + 3.0,
+            4.4,
+            CONTROLLER_SPRITE,
+        );
+        draw_model_box(
+            host,
+            draw,
+            x - 2.0,
+            y - 2.0,
+            2.8,
+            x + 2.0,
+            y + 2.0,
+            3.2,
+            hot_sprite,
+        );
+    }
+    for (u, y) in [(18.0, 11.0), (30.0, 11.0), (18.0, 26.0), (30.0, 26.0)] {
+        draw_model_box(
+            host,
+            draw,
+            2.5,
+            y - 3.0,
+            u - 3.5,
+            4.4,
+            y + 3.0,
+            u + 3.5,
+            CONTROLLER_SPRITE,
+        );
+        draw_model_box(
+            host,
+            draw,
+            2.8,
+            y - 2.0,
+            u - 2.0,
+            3.2,
+            y + 2.0,
+            u + 2.0,
+            hot_sprite,
+        );
+    }
+
+    // Radiant tubes and twin headers rising from the firebox roof.
+    for x in [11.0, 23.0] {
+        draw_model_box(
+            host,
+            draw,
+            x - 1.6,
+            37.0,
+            6.0,
+            x + 1.6,
+            41.0,
+            29.0,
+            CONTROLLER_SPRITE,
+        );
+        for u in [8.0, 12.0, 16.0, 20.0, 24.0, 28.0] {
+            draw_model_box(
+                host,
+                draw,
+                x - 0.6,
+                34.0,
+                u - 0.6,
+                x + 0.6,
+                39.0,
+                u + 0.6,
+                CONTROLLER_SPRITE,
+            );
+        }
+    }
+    draw_model_box(host, draw, 9.0, 34.0, 30.0, 25.0, 39.0, 42.0, CASING_SPRITE);
+    draw_model_box(
+        host,
+        draw,
+        14.0,
+        39.0,
+        33.0,
+        20.0,
+        48.0,
+        39.0,
+        CONTROLLER_SPRITE,
+    );
+
+    // Quench drum, base rings and transfer line from the collector.
+    draw_model_box(host, draw, 33.5, 3.0, 16.0, 45.5, 32.0, 28.0, CASING_SPRITE);
+    draw_model_box(
+        host,
+        draw,
+        33.0,
+        8.0,
+        15.5,
+        46.0,
+        10.0,
+        28.5,
+        CONTROLLER_SPRITE,
+    );
+    draw_model_box(
+        host,
+        draw,
+        33.0,
+        20.0,
+        15.5,
+        46.0,
+        22.0,
+        28.5,
+        CONTROLLER_SPRITE,
+    );
+    draw_model_box(
+        host,
+        draw,
+        33.0,
+        30.0,
+        15.5,
+        46.0,
+        32.0,
+        28.5,
+        CONTROLLER_SPRITE,
+    );
+    draw_model_box(
+        host,
+        draw,
+        22.0,
+        38.0,
+        5.0,
+        41.0,
+        41.0,
+        8.0,
+        CONTROLLER_SPRITE,
+    );
+    draw_model_box(
+        host,
+        draw,
+        38.0,
+        31.0,
+        20.0,
+        41.0,
+        40.0,
+        23.0,
+        CONTROLLER_SPRITE,
+    );
+    draw_model_box(
+        host,
+        draw,
+        35.0,
+        30.0,
+        20.0,
+        44.0,
+        32.0,
+        23.0,
+        CONTROLLER_SPRITE,
+    );
+
+    draw.pop();
 }
