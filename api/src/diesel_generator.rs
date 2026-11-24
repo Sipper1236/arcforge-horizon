@@ -1,8 +1,8 @@
 //! Pinned Arcforge Diesel Generator fuel-to-FE behaviour.
 //!
-//! Horizon's block-entity tank and energy declarations are block-ID-wide, so
-//! the largest engine's capacities are declared for every formed length. The
-//! simulation still uses each structure's V8/V12/V16 limits.
+//! Horizon's block-entity tank and energy declarations are block-ID-wide. The
+//! fuel tank therefore keeps the V16 maximum for every engine, while generated
+//! FE and the internal energy buffer follow the formed V8/V12/V16 length.
 
 use horizon_client::{
     containers::{ModBlockEntity, ModContainer},
@@ -19,7 +19,6 @@ const V8_OUTPUT: u64 = 3_000;
 const V12_OUTPUT: u64 = 8_000;
 const V16_OUTPUT: u64 = 15_000;
 const V8_ENERGY_CAPACITY: u64 = 400_000;
-const V8_FUEL_CAPACITY: u32 = 16_000;
 const MAX_FUEL_CAPACITY: u32 = 28_800;
 const MAX_ENERGY_CAPACITY: u64 = 2_000_000;
 const MAX_OUTPUT_RATE: u64 = 16_384;
@@ -161,10 +160,6 @@ fn energy_capacity(length: i32) -> u64 {
         .checked_div(V8_OUTPUT)
         .unwrap_or(V8_ENERGY_CAPACITY)
         .min(MAX_ENERGY_CAPACITY)
-}
-
-fn fuel_capacity(length: i32) -> u32 {
-    (u64::from(V8_FUEL_CAPACITY) * length as u64 / 5).min(u64::from(MAX_FUEL_CAPACITY)) as u32
 }
 
 fn fuel_fe_per_mb(fluid: &str) -> Option<u64> {
@@ -387,7 +382,7 @@ fn sync_screen(entity: &mut ModBlockEntity, made: u64, status: i32, powered: boo
     entity.data[3] = max_output(length).min(i32::MAX as u64) as i32;
     entity.data[4] = get_i32(&entity.nbt, "DieselGeneratorSpeed").clamp(0, 120) * 1000 / 120;
     entity.data[5] = crate::fluid::amount(&entity.nbt, FUEL_TANK).min(i32::MAX as u32) as i32;
-    entity.data[6] = fuel_capacity(length).min(i32::MAX as u32) as i32;
+    entity.data[6] = MAX_FUEL_CAPACITY.min(i32::MAX as u32) as i32;
     let credit = get_i32(&entity.nbt, "DieselGeneratorFuelCredit").max(0);
     let fuel_name = if credit > 0 {
         get_string(&entity.nbt, "DieselGeneratorCreditFuel")
@@ -418,8 +413,8 @@ fn redstone_allowed(mode: i32, powered: bool) -> bool {
 pub(crate) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEntity) {
     entity.items.clear();
 
-    let mut scan = get_i32(&entity.nbt, "DieselGeneratorStructureScan").max(0);
-    if is_formed(entity) && scan == 0 {
+    let mut scan_count = get_i32(&entity.nbt, "DieselGeneratorStructureScan").max(0);
+    if is_formed(entity) && scan_count == 0 {
         let Some((direction, length)) = save_facing_length(&entity.nbt) else {
             set_i32(&mut entity.nbt, "DieselGeneratorFormed", 0);
             set_i32(&mut entity.nbt, "DieselGeneratorSpeed", 0);
@@ -441,18 +436,18 @@ pub(crate) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
             sync_screen(entity, 0, 1, false);
             return;
         } else {
-            scan = STRUCTURE_SCAN_TICKS;
-            set_i32(&mut entity.nbt, "DieselGeneratorStructureScan", scan);
+            scan_count = STRUCTURE_SCAN_TICKS;
+            set_i32(&mut entity.nbt, "DieselGeneratorStructureScan", scan_count);
         }
-    } else if !is_formed(entity) && scan == 0 {
+    } else if !is_formed(entity) && scan_count == 0 {
         let _ = scan(host, pos, entity);
         if !is_formed(entity) {
-            scan = STRUCTURE_SCAN_TICKS;
-            set_i32(&mut entity.nbt, "DieselGeneratorStructureScan", scan);
+            scan_count = STRUCTURE_SCAN_TICKS;
+            set_i32(&mut entity.nbt, "DieselGeneratorStructureScan", scan_count);
         }
     } else {
-        scan -= 1;
-        set_i32(&mut entity.nbt, "DieselGeneratorStructureScan", scan);
+        scan_count -= 1;
+        set_i32(&mut entity.nbt, "DieselGeneratorStructureScan", scan_count);
     }
 
     if !is_formed(entity) {
@@ -480,7 +475,7 @@ pub(crate) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
         };
         powered = box_positions(pos, direction, len)
             .iter()
-            .any(|part| host.neighbor_signal(*part) > 0);
+            .any(|part| host.neighbor_signal(host.dimension(), *part) > 0);
         set_i32(
             &mut entity.nbt,
             "DieselGeneratorPowered",
@@ -706,7 +701,7 @@ pub(crate) fn status(entity: &ModBlockEntity) -> String {
             _ => 16,
         },
         crate::fluid::amount(&entity.nbt, FUEL_TANK),
-        fuel_capacity(length),
+        MAX_FUEL_CAPACITY,
         energy_capacity(length),
     )
 }
