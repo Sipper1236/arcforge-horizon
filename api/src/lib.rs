@@ -36,6 +36,7 @@ mod area_tool;
 mod coker;
 mod cracking_unit;
 mod crushing_catalog;
+mod diesel_generator;
 mod distillation_array;
 mod electric_pump;
 mod energy;
@@ -125,6 +126,8 @@ const CRACKING_CASING: &str = cracking_unit::CASING;
 const CRACKING_CATALYST: &str = cracking_unit::CATALYST;
 const STEAM_CRACKER_CONTROLLER: &str = steam_cracker::CONTROLLER;
 const STEAM_CRACKER_CASING: &str = steam_cracker::CASING;
+const DIESEL_GENERATOR_CONTROLLER: &str = diesel_generator::CONTROLLER;
+const DIESEL_GENERATOR_CASING: &str = diesel_generator::CASING;
 const STEAM_TURBINE_ARRAY_CASING: &str = steam_turbine::CASING;
 const FUEL_BURNER: &str = "arcforge:fuel_burner";
 const WROUGHT_FLUID_TANK: &str = "arcforge:wrought_fluid_tank";
@@ -395,6 +398,12 @@ impl Hooks for Arcforge {
         ) {
             steam_cracker::notify_placed(host, event.pos);
         }
+        if matches!(
+            event.stack.item.as_ref(),
+            DIESEL_GENERATOR_CONTROLLER | DIESEL_GENERATOR_CASING
+        ) {
+            diesel_generator::notify_placed(host, event.pos);
+        }
         if host
             .mod_block_entity(event.pos)
             .is_some_and(|entity| entity.id == ARC_CRUSHING_ARRAY_CASING)
@@ -501,6 +510,9 @@ impl Hooks for Arcforge {
             if entity.id == STEAM_CRACKER_CONTROLLER {
                 steam_cracker::unform(host, event.pos, &entity.nbt);
             }
+            if entity.id == DIESEL_GENERATOR_CONTROLLER {
+                diesel_generator::unform(host, event.pos, &entity.nbt);
+            }
             if entity.id == SOLAR_ARRAY_CONTROLLER {
                 if let Some(tower) = solar::tower_from_nbt(&entity.nbt) {
                     solar::set_formed(host, tower, false);
@@ -537,6 +549,9 @@ impl Hooks for Arcforge {
         }
         if host.block(event.pos) == STEAM_CRACKER_CASING {
             steam_cracker::unform_near(host, event.pos);
+        }
+        if host.block(event.pos) == DIESEL_GENERATOR_CASING {
+            diesel_generator::unform_near(host, event.pos);
         }
         if matches!(
             host.block(event.pos).as_str(),
@@ -1081,6 +1096,13 @@ impl Hooks for Arcforge {
             .is_some_and(|entity| entity.id == STEAM_CRACKER_CONTROLLER)
         {
             steam_cracker::wrench(host, event.pos, event.face);
+            return Flow::Cancel;
+        }
+        if host
+            .mod_block_entity(event.pos)
+            .is_some_and(|entity| entity.id == DIESEL_GENERATOR_CONTROLLER)
+        {
+            diesel_generator::wrench(host, event.pos, event.face);
             return Flow::Cancel;
         }
         if host
@@ -1738,6 +1760,39 @@ impl Hooks for Arcforge {
             block.state_properties =
                 serde_json::from_value(serde_json::json!({ "formed": { "type": "boolean" } }))
                     .expect("valid Steam Cracker casing states");
+            block.default_state = [("formed".to_owned(), "false".to_owned())]
+                .into_iter()
+                .collect();
+        }
+        register_content!(&mut event.blocks, id: DIESEL_GENERATOR_CONTROLLER.into(), template: "minecraft:blast_furnace".into(), item: true);
+        if let Some(block) = event
+            .blocks
+            .iter_mut()
+            .find(|block| block.id == DIESEL_GENERATOR_CONTROLLER)
+        {
+            block.state_properties = serde_json::from_value(serde_json::json!({
+                "facing": { "type": "enum", "values": ["north", "east", "south", "west"] },
+                "formed": { "type": "boolean" },
+                "lit": { "type": "boolean" }
+            }))
+            .expect("valid Diesel Generator controller block states");
+            block.default_state = [
+                ("facing".to_owned(), "north".to_owned()),
+                ("formed".to_owned(), "false".to_owned()),
+                ("lit".to_owned(), "false".to_owned()),
+            ]
+            .into_iter()
+            .collect();
+        }
+        register_content!(&mut event.blocks, id: DIESEL_GENERATOR_CASING.into(), template: "minecraft:iron_block".into(), item: true);
+        if let Some(block) = event
+            .blocks
+            .iter_mut()
+            .find(|block| block.id == DIESEL_GENERATOR_CASING)
+        {
+            block.state_properties =
+                serde_json::from_value(serde_json::json!({ "formed": { "type": "boolean" } }))
+                    .expect("valid Diesel Generator casing states");
             block.default_state = [("formed".to_owned(), "false".to_owned())]
                 .into_iter()
                 .collect();
@@ -2593,6 +2648,7 @@ impl Hooks for Arcforge {
             || event.block == SULFUR_RECOVERY_UNIT
             || event.block == CRACKING_CONTROLLER
             || event.block == STEAM_CRACKER_CONTROLLER
+            || event.block == DIESEL_GENERATOR_CONTROLLER
             || event.block == SOLAR_ARRAY_CONTROLLER
             || event.block == GEOTHERMAL_PLANT
             || event.block == FUEL_BURNER
@@ -2657,6 +2713,7 @@ impl Hooks for Arcforge {
             || event.block == SULFUR_RECOVERY_UNIT
             || event.block == CRACKING_CONTROLLER
             || event.block == STEAM_CRACKER_CONTROLLER
+            || event.block == DIESEL_GENERATOR_CONTROLLER
             || event.block == SOLAR_ARRAY_CONTROLLER
             || event.block == GEOTHERMAL_PLANT
             || event.block == FUEL_BURNER
@@ -2691,6 +2748,8 @@ impl Hooks for Arcforge {
             Some(cracking_unit::container())
         } else if event.block == STEAM_CRACKER_CONTROLLER {
             Some(steam_cracker::container())
+        } else if event.block == DIESEL_GENERATOR_CONTROLLER {
+            Some(diesel_generator::container())
         } else if event.block == COKER {
             Some(coker::container())
         } else if event.block == CATALYTIC_REFORMER {
@@ -2990,6 +3049,15 @@ impl Hooks for Arcforge {
                 own_labels: true,
                 own_background: false,
             }),
+            DIESEL_GENERATOR_CONTROLLER => Some(NativeScreen {
+                width: 176.0,
+                height: 286.0,
+                slots: vec![],
+                inventory_y: 162.0,
+                inventory_x: 8.0,
+                own_labels: true,
+                own_background: false,
+            }),
             SIFTER => Some(NativeScreen {
                 width: 176.0,
                 height: 202.0,
@@ -3183,6 +3251,10 @@ impl Hooks for Arcforge {
         }
         if event.block == STEAM_CRACKER_CONTROLLER {
             steam_cracker::draw_screen(host, event);
+            return;
+        }
+        if event.block == DIESEL_GENERATOR_CONTROLLER {
+            diesel_generator::draw_screen(host, event);
             return;
         }
         if event.block == FIBERIZER {
@@ -3421,6 +3493,10 @@ impl Hooks for Arcforge {
             && !steam_cracker::accepts(event.tank, event.fluid)
         {
             Flow::Cancel
+        } else if event.block == DIESEL_GENERATOR_CONTROLLER
+            && !diesel_generator::accepts(event.tank, event.fluid)
+        {
+            Flow::Cancel
         } else if event.block == COKER && !coker::accepts(event.tank, event.fluid) {
             Flow::Cancel
         } else if event.block == CATALYTIC_REFORMER && !reformer::accepts(event.tank, event.fluid) {
@@ -3516,6 +3592,8 @@ impl Hooks for Arcforge {
         }
         if event.block == STEAM_TURBINE_ARRAY_CONTROLLER {
             Some(steam_turbine::energy_buffer())
+        } else if event.block == DIESEL_GENERATOR_CONTROLLER {
+            Some(diesel_generator::energy_buffer())
         } else if event.block == COMBUSTION {
             Some(horizon_client::mod_api::ModEnergyBuffer {
                 capacity: COMBUSTION_CAPACITY_FE as i32,
@@ -3610,6 +3688,8 @@ impl Hooks for Arcforge {
             Some(cracking_unit::fluid_tanks())
         } else if event.block == STEAM_CRACKER_CONTROLLER {
             Some(steam_cracker::fluid_tanks())
+        } else if event.block == DIESEL_GENERATOR_CONTROLLER {
+            Some(diesel_generator::fluid_tanks())
         } else if event.block == COKER {
             Some(coker::fluid_tanks())
         } else if event.block == CATALYTIC_REFORMER {
@@ -3775,6 +3855,7 @@ impl Hooks for Arcforge {
             SULFUR_RECOVERY_UNIT => sulfur_recovery::tick(host, event.pos, event.entity),
             CRACKING_CONTROLLER => cracking_unit::tick(host, event.pos, event.entity),
             STEAM_CRACKER_CONTROLLER => steam_cracker::tick(host, event.pos, event.entity),
+            DIESEL_GENERATOR_CONTROLLER => diesel_generator::tick(host, event.pos, event.entity),
             SOLAR_ARRAY_CONTROLLER => tick_solar_array(host, event.pos, event.entity),
             GEOTHERMAL_PLANT => tick_geothermal_plant(host, event.pos, event.entity),
             FUEL_BURNER => tick_fuel_burner(host, event.pos, event.entity),
@@ -8770,6 +8851,7 @@ fn arcforge_energy_source(id: &str) -> Option<(u64, u64)> {
         COMBUSTION => Some((COMBUSTION_CAPACITY_FE, COMBUSTION_MAX_EXTRACT_FE as u64)),
         THERMOELECTRIC_PLANT => Some((THERMOELECTRIC_FE_CAPACITY, THERMOELECTRIC_MAX_OUTPUT_FE)),
         STEAM_TURBINE_ARRAY_CONTROLLER => Some(steam_turbine::energy_source_spec()),
+        DIESEL_GENERATOR_CONTROLLER => Some(diesel_generator::energy_source_spec()),
         _ => None,
     }
 }
@@ -8845,7 +8927,10 @@ fn wrench_rotatable_machine(id: &str) -> bool {
 fn wrench_energy_output_machine(id: &str) -> bool {
     matches!(
         id,
-        COMBUSTION | THERMOELECTRIC_PLANT | STEAM_TURBINE_ARRAY_CONTROLLER
+        COMBUSTION
+            | THERMOELECTRIC_PLANT
+            | STEAM_TURBINE_ARRAY_CONTROLLER
+            | DIESEL_GENERATOR_CONTROLLER
     )
 }
 
