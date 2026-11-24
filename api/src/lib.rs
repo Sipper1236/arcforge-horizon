@@ -33,6 +33,7 @@ fn default_registry_entry<T: Default>(_: &[T]) -> T {
     T::default()
 }
 
+mod air_separator;
 mod area_tool;
 mod coker;
 mod cracking_unit;
@@ -122,6 +123,7 @@ const CATALYTIC_REFORMER: &str = reformer::BLOCK;
 const LUBRICANT_BLENDER: &str = lubricant_blender::BLOCK;
 const HYDROTREATER: &str = hydrotreater::BLOCK;
 const SULFUR_RECOVERY_UNIT: &str = sulfur_recovery::BLOCK;
+const AIR_SEPARATOR: &str = air_separator::BLOCK;
 const PETROLEUM_COKE: &str = coker::PETROLEUM_COKE;
 const CRACKING_CONTROLLER: &str = cracking_unit::CONTROLLER;
 const CRACKING_CASING: &str = cracking_unit::CASING;
@@ -638,6 +640,17 @@ impl Hooks for Arcforge {
         }
         if event.entity.id == SULFUR_RECOVERY_UNIT {
             return if sulfur_recovery::item_allowed(
+                event.slot,
+                event.stack.item.as_ref(),
+                event.stack.count,
+            ) {
+                Flow::Continue
+            } else {
+                Flow::Cancel
+            };
+        }
+        if event.entity.id == AIR_SEPARATOR {
+            return if air_separator::item_allowed(
                 event.slot,
                 event.stack.item.as_ref(),
                 event.stack.count,
@@ -1900,6 +1913,24 @@ impl Hooks for Arcforge {
             .into_iter()
             .collect();
         }
+        register_content!(&mut event.blocks, id: AIR_SEPARATOR.into(), template: "minecraft:blast_furnace".into(), item: true);
+        if let Some(block) = event
+            .blocks
+            .iter_mut()
+            .find(|block| block.id == AIR_SEPARATOR)
+        {
+            block.state_properties = serde_json::from_value(serde_json::json!({
+                "facing": { "type": "enum", "values": ["north", "east", "south", "west"] },
+                "lit": { "type": "boolean" }
+            }))
+            .expect("valid Air Separator block states");
+            block.default_state = [
+                ("facing".to_owned(), "north".to_owned()),
+                ("lit".to_owned(), "false".to_owned()),
+            ]
+            .into_iter()
+            .collect();
+        }
         register_content!(&mut event.blocks, id: DISTILLATION_CASING.into(), template: "minecraft:iron_block".into(), item: true);
         if let Some(block) = event
             .blocks
@@ -2663,6 +2694,7 @@ impl Hooks for Arcforge {
             || event.block == LUBRICANT_BLENDER
             || event.block == HYDROTREATER
             || event.block == SULFUR_RECOVERY_UNIT
+            || event.block == AIR_SEPARATOR
             || event.block == CRACKING_CONTROLLER
             || event.block == STEAM_CRACKER_CONTROLLER
             || event.block == DIESEL_GENERATOR_CONTROLLER
@@ -2753,6 +2785,7 @@ impl Hooks for Arcforge {
             || event.block == LUBRICANT_BLENDER
             || event.block == HYDROTREATER
             || event.block == SULFUR_RECOVERY_UNIT
+            || event.block == AIR_SEPARATOR
             || event.block == CRACKING_CONTROLLER
             || event.block == STEAM_CRACKER_CONTROLLER
             || event.block == DIESEL_GENERATOR_CONTROLLER
@@ -2803,6 +2836,8 @@ impl Hooks for Arcforge {
             Some(hydrotreater::container())
         } else if event.block == SULFUR_RECOVERY_UNIT {
             Some(sulfur_recovery::container())
+        } else if event.block == AIR_SEPARATOR {
+            Some(air_separator::container())
         } else if energy_cell_spec(event.block).is_some() {
             Some(ModContainer {
                 slots: 2,
@@ -3083,6 +3118,15 @@ impl Hooks for Arcforge {
                 own_labels: true,
                 own_background: false,
             }),
+            AIR_SEPARATOR => Some(NativeScreen {
+                width: 176.0,
+                height: 226.0,
+                slots: vec![Some([38.0, 30.0]), Some([122.0, 30.0])],
+                inventory_y: 140.0,
+                inventory_x: 8.0,
+                own_labels: true,
+                own_background: false,
+            }),
             STEAM_CRACKER_CONTROLLER => Some(NativeScreen {
                 width: 176.0,
                 height: 308.0,
@@ -3290,6 +3334,10 @@ impl Hooks for Arcforge {
         }
         if event.block == SULFUR_RECOVERY_UNIT {
             sulfur_recovery::draw_screen(host, event);
+            return;
+        }
+        if event.block == AIR_SEPARATOR {
+            air_separator::draw_screen(host, event);
             return;
         }
         if event.block == STEAM_CRACKER_CONTROLLER {
@@ -3556,6 +3604,8 @@ impl Hooks for Arcforge {
             && !sulfur_recovery::accepts(event.tank, event.fluid)
         {
             Flow::Cancel
+        } else if event.block == AIR_SEPARATOR && !air_separator::accepts(event.tank, event.fluid) {
+            Flow::Cancel
         } else if event.block == DISTILLATION_CONTROLLER
             && !distillation_array::accepts(event.tank, event.fluid)
         {
@@ -3616,6 +3666,9 @@ impl Hooks for Arcforge {
         }
         if event.block == HYDROTREATER {
             return Some(hydrotreater::energy_buffer());
+        }
+        if event.block == AIR_SEPARATOR {
+            return Some(air_separator::energy_buffer());
         }
         if let Some((capacity, rate)) = energy_conduit_spec(event.block) {
             return Some(horizon_client::mod_api::ModEnergyBuffer {
@@ -3747,6 +3800,8 @@ impl Hooks for Arcforge {
             Some(hydrotreater::fluid_tanks())
         } else if event.block == SULFUR_RECOVERY_UNIT {
             Some(sulfur_recovery::fluid_tanks())
+        } else if event.block == AIR_SEPARATOR {
+            Some(air_separator::fluid_tanks())
         } else if event.block == STEAM_TURBINE_ARRAY_CONTROLLER {
             Some(steam_turbine::fluid_tanks())
         } else if event.block == STEAM_CONDENSER_ARRAY_CONTROLLER {
@@ -3900,6 +3955,7 @@ impl Hooks for Arcforge {
             LUBRICANT_BLENDER => lubricant_blender::tick(host, event.pos, event.entity),
             HYDROTREATER => hydrotreater::tick(host, event.pos, event.entity),
             SULFUR_RECOVERY_UNIT => sulfur_recovery::tick(host, event.pos, event.entity),
+            AIR_SEPARATOR => air_separator::tick(host, event.pos, event.entity),
             CRACKING_CONTROLLER => cracking_unit::tick(host, event.pos, event.entity),
             STEAM_CRACKER_CONTROLLER => steam_cracker::tick(host, event.pos, event.entity),
             DIESEL_GENERATOR_CONTROLLER => diesel_generator::tick(host, event.pos, event.entity),

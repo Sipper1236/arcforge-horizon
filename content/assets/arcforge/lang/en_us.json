@@ -80,5 +80,7 @@
   "item.arcforge.steam_cracker_controller": "Steam Cracker Controller",
   "block.arcforge.steam_cracker_casing": "Steam Cracker Casing",
   "item.arcforge.steam_cracker_casing": "Steam Cracker Casing",
+  "block.arcforge.air_separator": "Air Separator",
+  "item.arcforge.air_separator": "Air Separator",
   "item.arcforge.cracking_catalyst": "Cracking Catalyst"
 }
