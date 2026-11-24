@@ -3,9 +3,9 @@ All Arcforge builds and compile verification run through GitHub Actions. Do not 
 
 ## Current build policy
 
-Latest complete playable client before the current attempts: commit `230b789`, run [44217016120](https://github.com/Sipper1236/arcforge-horizon/actions/runs/44217016120); both package and Linux client jobs passed. Run [45295887536](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45295887536) passed packaging on remote `main` at `b14d9c9`, then failed because its pinned Nightly was no longer published. Run [45300146574](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45300146574) resolved a current Nightly and passed packaging, but its client build attempted the newer Nightly source and failed before compiling the Arcforge client. The workflow now keeps the current Minecraft 26.3 resources while aliasing the runner-local version directory to the pinned Horizon source revision before native compilation; this correction is awaiting a GitHub run.
+Latest playable client: commit `6a4b74a`, run [45304153554](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45304153554). Both the package and Linux client jobs passed. The workflow resolves an available Minecraft 26.3 Nightly for game resources, then uses the Horizon revision pinned in `horizon-mixin.toml` for native compilation. The downloaded client ZIP and package checksums were verified; its SHA-256 is `4ac4e86beec5f86aebb95f26199e6d65125b61f5157e1bcd28ecaeb38b5a6beb`.
 
-Current instruction: build only with GitHub Actions. Do not run the hybrid compile workflow or local builds. GitHub runners use their default CPU parallelism; the half-thread limit applies only to local builds. The workflow checks Rust and content, packages the mod, then builds the pinned Linux client on pushes and manual dispatches.
+Build only with GitHub Actions. GitHub runners use their normal parallelism; the half-thread cap applies only to local compiling. The workflow checks Rust and content, packages the mod, then builds the pinned Linux client on pushes and manual dispatches.
 ## Historical hybrid remote build (inactive)
 `tools/build_hybrid_client.sh` builds the Rust crate, checks the `.hmod`, packages the `.hnmod`, prepares the pinned Horizon Nightly, and creates an importable Linux client ZIP. Run it from the project root through the hybrid runner:
 
