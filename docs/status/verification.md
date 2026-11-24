@@ -1,5 +1,12 @@
 # Verification record
 
+## Catalytic Reformer alpha — GitHub Actions verified (gameplay pending)
+Commit `d2ef69f` on `agent/energy-cell-output` adds the source Naphtha-to-Gasoline/Hydrogen Reformer alpha. GitHub Actions run [45319393207](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45319393207) passed Rust formatting and the locked native crate check, Horizon content build/check, HMOD/HNMOD packaging, and Linux client build/package.
+
+Playable client ZIP: `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-run-45319393207/arcforge-playable-linux-x86_64-d2ef69f6ab469922a22a1c1947ffb21bdfa5ea6d/arcforge-linux-x86_64.zip` (47,854,045 bytes; SHA-256 `7578b716e4b194f041a2bd049830765bc66e199a5e265d232d2c698989aa7486`). Package bundle ZIP SHA-256 `b99c6c2296ad1bef85ed5485755db87f2275802bd217e6b399a80ebad0fc60b`; HMOD SHA-256 `c7a5e1d9c730856acf801894e24d0ee3b7b40dae3133064ff2f364afefad3fc3`; HNMOD SHA-256 `de24fa012bda55c036c38625110cbb20bab000c8dcc43911c7d485ce88ed8480`.
+
+The package checksum file and both ZIP integrity checks passed; all four client-embedded SHA-256 entries matched. The client ZIP and extracted checksum-verified files are under `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-run-45319393207/`. GitHub Actions used normal runner parallelism. No local compilation or tests were run. This verifies build and packaging only; Reformer gameplay remains unverified.
+
 ## Energy Cell and Steam Power FE routing — GitHub Actions verified (2026-11-24)
 Commits `cf81c82` and `c64d28c` on `agent/energy-cell-output` add the Energy Cell menu and comparator, mod-side FE input/output routing, Steam Turbine FE output routing, and a Steam Boiler structure rescan interval. Run [45311824901](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45311824901) passed Rust formatting, the locked native crate check, Horizon content build/check, mod packaging, and the Linux client build/package.
 
