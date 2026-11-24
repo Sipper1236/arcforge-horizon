@@ -1,5 +1,8 @@
 # Current implementation
-**Current source:** branch `agent/energy-cell-output`, commit `e8e1d84`, adds the Air Separator alpha and aligns its default output sides with Arcforge. Actions run [45366326264](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45366326264) passed package and Linux client builds, and artifact checks passed. Build/package verification does not establish in-game behavior.
+**Current source:** branch `agent/energy-cell-output`, commit `cede083`, adds the Haber Reactor alpha after feature commit `d70df0f`. GitHub Actions run [45373797725](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45373797725) passed package and Linux client builds, and artifact integrity checks passed. Build/package verification does not establish gameplay behavior.
+
+## Haber Reactor alpha — GitHub Actions verified (gameplay pending)
+`api/src/haber_reactor.rs` adds a data-driven `arcforge:synthesizing` recipe loader for one or two gas inputs and the Haber Reactor machine. The source Ammonia recipe converts 60 mB Hydrogen + 20 mB Nitrogen into 40 mB Ammonia over 20 ticks at 60 FE/t and 10 HU/t, requiring 450°C and capped at 800°C. The machine has three 8,000 mB tanks, a 20,000 HU store, a 40,000 FE buffer with 400 FE/t maximum input, Speed/Energy Upgrade slots, Wrench status, and a screen. Fixed north-facing access accepts gas above/east, FE south, and heat below; Ammonia pushes west at 200 mB/t. Run [45373797725](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45373797725) passed package and Linux client builds; downloaded ZIPs and embedded hashes were verified. Gameplay remains unverified.
 
 ## Diesel Generator alpha — GitHub Actions verified (gameplay pending)
 The Diesel Generator supports 3×3×5/7/9 structures, V8/V12/V16 variants, diesel-family fuels, FE buffers and output, retained fractional fuel credit, Wrench side/redstone settings, and a status screen. Its custom renderer uses the pinned Horizon draw hooks and approximates the source engine model. It has not been checked in-game. Diesel run [45355110111](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45355110111) passed formatting, native crate check, Horizon content build/check, package creation, and Linux client build. The package and client archives and all embedded checksums passed verification; hashes are recorded in [verification.md](verification.md).
@@ -10,7 +13,7 @@ The Flare Stack accepts Arcforge gases except the three corrosive fluids, blocks
 ## Steam Cracker alpha — GitHub Actions verified (gameplay pending)
 Commits `3dd58fb`, `37ea780`, and `6395204` add the formed 3×3×3 casing, three source steam-cracking recipes, feed/Steam/four product tanks, 120,000 HU storage, Speed Upgrade support, Wrench status, and a processing screen. Commit `2e7dd70` adds a source-inspired static renderer through the pinned Horizon hooks and hides formed block models. Run [45359976088](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45359976088) passed both jobs; the client archive, package archive, manifest, and embedded hashes are verified. Artifact hashes are recorded in [verification.md](verification.md). All tank faces are exposed and automatic output routing/configurable faces are not implemented. Gameplay and renderer appearance remain unverified.
 
-## Air Separator alpha — GitHub Actions verified (gameplay pending)
+## Historical checkpoint — Air Separator alpha (GitHub Actions verified; gameplay pending)
 Commit `952a6ab` adds the registered Air Separator, its source recipe and crafting/loot data, a two-upgrade-slot screen, and FE-powered production. Follow-up `e8e1d84` aligns its fixed sided capabilities with Arcforge's default north-facing layout: Nitrogen west, Oxygen east, FE south. Outside the End it produces 80 mB Nitrogen and 20 mB Oxygen every 40 ticks at 80 FE/t by default, with an 8,000 mB tank per gas and Speed/Energy upgrades. The machine has a 40,000 FE buffer and accepts up to 400 FE/t. Run [45366326264](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45366326264) passed package and Linux client builds; archive integrity and embedded checksums passed. Source-style automatic 200 mB/t gas ejection and configurable port modes are not implemented, and gameplay remains unverified. Full artifact hashes are in [verification.md](verification.md).
 
 
@@ -20,10 +23,10 @@ The Energy Cell has a two-slot menu for charging from or extracting into portabl
 ## Cracking Unit alpha — GitHub Actions verified
 Commits `c65e0e8` and `230b789` implement both source cracking modes, the 3×3×5 structure, five recipe/crafting JSON files, four output tanks, catalyst wear, heat input, and Wrench mode switching. It is included in the latest source build, run [45319393207](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45319393207), which passed the native/content/package and Linux client jobs. No in-game trial has been run; fixed box geometry, Wrench-based mode switching, and no automatic port routing remain alpha limits.
 
-**Latest fully verified client:** Air Separator, commit `e8e1d84`, built by GitHub Actions run [45366326264](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45366326264).
-Playable client ZIP: `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-run-45366326264/arcforge-playable-linux-x86_64-e8e1d848ac60dca23032e6ce87a0cd88fd09b188/arcforge-linux-x86_64.zip` (47,976,393 bytes; SHA-256 `9efe4b03518cf04d71d76d80ef437e02e38689c21531f8f9325d33ba18c06aee`).
-Package bundle ZIP SHA-256: `2395bf363f0ada31a55788a1b03f8b315324f48e5e33df4346d6bb0c3dfcaeea`; HMOD SHA-256: `9bfc2f3beb419f96f896a7eca7f80a0a1374a531ec776c86829c2a59dfa304f1`; HNMOD SHA-256: `2aeca9a3f4f444aa72586f5830c8d919dcd54ee94e6fea095e7512e3aa97f29b`.
-The package/client ZIP integrity checks passed, the package manifest passed, and all four hashes embedded in the client matched. Steam Cracker gameplay/rendering appearance and Air Separator gameplay remain unverified.
+**Latest fully verified client:** Haber Reactor, commit `cede083`, built by GitHub Actions run [45373797725](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45373797725).
+Playable client ZIP: `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-run-45373797725/arcforge-playable-linux-x86_64-cede083acc3959b05ee46c6f46daa942bac55f7a/arcforge-linux-x86_64.zip` (47,989,356 bytes; SHA-256 `9e06d5cea85bb686a5ce31a40f37cba7a9025adfd70535f0ebc26d2b42b3a142`).
+Package bundle ZIP SHA-256: `9843d79005c530758667842fd24ac1a32dde652f0ba2764c3a07e8e7b3fcde44`; HMOD SHA-256: `6670ed4ebfab1b1905d958a9264a7866983c1cb0d9285c901dcb5500211cc6ca`; HNMOD SHA-256: `9c5901826012d3af5d5b503e2c712773a46bcab6494495e7e82e682f73a5435f`.
+The package/client ZIP integrity checks passed, package sums passed, and all four client-embedded hashes matched: Horizon client `7e1b8e569cb77f644a504f603e49d46e825fb0943d2ed89a6a73a5c2f2a5e6af`, native manifest `0379a0dd7a0a2664f7b99602d7d65009582881fe2f4b02d99f4291e0f4dd2e09`, HMOD and HNMOD as above. Steam Cracker, Air Separator, and Haber Reactor gameplay remain unverified.
 
 ## Coker alpha — GitHub Actions verified
 Commit `81b9018` adds the source Bitumen-to-Petroleum-Coke recipe, Refinery Gas and Heavy Oil byproducts, one speed-upgrade slot and one item-output slot, fixed tanks, Wrench status, crafting/loot data, and Petroleum Coke fuel/coke integration. Both GitHub jobs passed; package and client ZIP integrity and embedded hashes verified. Gameplay remains unverified. Reflux, automatic product routing, extra Coker recipes, and per-instance capacities are not implemented.
@@ -58,7 +61,7 @@ Four battery items expose Horizon's native item-energy capability with source ca
 
 ## Recipe data present
 
-The content directory contains 452 recipe JSON files (Arcforge machine recipes and vanilla recipe types):
+The content directory contains 454 recipe JSON files
 
 | Recipe group | Files |
 |---|---:|
@@ -91,6 +94,7 @@ The content directory contains 452 recipe JSON files (Arcforge machine recipes a
 | Steam Cracker recipes and controller/casing crafting | 5 |
 | Diesel Generator casing/controller crafting | 2 |
 | Flare Stack crafting | 1 |
+| Haber Reactor recipe and crafting | 2 |
 | Air Separator recipe and crafting | 2 |
 | Distillation Array controller, casing, and tray crafting | 3 |
 | Seismic Survey Tool crafting | 1 |
