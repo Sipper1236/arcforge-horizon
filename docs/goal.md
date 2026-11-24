@@ -6,7 +6,12 @@ Port the complete survival gameplay scope of the pinned Arcforge release to Hori
 
 The current code is an early prototype, not a complete port. Continue implementing real gameplay from the scope in the root [README](../README.md), preserve Arcforge's recognizable mechanics and progression, and update the as-built and remaining-work documents whenever implementation changes.
 
-### Current slice — Electrolyzer alpha (Actions verified; gameplay pending)
+### Current slice — Chemical Reactor Array alpha (Actions verified; gameplay pending)
+Commits `d7eeff4` and `d445666` add `api/src/chemical_reactor_array.rs`, a formed 3×3×3 machine with three concurrent lanes using shared `arcforge:chemical_reacting` recipes, per-lane item slots/progress, fluid outputs and byproducts, FE/HU, Speed/Energy upgrades, Wrench status, screen, casing recipe, and loot. It runs at twice base recipe speed and 1.6× FE/t, with fluid output up to 4,000 mB/t. Run [45403433785](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45403433785) passed the package and Linux client jobs; downloaded archive and embedded checksums were verified.
+
+Horizon exposes capabilities by block ID, leaving each casing with its own block entity. Formation consolidates outer resources into the center, but independent per-casing capacities can exceed the upstream aggregate; ports have fixed north-facing defaults and Wrench side configuration is unavailable. Probabilistic catalysts/byproducts remain unsupported by the shared Chemical Reactor parser. Gameplay remains unverified.
+
+### Historical checkpoint — Electrolyzer alpha (Actions verified; gameplay pending)
 Commits `7b86a84` and `042fb5c` add the Electrolyzer block, `arcforge:electrolyzing` recipe handling, water/brine/hydrofluoric-acid recipes, crafting/loot, gas vent controls, Speed/Energy upgrades, and a screen. Run [45392384733](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45392384733) passed Rust formatting, the locked native crate check, content build/check, package jobs, and Linux client build/package; downloaded archives and embedded checksums passed.
 
 The machine has an 8,000 mB water tank, two 16,000 mB gas tanks, an 8,000 mB liquid tank, and a 100,000 FE buffer with an 8,000 FE/t input cap. It uses 400 FE/t by default, speeds up with Speed upgrades, and scales Energy-upgrade savings down to the Hydrogen energy floor. Gas and Lye outputs auto-eject through the default north-facing ports at up to 1,000 mB/t. Top/bottom Wrench use toggles the Hydrogen/secondary-gas vents. External members of the `minecraft:water` fluid tag, water buckets, configurable side modes, redstone behavior, and in-game behavior remain unsupported or unverified.

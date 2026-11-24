@@ -3,11 +3,16 @@
 ## Current build policy (updated 2026-11-24)
 Build and compile only through GitHub Actions. Do not run hybrid or local compilation. GitHub runners use normal parallelism; the half-thread cap applies only to local builds.
 
-Latest fully build-verified client: branch `agent/energy-cell-output`, commit `042fb5c`; [45392384733](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45392384733) passed both package and Linux client jobs. Commits `7b86a84` and `042fb5c` add the Electrolyzer alpha. Full artifact details and local download paths are in [verification.md](status/verification.md). Gameplay remains unverified.
+Latest fully build-verified client: branch `agent/chemical-reactor-array`, commit `d445666`; [45403433785](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45403433785) passed both package and Linux client jobs. Commits `d7eeff4` and `d445666` add the Chemical Reactor Array alpha. Full artifact details and download paths are in [verification.md](status/verification.md). Gameplay remains unverified.
 
-Client ZIP: `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-run-45392384733/arcforge-playable-linux-x86_64-042fb5c151ffc252318506da16eb2ca9f835d2b1/arcforge-linux-x86_64.zip` (48,044,734 bytes; SHA-256 `d047bb39f8da30d51636723cc5efe60e0924676af29222e4acd339a5fb574658`). Package bundle ZIP SHA-256 `7734b56174d208dde1f85239ed04dfac02c1ffb1ba797ac710f45a1d370cb19e`; HMOD `28bbf5f8f45f73a6be9ae3cbc9222786bc427801bfaa8be806e590de1ceccd8b`; HNMOD `1f50c6b3261bfa546b428115e60c5851705897aa95d7cc3ef3371b74cbfdf002`. Build success does not verify gameplay.
+Client ZIP: `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-run-45403433785/arcforge-linux-x86_64.zip` (48,093,452 bytes; SHA-256 `9a24927f4326f28c14a441a3d0f33043f7d01d0de43039a47e0daff5e1eb6a17`). Package ZIP: `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-run-45403433785/arcforge-horizon-bundle.zip` (2,290,112 bytes; SHA-256 `8ef89a5d041c46c1c20c595f576165f7a41a282eeb3bd02ed872f6a881871a3a`); HMOD `9dc25d6c3e4500f269019e680c74b0801e0c126ffac1008512ba69d439bc43ed`; HNMOD `47817d77f8513376e727b07d62ef7a5f115335dd98c2f6faed632716d99611c8`. Build success does not verify gameplay.
 
-## Current slice — Electrolyzer alpha (GitHub Actions verified; gameplay pending)
+## Current slice — Chemical Reactor Array alpha (GitHub Actions verified; gameplay pending)
+Commits `d7eeff4` and `d445666` add `api/src/chemical_reactor_array.rs`, a 3×3×3 multiblock with three concurrent recipe lanes, per-lane item slots/progress, shared `arcforge:chemical_reacting` support, bounded fluid/FE/HU buffers, Speed/Energy upgrades, fluid output, Wrench status, screen, crafting, and loot. Run [45403433785](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45403433785) passed both package and Linux client jobs; archive details and hashes are in [verification.md](status/verification.md).
+
+Horizon exposes capabilities by block ID, so each casing keeps an independent block entity. Formation consolidates outer resources into the center, but per-casing capacities can exceed the upstream aggregate. Sides are fixed north-facing, Wrench port configuration is unavailable, probabilistic catalysts/byproducts remain unsupported by the recipe parser, and gameplay is unverified. Next: inspect the matching client in a disposable profile and verify formation, three-lane processing, resource limits, outputs, and save/reload.
+
+## Historical checkpoint — Electrolyzer alpha (GitHub Actions verified; gameplay pending)
 Commits `7b86a84` and `042fb5c` add `api/src/electrolyzer.rs`, block registration and callbacks, data-driven `arcforge:electrolyzing` recipes, crafting/loot, Speed/Energy Upgrade slots, vent controls, and a screen. The recipes split 100 mB Water into 200 mB Hydrogen + 100 mB Oxygen; 100 mB Brine into 50 mB Hydrogen + 50 mB Chlorine + 100 mB Lye; and 100 mB hydrofluoric acid into 50 mB Hydrogen + 50 mB Fluorine. The machine has 8,000 mB water, 16,000 mB gas, and 8,000 mB liquid capacities plus a 100,000 FE buffer. It draws 400 FE/t by default, speeds up with Speed upgrades, and scales Energy-upgrade savings down to the Hydrogen energy floor. Outputs auto-eject at up to 1,000 mB/t. Top/bottom Wrench use toggles Hydrogen/secondary-gas venting. Static ports follow the default north-facing layout; external water-tag fluids, bucket interaction, configurable sides, redstone behavior, and gameplay remain unimplemented or unverified. Run [45392384733](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45392384733) passed both package and Linux client jobs; package and embedded checksums are recorded in [verification.md](status/verification.md).
 
 ## Historical checkpoint — Chemical Reactor / NPK alpha (GitHub Actions verified; gameplay pending)
@@ -235,13 +240,13 @@ See [not-built.md](status/not-built.md) for the organized backlog and [parity-no
 
 ## 6. Suggested next actions
 
-1. Continue source-order parity after the Chemical Reactor alpha; audit upstream recipes and dependencies before choosing the next chemistry/refinery slice.
+1. Continue source-order parity after the Chemical Reactor Array alpha; audit upstream recipes and dependencies before choosing the Carbon Reclaimer, Gasifier, or Fischer-Tropsch slice.
 2. If gameplay verification is requested, use the matching client artifact in a disposable profile/world and record observed placement, recipe processing, output routing, heat/FE limits, and save/reload behavior. Do not infer gameplay success from a CI build.
 3. Make feature changes only in `api/` and/or `content/`; do not change Horizon source, hook declarations, generated bindings, or API proposals.
 4. Update the README, implemented/not-built/parity/verification records, and affected system plan in the same feature slice.
 5. Build and compile only through GitHub Actions. Actions runners may use normal parallelism; any half-thread cap is local-only.
 
-Next: review the pinned upstream chemistry progression and implement the next useful machine or recipe path. Continue using `/tmp/arcforge-energy-cell` on `agent/energy-cell-output`; keep the primary checkout untouched and do not merge to `main`. The full port remains incomplete.
+Next: verify the Chemical Reactor Array in a disposable profile, then continue with the next chemistry machine. Use `/tmp/arcforge-energy-cell` on `agent/chemical-reactor-array`; keep the primary checkout untouched and do not merge to `main`. The full port remains incomplete.
 
 ## 7. Documentation map
 

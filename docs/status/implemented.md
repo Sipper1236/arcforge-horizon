@@ -1,5 +1,10 @@
 # Current implementation
-**Current source:** branch `agent/energy-cell-output`, commit `042fb5c`, adds the Electrolyzer alpha after feature commit `7b86a84`. GitHub Actions run [45392384733](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45392384733) passed package and Linux client builds; artifact integrity checks passed. Build/package verification does not establish gameplay behavior.
+**Current source:** branch `agent/chemical-reactor-array`, commit `d445666`, adds the Chemical Reactor Array alpha after feature commit `d7eeff4`. GitHub Actions run [45403433785](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45403433785) passed package and Linux client builds; artifact integrity checks passed. Build/package verification does not establish gameplay behavior.
+
+## Chemical Reactor Array alpha — GitHub Actions verified (gameplay pending)
+`api/src/chemical_reactor_array.rs` adds a formed 3×3×3 three-lane machine that reuses `arcforge:chemical_reacting` recipes. It has lane-specific item inputs/outputs and progress, three 32,000 mB input tanks plus product/byproduct tanks, a 200,000 FE buffer with a 4,000 FE/t input cap, a 160,000 HU store capped at 1,200°C, Speed/Energy Upgrade slots, Wrench status, and a screen. Three lanes can run concurrently at twice base recipe speed; energy draw is 1.6× the recipe rate before upgrades. Fluid outputs eject at up to 4,000 mB/t. The source casing recipe and block loot are included. Run [45403433785](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45403433785) passed package and Linux client jobs; artifact integrity is recorded in [verification.md](verification.md).
+
+The pinned Horizon API selects capabilities by block ID, so every casing keeps an independent block entity. Formation consolidates outer resources into the center, but per-casing fluid/energy/heat capacity can exceed the source aggregate. Ports use fixed north-facing defaults, Wrench port configuration is unavailable, and probabilistic catalyst/byproduct semantics remain unsupported by the existing Chemical Reactor recipe parser. Gameplay remains unverified.
 
 ## Electrolyzer alpha — GitHub Actions verified (gameplay pending)
 `api/src/electrolyzer.rs` adds data-driven `arcforge:electrolyzing` recipes for water, brine, and hydrofluoric acid, the Electrolyzer block, crafting/loot, Speed/Energy Upgrade slots, gas vent controls, and a screen. Water makes 200 mB Hydrogen + 100 mB Oxygen from 100 mB; brine makes Hydrogen, Chlorine, and Lye; hydrofluoric acid makes Hydrogen and Fluorine. The machine has 8,000 mB water, 16,000 mB gas, and 8,000 mB liquid capacities, a 100,000 FE buffer, and an 8,000 FE/t input cap. It draws 400 FE/t by default, supports eight Speed/Energy upgrades, and enforces the Hydrogen energy-balance floor. Fixed north-facing ports follow Arcforge's default; top/bottom Wrench use toggles gas venting. Water buckets, configurable side modes, redstone behavior, and gameplay remain unimplemented or unverified. Run [45392384733](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45392384733) passed both package and Linux client jobs; archive and embedded hashes were verified.
@@ -63,11 +68,11 @@ Four battery items expose Horizon's native item-energy capability with source ca
 
 ## Native crate and registered content
 
-`api/src/lib.rs` registers a Metal Press, Sifter, Arc Crusher, a three-lane Arc Crushing Array controller and its formed casing multiblock, Carbonizer, Induction Furnace, Infuser, Resin Tap, Firebox, Firebox Array controller and casing, Pressure Glass, Solar Thermal Array controller/casing/collectors, Fuel Burner, all four Fluid Tank tiers, four Pressurized Cylinder tiers, Thermoelectric Plant, four Energy Conduit tiers, four Item Conduit tiers, four Fluid Conduit tiers, four thermal conduit tiers, four Energy Cell tiers, four Heat Cell tiers, four portable FE Battery items, a Wrench that rotates supported single-block machines and configures conduit, Solar heat-port, and energy-generator faces, seven Steel tools, four Steel armor pieces, Fiberizer, Vulcanizer, Grain Dryer, Arcforge Furnace port, Steelworks prototype, Combustion Plant, Lubricant Blender, Air Separator, Chemical Reactor, Electrolyzer, NPK Fertilizer, coke block, treated wood, Arcforge furnace bricks, Creosote/Latex buckets, four liquid Canisters and four Gas Cartridges, the tungsten heating coil, processing materials, the Distillation Array controller/casing/tray, and the 3×5 Pumpjack with a craftable Well Head stand-in.
+`api/src/lib.rs` registers a Metal Press, Sifter, Arc Crusher, a three-lane Arc Crushing Array controller and its formed casing multiblock, a three-lane Chemical Reactor Array, Carbonizer, Induction Furnace, Infuser, Resin Tap, Firebox, Firebox Array controller and casing, Pressure Glass, Solar Thermal Array controller/casing/collectors, Fuel Burner, all four Fluid Tank tiers, four Pressurized Cylinder tiers, Thermoelectric Plant, four Energy Conduit tiers, four Item Conduit tiers, four Fluid Conduit tiers, four thermal conduit tiers, four Energy Cell tiers, four Heat Cell tiers, four portable FE Battery items, a Wrench that rotates supported single-block machines and configures conduit, Solar heat-port, and energy-generator faces, seven Steel tools, four Steel armor pieces, Fiberizer, Vulcanizer, Grain Dryer, Arcforge Furnace port, Steelworks prototype, Combustion Plant, Lubricant Blender, Air Separator, Chemical Reactor, Electrolyzer, NPK Fertilizer, coke block, treated wood, Arcforge furnace bricks, Creosote/Latex buckets, four liquid Canisters and four Gas Cartridges, the tungsten heating coil, processing materials, the Distillation Array controller/casing/tray, and the 3×5 Pumpjack with a craftable Well Head stand-in.
 
 ## Recipe data present
 
-The content directory contains 460 recipe JSON files
+The content directory contains 461 recipe JSON files
 
 | Recipe group | Files |
 |---|---:|
@@ -101,6 +106,7 @@ The content directory contains 460 recipe JSON files
 | Diesel Generator casing/controller crafting | 2 |
 | Flare Stack crafting | 1 |
 | Chemical Reactor recipe and crafting | 2 |
+| Chemical Reactor Array casing crafting | 1 |
 | Electrolyzing recipes | 3 |
 | Electrolyzer crafting | 1 |
 | Haber Reactor recipe and crafting | 2 |
@@ -131,7 +137,7 @@ The content directory contains 460 recipe JSON files
 | Induction Furnace Arcforge smelting catalog | 32 |
 | Heat Cell crafting recipes | 4 |
 | Additional recipe files not itemized above | 12 |
-| **Total** | **460** |
+| **Total** | **461** |
 
 Files existing does not by itself prove the complete recipe graph or survival progression works.
 

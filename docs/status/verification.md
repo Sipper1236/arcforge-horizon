@@ -1,5 +1,17 @@
 # Verification record
 
+## Chemical Reactor Array alpha — GitHub Actions verified (gameplay pending; 2026-11-24)
+
+Commits `d7eeff4` and `d445666` add the formed 3×3×3 Chemical Reactor Array, three concurrent lanes using `arcforge:chemical_reacting`, casing crafting/loot, per-lane items and progress, fluids, FE/HU, Speed/Energy upgrades, Wrench status, and a screen. Initial run [45402148431](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45402148431) exposed dynamic NBT key, heat-consumption method, and inventory borrowing errors. Commit `d445666` fixes those errors. Run [45403433785](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45403433785) passed Rust formatting, locked native crate check, content build/check, package assembly, and Linux client build/package.
+
+The array runs three lanes concurrently at twice base recipe speed and 1.6× FE/t before upgrades. It has three 32,000 mB input tanks plus output/byproduct tanks, a 200,000 FE buffer capped at 4,000 FE/t input, and a 160,000 HU store capped at 1,200°C. Fluid output ejects at up to 4,000 mB/t. The packaged HMOD contains 461 recipe JSON files, including the casing crafting recipe.
+
+The package ZIP is `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-run-45403433785/arcforge-horizon-bundle.zip` (2,290,112 bytes; SHA-256 `8ef89a5d041c46c1c20c595f576165f7a41a282eeb3bd02ed872f6a881871a3a`). Its embedded HMOD SHA-256 is `9dc25d6c3e4500f269019e680c74b0801e0c126ffac1008512ba69d439bc43ed`; HNMOD is `47817d77f8513376e727b07d62ef7a5f115335dd98c2f6faed632716d99611c8`.
+
+The playable Linux client ZIP is `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-run-45403433785/arcforge-linux-x86_64.zip` (48,093,452 bytes; SHA-256 `9a24927f4326f28c14a441a3d0f33043f7d01d0de43039a47e0daff5e1eb6a17`). Both ZIP integrity checks passed, the package `SHA256SUMS` matched, and all four client embedded hashes matched: Horizon client `7a6ff57cb8f25045d46118971e244a3fa0d022f403625895022b9ee043726055`, native manifest `1a19d441b06e974afee649dc0c263986f5ec53366cd9f99592ea8b4ea3eb1f1d`, and the HMOD/HNMOD hashes above.
+
+Horizon exposes capabilities by block ID, so each casing retains an independent block entity. Formation consolidates outer resources into the center, but per-casing fluid/energy/heat capacity can exceed the upstream aggregate. Ports use fixed north-facing defaults, Wrench port configuration is unavailable, and probabilistic catalysts/byproducts remain unsupported by the shared Chemical Reactor parser. Gameplay remains unverified. Local `cargo fmt --check` and `git diff --check` passed; no local compilation or tests were run. GitHub Actions used normal runner parallelism; the half-thread cap applies only to local builds.
+
 ## Electrolyzer alpha — GitHub Actions verified (gameplay pending; 2026-11-24)
 
 Commits `7b86a84` and `042fb5c` add the source Electrolyzer block, data-driven `arcforge:electrolyzing` processing, water/brine/hydrofluoric-acid recipes, crafting and loot, FE/fluid capabilities, Speed/Energy upgrades, gas vent controls, and a screen. Run [45392384733](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45392384733) passed Rust formatting, the locked native crate check, Horizon content build/check, mod packaging, and the Linux client build. The first attempt, [45391758227](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45391758227), found a recipe JSON `Arc` type mismatch; commit `042fb5c` fixes it.
