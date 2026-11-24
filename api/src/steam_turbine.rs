@@ -222,8 +222,7 @@ pub(crate) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
     } else {
         0
     };
-    let mut stored_energy =
-        EnergyStore::new(u64::from(ENERGY_BUFFER_CAPACITY), u64::from(energy));
+    let mut stored_energy = EnergyStore::new(u64::from(ENERGY_BUFFER_CAPACITY), u64::from(energy));
     super::push_adjacent_arcforge_energy_with_context(
         host,
         pos,

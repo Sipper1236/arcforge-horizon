@@ -197,15 +197,13 @@ pub(crate) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
     let facing = host
         .block_property(pos, "facing")
         .unwrap_or_else(|| "north".to_owned());
-    let elapsed = get_i32(&entity.nbt, "BoilerScan")
-        .max(0)
-        .saturating_add(1);
+    let elapsed = get_i32(&entity.nbt, "BoilerScan").max(0).saturating_add(1);
     let previous_facing = get_string(&entity.nbt, "BoilerFacing").unwrap_or_default();
     let facing_changed = previous_facing != facing;
     let initialized = get_i32(&entity.nbt, "BoilerInitialized") != 0;
     let should_scan = !initialized || facing_changed || elapsed >= SCAN_INTERVAL_TICKS;
-    let previous_shell = (get_i32(&entity.nbt, "BoilerFormed") != 0)
-        .then(|| saved_shell(&entity.nbt));
+    let previous_shell =
+        (get_i32(&entity.nbt, "BoilerFormed") != 0).then(|| saved_shell(&entity.nbt));
     let shell = if should_scan {
         set_i32(&mut entity.nbt, "BoilerScan", 0);
         set_i32(&mut entity.nbt, "BoilerInitialized", 1);

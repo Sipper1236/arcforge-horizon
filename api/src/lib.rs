@@ -8047,11 +8047,9 @@ fn cached_cell_charge(dimension: &str, pos: [i32; 3]) -> Option<(String, i32)> {
         .lock()
         .unwrap_or_else(std::sync::PoisonError::into_inner);
     let key = (dimension.to_owned(), pos);
-    if pending
-        .entries
-        .get(&key)
-        .is_some_and(|(_, _, captured)| now.duration_since(*captured) > PENDING_CELL_CHARGE_LIFETIME)
-    {
+    if pending.entries.get(&key).is_some_and(|(_, _, captured)| {
+        now.duration_since(*captured) > PENDING_CELL_CHARGE_LIFETIME
+    }) {
         pending.entries.remove(&key);
         return None;
     }
@@ -8063,8 +8061,8 @@ fn cached_cell_charge(dimension: &str, pos: [i32; 3]) -> Option<(String, i32)> {
 
 fn record_cell_charge(host: &mut dyn Host, pos: [i32; 3], item: &str, energy: i32) {
     let dimension = host.dimension().to_owned();
-    let changed = cached_cell_charge(&dimension, pos)
-        .is_none_or(|(previous_item, previous_energy)| {
+    let changed =
+        cached_cell_charge(&dimension, pos).is_none_or(|(previous_item, previous_energy)| {
             previous_item != item || previous_energy != energy
         });
     cache_cell_charge(&dimension, pos, item, energy);
@@ -8380,7 +8378,10 @@ fn wrench_rotatable_machine(id: &str) -> bool {
 }
 
 fn wrench_energy_output_machine(id: &str) -> bool {
-    matches!(id, COMBUSTION | THERMOELECTRIC_PLANT | STEAM_TURBINE_ARRAY_CONTROLLER)
+    matches!(
+        id,
+        COMBUSTION | THERMOELECTRIC_PLANT | STEAM_TURBINE_ARRAY_CONTROLLER
+    )
 }
 
 fn next_machine_facing(current: &str) -> Option<&'static str> {

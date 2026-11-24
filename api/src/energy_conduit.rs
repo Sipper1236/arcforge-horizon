@@ -552,9 +552,7 @@ fn network_output_endpoints(
                         .iter()
                         .find(|other| other.offset == side.opposite)
                         .is_some_and(|other| {
-                            can_input(
-                                get_string(&target.nbt, &setting_key(other.name)).as_deref(),
-                            )
+                            can_input(get_string(&target.nbt, &setting_key(other.name)).as_deref())
                         })
                 } else {
                     true
