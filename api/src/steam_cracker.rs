@@ -246,19 +246,16 @@ fn sync_screen(entity: &mut ModBlockEntity, heat_rate: u32, total: u32, status: 
     entity.data.resize(14, 0);
     let stored_heat = get_i32(&entity.nbt, "HeatHU").max(0);
     entity.data[0] = stored_heat;
-    entity.data[1] = crate::heat::HeatStore::new(
-        HEAT_CAPACITY,
-        MAX_TEMPERATURE_C,
-        stored_heat as u64,
-    )
-    .temperature_c() as i32;
+    entity.data[1] =
+        crate::heat::HeatStore::new(HEAT_CAPACITY, MAX_TEMPERATURE_C, stored_heat as u64)
+            .temperature_c() as i32;
     entity.data[2] = progress(entity).min(i32::MAX as u32) as i32;
     entity.data[3] = total.min(i32::MAX as u32) as i32;
     entity.data[4] = crate::fluid::amount(&entity.nbt, FEED_TANK).min(i32::MAX as u32) as i32;
     entity.data[5] = crate::fluid::amount(&entity.nbt, STEAM_TANK).min(i32::MAX as u32) as i32;
     for index in 0..PRODUCT_COUNT {
-        entity.data[6 + index] = crate::fluid::amount(&entity.nbt, PRODUCT_START + index)
-            .min(i32::MAX as u32) as i32;
+        entity.data[6 + index] =
+            crate::fluid::amount(&entity.nbt, PRODUCT_START + index).min(i32::MAX as u32) as i32;
     }
     entity.data[10] = heat_rate.min(i32::MAX as u32) as i32;
     entity.data[11] = status;
@@ -365,8 +362,7 @@ fn clear_box(host: &mut dyn Host, pos: [i32; 3], facing: Facing) {
 }
 
 pub(crate) fn unform(host: &mut dyn Host, pos: [i32; 3], nbt: &Compound) {
-    let name = get_string(nbt, "SteamCrackerFacing")
-        .or_else(|| host.block_property(pos, "facing"));
+    let name = get_string(nbt, "SteamCrackerFacing").or_else(|| host.block_property(pos, "facing"));
     if let Some(direction) = name.as_deref().and_then(facing) {
         clear_box(host, pos, direction);
     }
@@ -383,8 +379,8 @@ pub(crate) fn unform_near(host: &mut dyn Host, broken: [i32; 3]) {
                 if entity.id != CONTROLLER || !formed(&entity) {
                     continue;
                 }
-                let Some(direction) = get_string(&entity.nbt, "SteamCrackerFacing")
-                    .and_then(|name| facing(&name))
+                let Some(direction) =
+                    get_string(&entity.nbt, "SteamCrackerFacing").and_then(|name| facing(&name))
                 else {
                     continue;
                 };
@@ -425,7 +421,13 @@ pub(crate) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
     let Some(recipe) = recipe else {
         set_i32(&mut entity.nbt, "SteamCrackerProgress", 0);
         set_string(&mut entity.nbt, "SteamCrackerRecipe", "");
-        pause(host, pos, entity, if feed_name.is_some() { 2 } else { 0 }, 0);
+        pause(
+            host,
+            pos,
+            entity,
+            if feed_name.is_some() { 2 } else { 0 },
+            0,
+        );
         return;
     };
 
@@ -481,12 +483,7 @@ pub(crate) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
             &recipe.input,
             recipe.input_amount,
         );
-        crate::fluid::extract(
-            &mut entity.nbt,
-            STEAM_TANK,
-            STEAM,
-            recipe.steam_amount,
-        );
+        crate::fluid::extract(&mut entity.nbt, STEAM_TANK, STEAM, recipe.steam_amount);
         for product in &recipe.products {
             let Some(index) = product_slot(&product.fluid) else {
                 continue;
@@ -506,8 +503,7 @@ pub(crate) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
 }
 
 pub(crate) fn accepts(tank: usize, fluid: &str) -> bool {
-    (tank == FEED_TANK
-        && (fluid == NAPHTHA || fluid == REFINERY_GAS || fluid == NATURAL_GAS))
+    (tank == FEED_TANK && (fluid == NAPHTHA || fluid == REFINERY_GAS || fluid == NATURAL_GAS))
         || (tank == STEAM_TANK && fluid == STEAM)
 }
 
@@ -623,12 +619,8 @@ pub(crate) fn wrench(host: &mut dyn Host, pos: [i32; 3], face_hit: [i32; 3]) {
 
 pub(crate) fn status(entity: &ModBlockEntity) -> String {
     let stored_heat = get_i32(&entity.nbt, "HeatHU").max(0) as u64;
-    let temperature = crate::heat::HeatStore::new(
-        HEAT_CAPACITY,
-        MAX_TEMPERATURE_C,
-        stored_heat,
-    )
-    .temperature_c();
+    let temperature =
+        crate::heat::HeatStore::new(HEAT_CAPACITY, MAX_TEMPERATURE_C, stored_heat).temperature_c();
     let state = match get_i32(&entity.nbt, "SteamCrackerStatus") {
         1 => "needs a formed 3x3x3 casing",
         2 => "no recipe for this feed",
@@ -680,13 +672,21 @@ pub(crate) fn draw_screen(
     text!("Feed", 8.0, 48.0, 0xFFBBBBBB);
     text!("Steam", 90.0, 48.0, 0xFFBBBBBB);
     text!(
-        &format!("{}/{} mB", data.get(4).copied().unwrap_or_default(), FEED_CAPACITY),
+        &format!(
+            "{}/{} mB",
+            data.get(4).copied().unwrap_or_default(),
+            FEED_CAPACITY
+        ),
         8.0,
         61.0,
         0xFFE0E0E0,
     );
     text!(
-        &format!("{}/{} mB", data.get(5).copied().unwrap_or_default(), STEAM_CAPACITY),
+        &format!(
+            "{}/{} mB",
+            data.get(5).copied().unwrap_or_default(),
+            STEAM_CAPACITY
+        ),
         90.0,
         61.0,
         0xFFE0E0E0,
