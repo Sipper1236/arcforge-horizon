@@ -1,5 +1,12 @@
 # Verification record
 
+## Lubricant Blender alpha — GitHub Actions verified (gameplay pending)
+Source commit `898bb6a` plus formatting commit `07b59a7` on `agent/energy-cell-output` add the 100 mB Heavy Oil → 90 mB Lubricant machine. GitHub Actions run [45325717893](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45325717893) passed Rust formatting, the locked native crate check, Horizon content build/check, HMOD/HNMOD packaging, and the pinned Linux client build/package. Initial run [45325623133](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45325623133) stopped at the Rust formatting check; its reported layout changes were applied before the passing run.
+
+Playable client ZIP: `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-run-45325717893/arcforge-playable-linux-x86_64-07b59a77bc3fa3adc961b73f88e1e5ccc2ffe4ba/arcforge-linux-x86_64.zip` (47,864,473 bytes; SHA-256 `f2adc4375592e41913fb7a2d17cc9a1e43c572902caf9f47b23da0ad180efe2e`). Package bundle ZIP SHA-256 `775176063e113cc21948db007b965c81f5718b588555419cbab5d633389020b6`; HMOD SHA-256 `8e88545a63e91e4748ac29a99faa2a2e67b51e6ca5640407fa532c358b3f6eaa`; HNMOD SHA-256 `8e498f96903ec773f62adb5616a236818c2e3cc393b48230aa1ff3d40cdc77b8`.
+
+Both ZIPs passed integrity checks, the package manifest matched the HMOD/HNMOD, and all four client-embedded SHA-256 entries matched. Artifacts are under `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-run-45325717893/`. GitHub runners used normal parallelism; no local compilation or tests were run. This verifies build and packaging only; Blender behavior remains unverified in-game.
+
 ## Catalytic Reformer alpha — GitHub Actions verified (gameplay pending)
 Commit `d2ef69f` on `agent/energy-cell-output` adds the source Naphtha-to-Gasoline/Hydrogen Reformer alpha. GitHub Actions run [45319393207](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45319393207) passed Rust formatting and the locked native crate check, Horizon content build/check, HMOD/HNMOD packaging, and Linux client build/package.
 
