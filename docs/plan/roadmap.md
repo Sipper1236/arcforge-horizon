@@ -38,7 +38,7 @@ Commit `07b59a7` adds the Lubricant Blender alpha: Heavy Oil → Lubricant, FE a
 
 Commits `8711736` and `8cbd807` add the Hydrotreater alpha with the two pinned sour-fuel recipes, Hydrogen input, clean-fuel and Hydrogen Sulfide products, heat and FE processing, upgrades, bounded tanks, crafting/loot, and a screen. GitHub Actions run [45331449362](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45331449362) passed both jobs; gameplay checks are pending. Tank/energy capabilities remain all-sided, and automatic output ejection and configurable side modes are not implemented.
 
-The Sulfur Recovery Unit alpha is now implemented in source with its 100 mB Hydrogen Sulfide + 50 mB Oxygen → 100 mB Steam + Sulfur Dust recipe, 10-tick/15-HU/t/250°C processing, bounded tanks, and source crafting/loot data. Its first GitHub Actions build is pending. All-face fluid access, automatic output routing, configurable sides, and gameplay checks remain outstanding.
+Commits `6f3be6f` and `aa3b511` add the Sulfur Recovery Unit alpha with its 100 mB Hydrogen Sulfide + 50 mB Oxygen → 100 mB Steam + Sulfur Dust recipe, 10-tick/15-HU/t/250°C processing, bounded tanks, and source crafting/loot data. GitHub Actions run [45336218425](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45336218425) passed both jobs. All-face fluid access, automatic output routing, configurable sides, and gameplay checks remain outstanding.
 
 Build water/steam loops, turbines, deposit-based extraction, refining, chemical processing, lithium/battery materials, and agricultural/biofuel chains in the order of the source chapters.
 
