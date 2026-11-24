@@ -1,5 +1,8 @@
 # Current implementation
-**Current source:** branch `agent/energy-cell-output`, commit `cede083`, adds the Haber Reactor alpha after feature commit `d70df0f`. GitHub Actions run [45373797725](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45373797725) passed package and Linux client builds, and artifact integrity checks passed. Build/package verification does not establish gameplay behavior.
+**Current source:** branch `agent/energy-cell-output`, commit `8298f04`, adds the Chemical Reactor/NPK alpha after feature commit `3cca81c`. GitHub Actions run [45383029947](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45383029947) passed package and Linux client builds; artifact integrity checks passed. Build/package verification does not establish gameplay behavior.
+
+## Chemical Reactor alpha — GitHub Actions verified (gameplay pending)
+`api/src/chemical_reactor.rs` adds data-driven `arcforge:chemical_reacting` recipes with up to three item and three fluid inputs, item/fluid products and byproducts, a machine screen, Wrench status, and Speed/Energy Upgrade slots. The NPK recipe consumes 1 Basic Slag + 1 Wood Ash + 100 mB Ammonia to produce 2 NPK Fertilizer over 100 ticks at the default 60 FE/t; it requires no heat. The reactor has 8,000 mB tanks, 40,000 FE storage with a 1,000 FE/t input cap, and 40,000 HU storage. Fixed north-facing access approximates the source ports, with heat entering below. Fluid-tag inputs, custom item components, probabilistic catalysts/byproducts, configurable sides, and source-style automatic output routing are unsupported or unimplemented. Run [45383029947](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45383029947) passed both package and Linux client jobs; archives and embedded hashes were verified. Gameplay remains unverified.
 
 ## Haber Reactor alpha — GitHub Actions verified (gameplay pending)
 `api/src/haber_reactor.rs` adds a data-driven `arcforge:synthesizing` recipe loader for one or two gas inputs and the Haber Reactor machine. The source Ammonia recipe converts 60 mB Hydrogen + 20 mB Nitrogen into 40 mB Ammonia over 20 ticks at 60 FE/t and 10 HU/t, requiring 450°C and capped at 800°C. The machine has three 8,000 mB tanks, a 20,000 HU store, a 40,000 FE buffer with 400 FE/t maximum input, Speed/Energy Upgrade slots, Wrench status, and a screen. Fixed north-facing access accepts gas above/east, FE south, and heat below; Ammonia pushes west at 200 mB/t. Run [45373797725](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45373797725) passed package and Linux client builds; downloaded ZIPs and embedded hashes were verified. Gameplay remains unverified.
@@ -23,10 +26,10 @@ The Energy Cell has a two-slot menu for charging from or extracting into portabl
 ## Cracking Unit alpha — GitHub Actions verified
 Commits `c65e0e8` and `230b789` implement both source cracking modes, the 3×3×5 structure, five recipe/crafting JSON files, four output tanks, catalyst wear, heat input, and Wrench mode switching. It is included in the latest source build, run [45319393207](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45319393207), which passed the native/content/package and Linux client jobs. No in-game trial has been run; fixed box geometry, Wrench-based mode switching, and no automatic port routing remain alpha limits.
 
-**Latest fully verified client:** Haber Reactor, commit `cede083`, built by GitHub Actions run [45373797725](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45373797725).
-Playable client ZIP: `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-run-45373797725/arcforge-playable-linux-x86_64-cede083acc3959b05ee46c6f46daa942bac55f7a/arcforge-linux-x86_64.zip` (47,989,356 bytes; SHA-256 `9e06d5cea85bb686a5ce31a40f37cba7a9025adfd70535f0ebc26d2b42b3a142`).
-Package bundle ZIP SHA-256: `9843d79005c530758667842fd24ac1a32dde652f0ba2764c3a07e8e7b3fcde44`; HMOD SHA-256: `6670ed4ebfab1b1905d958a9264a7866983c1cb0d9285c901dcb5500211cc6ca`; HNMOD SHA-256: `9c5901826012d3af5d5b503e2c712773a46bcab6494495e7e82e682f73a5435f`.
-The package/client ZIP integrity checks passed, package sums passed, and all four client-embedded hashes matched: Horizon client `7e1b8e569cb77f644a504f603e49d46e825fb0943d2ed89a6a73a5c2f2a5e6af`, native manifest `0379a0dd7a0a2664f7b99602d7d65009582881fe2f4b02d99f4291e0f4dd2e09`, HMOD and HNMOD as above. Steam Cracker, Air Separator, and Haber Reactor gameplay remain unverified.
+**Latest fully verified client:** Chemical Reactor, commit `8298f04`, built by GitHub Actions run [45383029947](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45383029947).
+Playable client ZIP: `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-run-45383029947/arcforge-playable-linux-x86_64-8298f0408404ab46dbbfff26b9b221b330c89d03/arcforge-linux-x86_64.zip` (48,020,101 bytes; SHA-256 `5d96be5613f64010f063dc04e7dd4f0a49e9852693df2b3258872559eab03bfa`).
+Package bundle ZIP SHA-256: `9fd0d0b09500f692c56964f9a05b0210362a3c0e629744a45555d12f24457f83`; HMOD SHA-256: `3a034c73f51776c43fc92a917c3a7f07b3592b42be931f09e59a45b1eacb4474`; HNMOD SHA-256: `4588a20adcaa051aade4c151a3ee0c3f234f0b26ff1bd163264f9e74065ce020`.
+Both ZIP integrity checks passed, package sums matched, and all four embedded hashes matched: Horizon client `63e3578ad2cf5359a97747e75dfd3f8bf106fe624156be9e3225daf350cd923f`, native manifest `09fbdac271655a9b66e7ef36b6d5562f5f8e5cac51da75aa99f9b0d4fd0637b1`, HMOD, and HNMOD as above. The package contains 456 recipe JSON files. No local compilation or tests were run; Chemical Reactor and Haber Reactor gameplay remain unverified.
 
 ## Coker alpha — GitHub Actions verified
 Commit `81b9018` adds the source Bitumen-to-Petroleum-Coke recipe, Refinery Gas and Heavy Oil byproducts, one speed-upgrade slot and one item-output slot, fixed tanks, Wrench status, crafting/loot data, and Petroleum Coke fuel/coke integration. Both GitHub jobs passed; package and client ZIP integrity and embedded hashes verified. Gameplay remains unverified. Reflux, automatic product routing, extra Coker recipes, and per-instance capacities are not implemented.
@@ -57,11 +60,11 @@ Four battery items expose Horizon's native item-energy capability with source ca
 
 ## Native crate and registered content
 
-`api/src/lib.rs` registers a Metal Press, Sifter, Arc Crusher, a three-lane Arc Crushing Array controller and its formed casing multiblock, Carbonizer, Induction Furnace, Infuser, Resin Tap, Firebox, Firebox Array controller and casing, Pressure Glass, Solar Thermal Array controller/casing/collectors, Fuel Burner, all four Fluid Tank tiers, four Pressurized Cylinder tiers, Thermoelectric Plant, four Energy Conduit tiers, four Item Conduit tiers, four Fluid Conduit tiers, four thermal conduit tiers, four Energy Cell tiers, four Heat Cell tiers, four portable FE Battery items, a Wrench that rotates supported single-block machines and configures conduit, Solar heat-port, and energy-generator faces, seven Steel tools, four Steel armor pieces, Fiberizer, Vulcanizer, Grain Dryer, Arcforge Furnace port, Steelworks prototype, Combustion Plant, Lubricant Blender, Air Separator, coke block, treated wood, Arcforge furnace bricks, Creosote/Latex buckets, four liquid Canisters and four Gas Cartridges, the tungsten heating coil, processing materials, the Distillation Array controller/casing/tray, and the 3×5 Pumpjack with a craftable Well Head stand-in.
+`api/src/lib.rs` registers a Metal Press, Sifter, Arc Crusher, a three-lane Arc Crushing Array controller and its formed casing multiblock, Carbonizer, Induction Furnace, Infuser, Resin Tap, Firebox, Firebox Array controller and casing, Pressure Glass, Solar Thermal Array controller/casing/collectors, Fuel Burner, all four Fluid Tank tiers, four Pressurized Cylinder tiers, Thermoelectric Plant, four Energy Conduit tiers, four Item Conduit tiers, four Fluid Conduit tiers, four thermal conduit tiers, four Energy Cell tiers, four Heat Cell tiers, four portable FE Battery items, a Wrench that rotates supported single-block machines and configures conduit, Solar heat-port, and energy-generator faces, seven Steel tools, four Steel armor pieces, Fiberizer, Vulcanizer, Grain Dryer, Arcforge Furnace port, Steelworks prototype, Combustion Plant, Lubricant Blender, Air Separator, Chemical Reactor, NPK Fertilizer, coke block, treated wood, Arcforge furnace bricks, Creosote/Latex buckets, four liquid Canisters and four Gas Cartridges, the tungsten heating coil, processing materials, the Distillation Array controller/casing/tray, and the 3×5 Pumpjack with a craftable Well Head stand-in.
 
 ## Recipe data present
 
-The content directory contains 454 recipe JSON files
+The content directory contains 456 recipe JSON files
 
 | Recipe group | Files |
 |---|---:|
@@ -94,6 +97,7 @@ The content directory contains 454 recipe JSON files
 | Steam Cracker recipes and controller/casing crafting | 5 |
 | Diesel Generator casing/controller crafting | 2 |
 | Flare Stack crafting | 1 |
+| Chemical Reactor recipe and crafting | 2 |
 | Haber Reactor recipe and crafting | 2 |
 | Air Separator recipe and crafting | 2 |
 | Distillation Array controller, casing, and tray crafting | 3 |
@@ -122,7 +126,7 @@ The content directory contains 454 recipe JSON files
 | Induction Furnace Arcforge smelting catalog | 32 |
 | Heat Cell crafting recipes | 4 |
 | Additional recipe files not itemized above | 12 |
-| **Total** | **452** |
+| **Total** | **456** |
 
 Files existing does not by itself prove the complete recipe graph or survival progression works.
 

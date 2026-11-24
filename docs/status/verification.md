@@ -1,5 +1,15 @@
 # Verification record
 
+## Chemical Reactor / NPK alpha — GitHub Actions verified (gameplay pending; 2026-11-24)
+
+Commits `3cca81c` and `8298f04` on `agent/energy-cell-output` add the Chemical Reactor machine, data-driven `arcforge:chemical_reacting` recipe loading, NPK Fertilizer recipe, crafting/loot, upgrades, Wrench status, and screen. The recipe consumes 1 Basic Slag + 1 Wood Ash + 100 mB Ammonia to produce 2 NPK over 100 ticks at 60 FE/t, without heat. Run [45383029947](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45383029947) passed the package and Linux client jobs; the client job passed after a retry. Rust formatting, locked crate check, Horizon content build/check, package creation, and Linux client build/package completed successfully.
+
+Client ZIP: `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-run-45383029947/arcforge-playable-linux-x86_64-8298f0408404ab46dbbfff26b9b221b330c89d03/arcforge-linux-x86_64.zip` (48,020,101 bytes; SHA-256 `5d96be5613f64010f063dc04e7dd4f0a49e9852693df2b3258872559eab03bfa`). Package bundle ZIP SHA-256 `9fd0d0b09500f692c56964f9a05b0210362a3c0e629744a45555d12f24457f83`; HMOD SHA-256 `3a034c73f51776c43fc92a917c3a7f07b3592b42be931f09e59a45b1eacb4474`; HNMOD SHA-256 `4588a20adcaa051aade4c151a3ee0c3f234f0b26ff1bd163264f9e74065ce020`.
+
+Both ZIP integrity checks passed, package `SHA256SUMS` matched, and all four embedded hashes matched: Horizon client `63e3578ad2cf5359a97747e75dfd3f8bf106fe624156be9e3225daf350cd923f`, native manifest `09fbdac271655a9b66e7ef36b6d5562f5f8e5cac51da75aa99f9b0d4fd0637b1`, plus HMOD/HNMOD as above. Artifacts are under `/mnt/hdd2tb/arcforge-horizon-builds/arcforge-run-45383029947/`. The package contains 456 recipe JSON files. This verifies build and archive integrity, not gameplay; the Chemical Reactor has not been tried in-game. No local compilation or tests were run.
+
+The first slice supports named fluid inputs, item inputs, deterministic item/fluid outputs and byproducts, up to three item inputs and three fluid inputs, and eight-card Speed/Energy Upgrade slots. Probabilistic catalysts/byproducts, fluid-tag inputs, custom item components, configurable sides, and source-style automatic output routing remain unsupported or unimplemented. Fixed north-facing capabilities approximate source port layout; heat enters from below. GitHub Actions used normal runner parallelism; the half-thread cap applies only to local builds.
+
 ## Haber Reactor alpha — GitHub Actions verified (gameplay pending; 2026-11-24)
 
 Commits `d70df0f` and `cede083` on `agent/energy-cell-output` add the Haber Reactor and its data-driven synthesizing recipe support, Ammonia recipe, crafting/loot, fixed gas/heat/FE capabilities, Speed/Energy Upgrade slots, Wrench status, and screen. The recipe converts 60 mB Hydrogen + 20 mB Nitrogen into 40 mB Ammonia over 20 ticks at 60 FE/t and 10 HU/t, requiring at least 450°C. Run [45373797725](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45373797725) passed both package and Linux client jobs, including Rust formatting, locked crate check, Horizon content build/check, HMOD/HNMOD packaging, and client build/package.
