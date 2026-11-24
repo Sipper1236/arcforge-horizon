@@ -1,5 +1,13 @@
 # Verification record
 
+## Diesel Generator and Flare Stack — current Actions runs (2026-11-24)
+
+Diesel Generator run [45355110111](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45355110111) passed formatting, native crate check, Horizon content build/check, package creation, and artifact upload. Its Linux client job is still building Arcforge into Horizon; no client artifact or in-game behavior is verified yet.
+
+Flare Stack run [45356969650](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45356969650) passed formatting, native crate check, Horizon content build/check, package creation, and artifact upload. Its Linux client job is still running; no client artifact or in-game behavior is verified yet.
+
+All compile/build verification uses GitHub Actions. Runner parallelism is unrestricted; the half-thread cap applies only to local builds. No local compilation or tests were run for these slices.
+
 ## Steam Cracker alpha — GitHub Actions verified (gameplay pending)
 Commits `3dd58fb`, `37ea780`, and `6395204` on `agent/energy-cell-output` add the source Steam Cracker multiblock, recipes, crafting/loot data, heat and Speed Upgrade processing, and screen. Initial run [45341792504](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45341792504) stopped at Rust formatting. The follow-up run [45341929545](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45341929545) passed formatting but found that the six slot-face vectors needed explicit initialization. After the fix, run [45342469255](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45342469255) passed Rust formatting, locked crate check, Horizon content build/check, HMOD/HNMOD packaging, and the Linux client build/package.
 
