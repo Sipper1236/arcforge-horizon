@@ -141,9 +141,7 @@ fn products_fit(entity: &ModBlockEntity, recipe: &Recipe) -> bool {
         let tank = FIRST_PRODUCT_TANK + index;
         let existing = crate::fluid::name(&entity.nbt, tank);
         let amount = crate::fluid::amount(&entity.nbt, tank);
-        existing
-            .as_deref()
-            .is_none_or(|name| name == product.fluid)
+        existing.as_deref().is_none_or(|name| name == product.fluid)
             && amount.saturating_add(product.amount) <= PRODUCT_CAPACITY
     })
 }
@@ -168,9 +166,10 @@ fn sync_screen(
     entity.data[4] = total.min(i32::MAX as u32) as i32;
     entity.data[5] = crate::fluid::amount(&entity.nbt, FEED_TANK).min(i32::MAX as u32) as i32;
     entity.data[6] = crate::fluid::amount(&entity.nbt, HYDROGEN_TANK).min(i32::MAX as u32) as i32;
-    entity.data[7] = crate::fluid::amount(&entity.nbt, FIRST_PRODUCT_TANK).min(i32::MAX as u32) as i32;
-    entity.data[8] = crate::fluid::amount(&entity.nbt, FIRST_PRODUCT_TANK + 1)
-        .min(i32::MAX as u32) as i32;
+    entity.data[7] =
+        crate::fluid::amount(&entity.nbt, FIRST_PRODUCT_TANK).min(i32::MAX as u32) as i32;
+    entity.data[8] =
+        crate::fluid::amount(&entity.nbt, FIRST_PRODUCT_TANK + 1).min(i32::MAX as u32) as i32;
     entity.data[9] = energy_rate.min(i32::MAX as u32) as i32;
     entity.data[10] = heat_rate.min(i32::MAX as u32) as i32;
     entity.data[11] = status;
@@ -217,13 +216,7 @@ pub(crate) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
     let Some(recipe) = recipe else {
         set_i32(&mut entity.nbt, "HydrotreaterProgress", 0);
         set_i32(&mut entity.nbt, "HydrotreaterTotal", 0);
-        set_status(
-            entity,
-            if feed_name.is_some() { 2 } else { 1 },
-            0,
-            0,
-            0,
-        );
+        set_status(entity, if feed_name.is_some() { 2 } else { 1 }, 0, 0, 0);
         set_lit(host, pos, false);
         return;
     };
@@ -259,11 +252,8 @@ pub(crate) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
         return;
     }
 
-    let energy_cost = crate::scaled_upgrade_cost(
-        u64::from(recipe.energy_per_tick),
-        speed,
-        energy_upgrades,
-    );
+    let energy_cost =
+        crate::scaled_upgrade_cost(u64::from(recipe.energy_per_tick), speed, energy_upgrades);
     let mut energy = crate::energy::EnergyStore::new(ENERGY_CAPACITY, stored_energy);
     if energy.stored_fe() < energy_cost {
         set_status(entity, 6, 0, 0, total);
@@ -429,12 +419,8 @@ pub(crate) fn face(host: &mut dyn Host, pos: [i32; 3], name: &str) {
 
 pub(crate) fn status(entity: &ModBlockEntity) -> String {
     let stored_heat = get_i32(&entity.nbt, "HeatHU").max(0) as u64;
-    let temperature = crate::heat::HeatStore::new(
-        HEAT_CAPACITY,
-        MAX_TEMPERATURE_C,
-        stored_heat,
-    )
-    .temperature_c();
+    let temperature =
+        crate::heat::HeatStore::new(HEAT_CAPACITY, MAX_TEMPERATURE_C, stored_heat).temperature_c();
     let energy = get_i32(&entity.nbt, "energy").max(0);
     let state = match get_i32(&entity.nbt, "HydrotreaterStatus") {
         1 => "needs sour fuel",

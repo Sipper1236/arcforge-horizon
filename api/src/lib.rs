@@ -3274,9 +3274,7 @@ impl Hooks for Arcforge {
             && !lubricant_blender::accepts(event.tank, event.fluid)
         {
             Flow::Cancel
-        } else if event.block == HYDROTREATER
-            && !hydrotreater::accepts(event.tank, event.fluid)
-        {
+        } else if event.block == HYDROTREATER && !hydrotreater::accepts(event.tank, event.fluid) {
             Flow::Cancel
         } else if event.block == DISTILLATION_CONTROLLER
             && !distillation_array::accepts(event.tank, event.fluid)
