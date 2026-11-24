@@ -4,6 +4,8 @@
     "arcforge:high_pressure_steam",
     "arcforge:superheated_steam",
     "arcforge:hydrogen",
+    "arcforge:nitrogen",
+    "arcforge:ammonia",
     "arcforge:oxygen",
     "arcforge:chlorine",
     "arcforge:ethylene",

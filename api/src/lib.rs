@@ -47,6 +47,7 @@ mod flare_stack;
 mod fluid;
 mod fluid_conduit;
 mod fuel_burner;
+mod haber_reactor;
 mod heat;
 mod heat_cell;
 mod hydrotreater;
@@ -122,6 +123,7 @@ const COKER: &str = coker::BLOCK;
 const CATALYTIC_REFORMER: &str = reformer::BLOCK;
 const LUBRICANT_BLENDER: &str = lubricant_blender::BLOCK;
 const HYDROTREATER: &str = hydrotreater::BLOCK;
+const HABER_REACTOR: &str = haber_reactor::BLOCK;
 const SULFUR_RECOVERY_UNIT: &str = sulfur_recovery::BLOCK;
 const AIR_SEPARATOR: &str = air_separator::BLOCK;
 const PETROLEUM_COKE: &str = coker::PETROLEUM_COKE;
@@ -629,6 +631,17 @@ impl Hooks for Arcforge {
         }
         if event.entity.id == HYDROTREATER {
             return if hydrotreater::item_allowed(
+                event.slot,
+                event.stack.item.as_ref(),
+                event.stack.count,
+            ) {
+                Flow::Continue
+            } else {
+                Flow::Cancel
+            };
+        }
+        if event.entity.id == HABER_REACTOR {
+            return if haber_reactor::item_allowed(
                 event.slot,
                 event.stack.item.as_ref(),
                 event.stack.count,
@@ -1204,6 +1217,27 @@ impl Hooks for Arcforge {
             if let Some(entity) = host.mod_block_entity(event.pos) {
                 if let Some(player) = host.acting_player() {
                     host.action_bar(player.uuid, Text::literal(hydrotreater::status(&entity)));
+                }
+            }
+            return Flow::Cancel;
+        }
+        if host
+            .mod_block_entity(event.pos)
+            .is_some_and(|entity| entity.id == HABER_REACTOR)
+        {
+            let requested_facing = match event.face {
+                [0, 0, -1] => Some("north"),
+                [1, 0, 0] => Some("east"),
+                [0, 0, 1] => Some("south"),
+                [-1, 0, 0] => Some("west"),
+                _ => None,
+            };
+            if let Some(facing) = requested_facing {
+                haber_reactor::face(host, event.pos, facing);
+            }
+            if let Some(entity) = host.mod_block_entity(event.pos) {
+                if let Some(player) = host.acting_player() {
+                    host.action_bar(player.uuid, Text::literal(haber_reactor::status(&entity)));
                 }
             }
             return Flow::Cancel;
@@ -1924,6 +1958,24 @@ impl Hooks for Arcforge {
                 "lit": { "type": "boolean" }
             }))
             .expect("valid Air Separator block states");
+            block.default_state = [
+                ("facing".to_owned(), "north".to_owned()),
+                ("lit".to_owned(), "false".to_owned()),
+            ]
+            .into_iter()
+            .collect();
+        }
+        register_content!(&mut event.blocks, id: HABER_REACTOR.into(), template: "minecraft:blast_furnace".into(), item: true);
+        if let Some(block) = event
+            .blocks
+            .iter_mut()
+            .find(|block| block.id == HABER_REACTOR)
+        {
+            block.state_properties = serde_json::from_value(serde_json::json!({
+                "facing": { "type": "enum", "values": ["north", "east", "south", "west"] },
+                "lit": { "type": "boolean" }
+            }))
+            .expect("valid Haber Reactor block states");
             block.default_state = [
                 ("facing".to_owned(), "north".to_owned()),
                 ("lit".to_owned(), "false".to_owned()),
@@ -2693,6 +2745,7 @@ impl Hooks for Arcforge {
             || event.block == CATALYTIC_REFORMER
             || event.block == LUBRICANT_BLENDER
             || event.block == HYDROTREATER
+            || event.block == HABER_REACTOR
             || event.block == SULFUR_RECOVERY_UNIT
             || event.block == AIR_SEPARATOR
             || event.block == CRACKING_CONTROLLER
@@ -2784,6 +2837,7 @@ impl Hooks for Arcforge {
             || event.block == CATALYTIC_REFORMER
             || event.block == LUBRICANT_BLENDER
             || event.block == HYDROTREATER
+            || event.block == HABER_REACTOR
             || event.block == SULFUR_RECOVERY_UNIT
             || event.block == AIR_SEPARATOR
             || event.block == CRACKING_CONTROLLER
@@ -2834,6 +2888,8 @@ impl Hooks for Arcforge {
             Some(lubricant_blender::container())
         } else if event.block == HYDROTREATER {
             Some(hydrotreater::container())
+        } else if event.block == HABER_REACTOR {
+            Some(haber_reactor::container())
         } else if event.block == SULFUR_RECOVERY_UNIT {
             Some(sulfur_recovery::container())
         } else if event.block == AIR_SEPARATOR {
@@ -3109,6 +3165,15 @@ impl Hooks for Arcforge {
                 own_labels: true,
                 own_background: false,
             }),
+            HABER_REACTOR => Some(NativeScreen {
+                width: 176.0,
+                height: 286.0,
+                slots: vec![Some([38.0, 30.0]), Some([122.0, 30.0])],
+                inventory_y: 200.0,
+                inventory_x: 8.0,
+                own_labels: true,
+                own_background: false,
+            }),
             SULFUR_RECOVERY_UNIT => Some(NativeScreen {
                 width: 176.0,
                 height: 262.0,
@@ -3330,6 +3395,10 @@ impl Hooks for Arcforge {
         }
         if event.block == HYDROTREATER {
             hydrotreater::draw_screen(host, event);
+            return;
+        }
+        if event.block == HABER_REACTOR {
+            haber_reactor::draw_screen(host, event);
             return;
         }
         if event.block == SULFUR_RECOVERY_UNIT {
@@ -3600,6 +3669,8 @@ impl Hooks for Arcforge {
             Flow::Cancel
         } else if event.block == HYDROTREATER && !hydrotreater::accepts(event.tank, event.fluid) {
             Flow::Cancel
+        } else if event.block == HABER_REACTOR && !haber_reactor::accepts(event.tank, event.fluid) {
+            Flow::Cancel
         } else if event.block == SULFUR_RECOVERY_UNIT
             && !sulfur_recovery::accepts(event.tank, event.fluid)
         {
@@ -3666,6 +3737,9 @@ impl Hooks for Arcforge {
         }
         if event.block == HYDROTREATER {
             return Some(hydrotreater::energy_buffer());
+        }
+        if event.block == HABER_REACTOR {
+            return Some(haber_reactor::energy_buffer());
         }
         if event.block == AIR_SEPARATOR {
             return Some(air_separator::energy_buffer());
@@ -3798,6 +3872,8 @@ impl Hooks for Arcforge {
             Some(lubricant_blender::fluid_tanks())
         } else if event.block == HYDROTREATER {
             Some(hydrotreater::fluid_tanks())
+        } else if event.block == HABER_REACTOR {
+            Some(haber_reactor::fluid_tanks())
         } else if event.block == SULFUR_RECOVERY_UNIT {
             Some(sulfur_recovery::fluid_tanks())
         } else if event.block == AIR_SEPARATOR {
@@ -3954,6 +4030,7 @@ impl Hooks for Arcforge {
             CATALYTIC_REFORMER => reformer::tick(host, event.pos, event.entity),
             LUBRICANT_BLENDER => lubricant_blender::tick(host, event.pos, event.entity),
             HYDROTREATER => hydrotreater::tick(host, event.pos, event.entity),
+            HABER_REACTOR => haber_reactor::tick(host, event.pos, event.entity),
             SULFUR_RECOVERY_UNIT => sulfur_recovery::tick(host, event.pos, event.entity),
             AIR_SEPARATOR => air_separator::tick(host, event.pos, event.entity),
             CRACKING_CONTROLLER => cracking_unit::tick(host, event.pos, event.entity),
@@ -7478,6 +7555,9 @@ fn transfer_supported_heat_to_neighbor(
     }
     if target.id == HYDROTREATER {
         return hydrotreater::accept_heat(host, neighbor, heat, rate);
+    }
+    if target.id == HABER_REACTOR {
+        return haber_reactor::accept_heat(host, neighbor, source_pos, heat, rate);
     }
     if target.id == SULFUR_RECOVERY_UNIT {
         return sulfur_recovery::accept_heat(host, neighbor, heat, rate);
