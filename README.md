@@ -106,7 +106,7 @@ The target is functional parity with Arcforge's survival gameplay, not a byte-fo
 
 - Finite-fluid extraction, bucket slots, Electric Pump upgrades, and Seawater biome conversion; Water Intake biome bonus, loaded-chunk filtering, and gameplay validation; Steam Boiler Array (variable shell sizes and pressure behavior implemented); Steam Turbine Array alpha (variable shell sizing, grade-based FE, RPM ramp, lubricant/vacuum bonuses, and Exhaust Steam); Condenser Array alpha (variable solid box, one-to-one Exhaust Steam condensation, and water/ice cooling bonuses).
 - Seed-based oil surveys and persistent Pumpjack extraction are early alpha slices. Commit af81fc5 implements Arcforge's 3×5 Pumpjack structure; GitHub Actions built a Linux client, but in-game behavior remains unverified.
-- Cracking Unit alpha has both source cracking modes and passes the latest GitHub client build; verify its recipes and fluid/heat routing in-game. Complete its port modes and source parity, then add the Catalytic Reformer, Lubricant Blender, Hydrotreater, Sulfur Recovery Unit, Steam Cracker, Diesel Generator, Flare Stack, and further refinery fuels/products.
+- Cracking Unit alpha has both source cracking modes and passes the latest GitHub client build; verify its recipes and fluid/heat routing in-game. The Catalytic Reformer alpha now has the source Naphtha recipe, heat use, speed upgrades and separate Gasoline/Hydrogen tanks; its GitHub build and gameplay are pending. All-face tanks and no automatic product ejection or configurable output faces are current API limits. Continue refinery work with its output routing and parity, then the Lubricant Blender, Hydrotreater, Sulfur Recovery Unit, Steam Cracker, Diesel Generator, Flare Stack, and further refinery fuels/products.
 - Fluids and gases: water, brine, creosote, crude/sour crude, refinery fractions, steam grades, exhaust steam, hydrogen, oxygen, syngas, acid, chlorine, plastics and byproducts.
 - Data-driven fuel, recipe and worldgen definitions; migration-safe world configuration.
 
@@ -223,7 +223,7 @@ The implementation phases are ordered by dependency. The alpha's player unlock o
 ### Phase 8 — oil extraction and refinery chain
 
 - Extend the deterministic oil deposit survey and persistent Pumpjack extraction with Arcforge’s Derrick drilling, Well Heads, 3×5 Pumpjack structure, oil-rich biomes, caverns/gas, and shared depletion.
-- Extend Distillation Array parity and crude/creosote gameplay verification; verify the built Cracking Unit alpha, then continue with the Catalytic Reformer, Coker parity, Blender, Hydrotreater, Sulfur Recovery, Steam Cracker, Diesel Generator and Flare Stack.
+- Extend Distillation Array parity and crude/creosote gameplay verification; verify the built Cracking Unit alpha and the Catalytic Reformer alpha, then continue with its output routing, Coker parity, Blender, Hydrotreater, Sulfur Recovery, Steam Cracker, Diesel Generator and Flare Stack.
 - Add fluids/gases, recipe maps, catalysts, byproducts, sour variants, gas/item transfer, flare behavior and oil-rich biome tags.
 
 **Exit:** a complete oil deposit → crude → refinery products → fuel/power chain runs, survives restart and handles drained deposits and full tanks deterministically.

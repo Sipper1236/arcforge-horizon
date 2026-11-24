@@ -32,6 +32,8 @@ Add heat producers/consumers, conduits and cells; then storage and per-face tran
 
 ## Gates 8–15 — Steam, engines, oil, refinery, chemistry, salt, farming, bio-industry
 
+The source Naphtha-to-Gasoline Catalytic Reformer recipe now has an alpha implementation with heat, speed upgrades, and separate bounded product tanks. Its GitHub build and in-world behavior are pending. Automatic ejection and separate configurable output faces remain unported.
+
 Build water/steam loops, turbines, deposit-based extraction, refining, chemical processing, lithium/battery materials, and agricultural/biofuel chains in the order of the source chapters.
 
 **Acceptance:** each chain has an obtainable input, data-driven recipes, bounded output/byproduct handling, and survives save/reload.

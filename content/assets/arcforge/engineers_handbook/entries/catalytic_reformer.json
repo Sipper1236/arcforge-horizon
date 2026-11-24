@@ -9,7 +9,7 @@
   "pages": [
     {
       "type": "text",
-      "text": "Reforms Naphtha into Gasoline, giving off Hydrogen.\n- 100 mB Naphtha makes 85 mB Gasoline and 60 mB Hydrogen in 2 seconds, using 20 HU/t at 450°C or hotter.\n- Naphtha in the top, heat into the bottom (a Fuel Burner or a Firebox works), Gasoline out of the left and Hydrogen out of the right. It pushes both out on its own.\n- Speed Upgrades make it faster, drawing heat that much faster.\nThe Hydrogen is worth keeping: it makes Plastic, Hydrochloric Acid and Ammonia, or burns."
+      "text": "Reforms Naphtha into Gasoline, giving off Hydrogen.\n- 100 mB Naphtha makes 85 mB Gasoline and 60 mB Hydrogen in 2 seconds, using 20 HU/t at 450°C or hotter.\n- Supply heat through a Thermal Conduit. Speed Upgrades shorten the process and increase its heat use.\n- Hydrogen makes Plastic, Hydrochloric Acid and Ammonia, or burns.\n\nThis Horizon alpha uses one Naphtha tank and separate Gasoline and Hydrogen tanks, each with fixed capacity. All three tanks are accessible from every face. The source mod's left/right output modes, automatic product ejection, and configurable ports are not implemented yet; use buckets or fluid conduits to move the products. In-world behavior is unverified."
     }
   ]
 }

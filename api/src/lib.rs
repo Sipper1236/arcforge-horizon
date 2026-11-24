@@ -49,6 +49,7 @@ mod item_conduit;
 mod oil_deposit;
 mod oil_pumpjack;
 mod pressurized_cylinder;
+mod reformer;
 mod solar;
 mod steam_boiler;
 mod steam_condenser;
@@ -110,6 +111,7 @@ const DISTILLATION_CONTROLLER: &str = distillation_array::CONTROLLER;
 const DISTILLATION_CASING: &str = distillation_array::CASING;
 const DISTILLATION_TRAY: &str = distillation_array::TRAY;
 const COKER: &str = coker::BLOCK;
+const CATALYTIC_REFORMER: &str = reformer::BLOCK;
 const PETROLEUM_COKE: &str = coker::PETROLEUM_COKE;
 const CRACKING_CONTROLLER: &str = cracking_unit::CONTROLLER;
 const CRACKING_CASING: &str = cracking_unit::CASING;
@@ -546,6 +548,17 @@ impl Hooks for Arcforge {
         if event.entity.id == COKER {
             return if coker::item_allowed(event.slot, event.stack.item.as_ref(), event.stack.count)
             {
+                Flow::Continue
+            } else {
+                Flow::Cancel
+            };
+        }
+        if event.entity.id == CATALYTIC_REFORMER {
+            return if reformer::item_allowed(
+                event.slot,
+                event.stack.item.as_ref(),
+                event.stack.count,
+            ) {
                 Flow::Continue
             } else {
                 Flow::Cancel
@@ -1015,6 +1028,27 @@ impl Hooks for Arcforge {
             if let Some(entity) = host.mod_block_entity(event.pos) {
                 if let Some(player) = host.acting_player() {
                     host.action_bar(player.uuid, Text::literal(coker::status(&entity)));
+                }
+            }
+            return Flow::Cancel;
+        }
+        if host
+            .mod_block_entity(event.pos)
+            .is_some_and(|entity| entity.id == CATALYTIC_REFORMER)
+        {
+            let requested_facing = match event.face {
+                [0, 0, -1] => Some("north"),
+                [1, 0, 0] => Some("east"),
+                [0, 0, 1] => Some("south"),
+                [-1, 0, 0] => Some("west"),
+                _ => None,
+            };
+            if let Some(facing) = requested_facing {
+                reformer::face(host, event.pos, facing);
+            }
+            if let Some(entity) = host.mod_block_entity(event.pos) {
+                if let Some(player) = host.acting_player() {
+                    host.action_bar(player.uuid, Text::literal(reformer::status(&entity)));
                 }
             }
             return Flow::Cancel;
@@ -1545,6 +1579,24 @@ impl Hooks for Arcforge {
                 "lit": { "type": "boolean" }
             }))
             .expect("valid Coker block states");
+            block.default_state = [
+                ("facing".to_owned(), "north".to_owned()),
+                ("lit".to_owned(), "false".to_owned()),
+            ]
+            .into_iter()
+            .collect();
+        }
+        register_content!(&mut event.blocks, id: CATALYTIC_REFORMER.into(), template: "minecraft:blast_furnace".into(), item: true);
+        if let Some(block) = event
+            .blocks
+            .iter_mut()
+            .find(|block| block.id == CATALYTIC_REFORMER)
+        {
+            block.state_properties = serde_json::from_value(serde_json::json!({
+                "facing": { "type": "enum", "values": ["north", "east", "south", "west"] },
+                "lit": { "type": "boolean" }
+            }))
+            .expect("valid Catalytic Reformer block states");
             block.default_state = [
                 ("facing".to_owned(), "north".to_owned()),
                 ("lit".to_owned(), "false".to_owned()),
@@ -2311,6 +2363,7 @@ impl Hooks for Arcforge {
             || event.block == PUMPJACK_CONTROLLER
             || event.block == DISTILLATION_CONTROLLER
             || event.block == COKER
+            || event.block == CATALYTIC_REFORMER
             || event.block == CRACKING_CONTROLLER
             || event.block == SOLAR_ARRAY_CONTROLLER
             || event.block == GEOTHERMAL_PLANT
@@ -2370,6 +2423,7 @@ impl Hooks for Arcforge {
             || event.block == PUMPJACK_CONTROLLER
             || event.block == DISTILLATION_CONTROLLER
             || event.block == COKER
+            || event.block == CATALYTIC_REFORMER
             || event.block == CRACKING_CONTROLLER
             || event.block == SOLAR_ARRAY_CONTROLLER
             || event.block == GEOTHERMAL_PLANT
@@ -2405,6 +2459,8 @@ impl Hooks for Arcforge {
             Some(cracking_unit::container())
         } else if event.block == COKER {
             Some(coker::container())
+        } else if event.block == CATALYTIC_REFORMER {
+            Some(reformer::container())
         } else if energy_cell_spec(event.block).is_some() {
             Some(ModContainer {
                 slots: 2,
@@ -3003,6 +3059,10 @@ impl Hooks for Arcforge {
             Flow::Cancel
         } else if event.block == COKER && !coker::accepts(event.tank, event.fluid) {
             Flow::Cancel
+        } else if event.block == CATALYTIC_REFORMER
+            && !reformer::accepts(event.tank, event.fluid)
+        {
+            Flow::Cancel
         } else if event.block == DISTILLATION_CONTROLLER
             && !distillation_array::accepts(event.tank, event.fluid)
         {
@@ -3172,6 +3232,8 @@ impl Hooks for Arcforge {
             Some(cracking_unit::fluid_tanks())
         } else if event.block == COKER {
             Some(coker::fluid_tanks())
+        } else if event.block == CATALYTIC_REFORMER {
+            Some(reformer::fluid_tanks())
         } else if event.block == STEAM_TURBINE_ARRAY_CONTROLLER {
             Some(steam_turbine::fluid_tanks())
         } else if event.block == STEAM_CONDENSER_ARRAY_CONTROLLER {
@@ -3321,6 +3383,7 @@ impl Hooks for Arcforge {
             PUMPJACK_CONTROLLER => oil_pumpjack::tick(host, event.pos, event.entity),
             DISTILLATION_CONTROLLER => distillation_array::tick(host, event.pos, event.entity),
             COKER => coker::tick(host, event.pos, event.entity),
+            CATALYTIC_REFORMER => reformer::tick(host, event.pos, event.entity),
             CRACKING_CONTROLLER => cracking_unit::tick(host, event.pos, event.entity),
             SOLAR_ARRAY_CONTROLLER => tick_solar_array(host, event.pos, event.entity),
             GEOTHERMAL_PLANT => tick_geothermal_plant(host, event.pos, event.entity),
@@ -6831,6 +6894,9 @@ fn transfer_supported_heat_to_neighbor(
     }
     if target.id == COKER {
         return coker::accept_heat(host, neighbor, heat, rate);
+    }
+    if target.id == CATALYTIC_REFORMER {
+        return reformer::accept_heat(host, neighbor, heat, rate);
     }
     let (min_temperature, capacity, max_temperature) = match target.id.as_str() {
         FIBERIZER => (800, 10_000, 1100),

@@ -13,6 +13,9 @@ HMOD SHA-256: `6dae1bea6d2fe6b93f67ef3d9878dae8fe4c9b20359bc0dddb8fe81846d5931b`
 ## Coker alpha — GitHub Actions verified
 Commit `81b9018` adds the source Bitumen-to-Petroleum-Coke recipe, Refinery Gas and Heavy Oil byproducts, one speed-upgrade slot and one item-output slot, fixed tanks, Wrench status, crafting/loot data, and Petroleum Coke fuel/coke integration. Both GitHub jobs passed; package and client ZIP integrity and embedded hashes verified. Gameplay remains unverified. Reflux, automatic product routing, extra Coker recipes, and per-instance capacities are not implemented.
 
+## Catalytic Reformer alpha — GitHub Actions pending
+`api/src/reformer.rs` registers the single-block machine and implements the source Naphtha recipe: 100 mB input becomes 85 mB Gasoline and 60 mB Hydrogen over 40 ticks at 20 HU/t and at least 450°C. It has a 20,000 HU buffer, 16,000 mB feed tank, two fixed 8,000 mB product tanks, a Speed Upgrade slot, Thermal Conduit input, and Wrench status/facing. Source crafting, loot and recipe data plus the handbook entry are packaged. Horizon's fluid tank declaration is fixed per block ID, so all three tanks currently accept access on every face; source-style separate output faces, automatic product ejection, configurable side modes, and gameplay verification remain outstanding.
+
 ## Distillation Array alpha — GitHub Actions build (2026-11-18)
 Commits 3b3d201 and 81d12b7 add and integrate the source-shaped Distillation Array. It forms a 2x2 or 3x3 column, 4–16 blocks high, with one controller and optional tray layers. Creosote, Crude Oil, and Sour Crude Oil recipes split into fluids and Pitch using source batch amounts, temperatures, heat costs, height tiers, and steam stripping. Thermal conduits supply HU; Speed and Heat Upgrades occupy the machine inventory; the Wrench reports structure, feed progress, stored heat, and steam. The controller exposes fluid tanks and all-side routing.
 The alpha uses static visible formed blocks, fixed block-ID tank capacities for all column sizes, and lacks source-style individual product ports and dynamic tower visuals. Horizon's fluid-capability hook does not provide per-instance tank sizing. GitHub Actions run [44207116666](https://github.com/Sipper1236/arcforge-horizon/actions/runs/44207116666) passed both package/content checks and the pinned Linux client build.
@@ -37,7 +40,7 @@ Four battery items expose Horizon's native item-energy capability with source ca
 
 ## Recipe data present
 
-The content directory contains 433 recipe JSON files (Arcforge machine recipes and vanilla recipe types):
+The content directory contains 435 recipe JSON files (Arcforge machine recipes and vanilla recipe types):
 
 | Recipe group | Files |
 |---|---:|
@@ -64,6 +67,7 @@ The content directory contains 433 recipe JSON files (Arcforge machine recipes a
 | Superheater Array casing and controller crafting | 2 |
 | Distillation Array distilling recipes | 3 |
 | Coker recipe and crafting | 2 |
+| Catalytic Reformer recipe and crafting | 2 |
 | Cracking recipes and crafting | 5 |
 | Distillation Array controller, casing, and tray crafting | 3 |
 | Seismic Survey Tool crafting | 1 |
@@ -91,7 +95,7 @@ The content directory contains 433 recipe JSON files (Arcforge machine recipes a
 | Induction Furnace Arcforge smelting catalog | 32 |
 | Heat Cell crafting recipes | 4 |
 | Additional recipe files not itemized above | 19 |
-| **Total** | **433** |
+| **Total** | **435** |
 
 Files existing does not by itself prove the complete recipe graph or survival progression works.
 
