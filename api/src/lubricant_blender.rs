@@ -35,10 +35,7 @@ fn recipe_from_json(json: &Value) -> Option<Recipe> {
     let product = products.first()?;
     Some(Recipe {
         input: input.get("fluid")?.as_str()?.to_owned(),
-        input_amount: input
-            .get("amount")?
-            .as_u64()?
-            .clamp(1, u64::from(u32::MAX)) as u32,
+        input_amount: input.get("amount")?.as_u64()?.clamp(1, u64::from(u32::MAX)) as u32,
         output: product.get("id")?.as_str()?.to_owned(),
         output_amount: product
             .get("amount")?
@@ -122,8 +119,16 @@ fn sync_screen(entity: &mut ModBlockEntity, energy_rate: u32, total: u32, status
 
 fn set_status(entity: &mut ModBlockEntity, status: i32, rate: u32, total: u32) {
     set_i32(&mut entity.nbt, "BlenderStatus", status);
-    set_i32(&mut entity.nbt, "BlenderRate", rate.min(i32::MAX as u32) as i32);
-    set_i32(&mut entity.nbt, "BlenderTotal", total.min(i32::MAX as u32) as i32);
+    set_i32(
+        &mut entity.nbt,
+        "BlenderRate",
+        rate.min(i32::MAX as u32) as i32,
+    );
+    set_i32(
+        &mut entity.nbt,
+        "BlenderTotal",
+        total.min(i32::MAX as u32) as i32,
+    );
     sync_screen(entity, rate, total, status);
 }
 
@@ -150,7 +155,11 @@ pub(crate) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
     };
 
     let duration = total(&recipe, entity).max(1);
-    set_i32(&mut entity.nbt, "BlenderTotal", duration.min(i32::MAX as u32) as i32);
+    set_i32(
+        &mut entity.nbt,
+        "BlenderTotal",
+        duration.min(i32::MAX as u32) as i32,
+    );
     if crate::fluid::amount(&entity.nbt, FEED_TANK) < recipe.input_amount {
         set_i32(&mut entity.nbt, "BlenderProgress", 0);
         set_status(entity, 1, 0, 0);
@@ -166,11 +175,8 @@ pub(crate) fn tick(host: &mut dyn Host, pos: [i32; 3], entity: &mut ModBlockEnti
     let speed_upgrades = upgrades(entity, SPEED_SLOT, SPEED_UPGRADE);
     let energy_upgrades = upgrades(entity, ENERGY_SLOT, ENERGY_UPGRADE);
     let speed = crate::speed_upgrade_multiplier(speed_upgrades);
-    let energy_cost = crate::scaled_upgrade_cost(
-        u64::from(recipe.energy_per_tick),
-        speed,
-        energy_upgrades,
-    );
+    let energy_cost =
+        crate::scaled_upgrade_cost(u64::from(recipe.energy_per_tick), speed, energy_upgrades);
     let mut energy = crate::energy::EnergyStore::new(ENERGY_CAPACITY, stored);
     if energy.stored_fe() < energy_cost {
         set_status(entity, 4, 0, duration);
