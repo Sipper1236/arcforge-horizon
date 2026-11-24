@@ -4,8 +4,7 @@
       "model": "arcforge:block/refinery/steam_cracker_casing"
     },
     "formed=true": {
-      "type": "arcforge:ported",
-      "model": "arcforge:block/refinery/steam_cracker_hidden"
+      "model": "arcforge:block/refinery/steam_cracker_casing"
     }
   }
 }
