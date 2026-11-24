@@ -142,12 +142,19 @@ jobs:
       - name: Build Horizon launcher CLI
         run: cargo build --locked --manifest-path horizon-source/launcher/Cargo.toml --bin horizon-launcher
 
-      - name: Install pinned Horizon Nightly and create a CI instance
+      - name: Install the current Horizon Nightly as a resource base
         run: |
+          set -euo pipefail
           launcher="$PWD/horizon-source/launcher/target/debug/horizon-launcher"
-          "$launcher" install nightly-2026-11-13-9f42064
+          nightly_version="$("$launcher" versions --json | python3 -c 'import json, sys; print(next((r["tag"] for r in json.load(sys.stdin) if r["tag"].startswith("nightly-") and not r["prerelease"] and r["available_here"]), ""))')"
+          if [ -z "$nightly_version" ]; then
+            echo "No current Horizon Nightly release is available for this runner." >&2
+            exit 1
+          fi
+          echo "HORIZON_BASE_VERSION=$nightly_version" >> "$GITHUB_ENV"
+          "$launcher" install "$nightly_version"
           "$launcher" instance create arcforge-ci
-          "$launcher" instance version arcforge-ci nightly-2026-11-13-9f42064
+          "$launcher" instance version arcforge-ci "$nightly_version"
 
       - name: Fetch the pinned Minecraft 26.3 inputs from Mojang
         run: |
@@ -160,7 +167,7 @@ jobs:
         run: |
           horizon-source/launcher/target/debug/horizon-launcher prepare \
             --minecraft "$PWD/ci-minecraft" \
-            --version nightly-2026-11-13-9f42064
+            --version "$HORIZON_BASE_VERSION"
 
       - name: Stage the native mod source for Horizon's symlink-safe packer
         run: |
@@ -172,7 +179,7 @@ jobs:
         run: |
           horizon-source/launcher/target/debug/horizon-launcher native-build "$PWD/target/native-build/arcforge" \
             --instance arcforge-ci \
-            --version nightly-2026-11-13-9f42064 \
+            --version "$HORIZON_BASE_VERSION" \
             --profile performance \
             --trust-native-code
 
@@ -199,13 +206,16 @@ jobs:
           cat > target/arcforge-linux-x86_64/INSTALL.txt <<'EOF'
           Arcforge Horizon Linux x86_64 client
 
-          This client executable contains the Arcforge native Rust mod and is built for
-          Horizon Nightly 2026-11-13 (9f42064c11efe7ef3e5ed2baad7ddc2a3b36eea0).
-          It is not a standalone Minecraft installation. Install that exact Horizon Nightly,
-          then import this client with:
+          This executable contains the Arcforge native Rust mod built against Horizon source
+          revision 9f42064c11efe7ef3e5ed2baad7ddc2a3b36eea0 and Minecraft 26.3 resources.
+          It is not a standalone Minecraft installation. Install a Horizon version for Minecraft
+          26.3, then import this client using that installed version as its resource base:
 
             Horizon.AppImage import-build ./horizon-client \
-              --version nightly-2026-11-13-9f42064 --trust-unsigned
+              --version <installed-26.3-version> --trust-unsigned
+
+          List installed versions with `horizon-launcher versions --installed`; use the exact
+          version tag shown there instead of <installed-26.3-version>.
 
           Use the imported version for an instance, and install arcforge.hmod in that instance
           for recipes, loot, tags, and other content. The imported executable also needs its
@@ -247,7 +257,8 @@ jobs:
         run: |
           {
             echo '### Playable Linux client'
-            echo '- Built Horizon Nightly 2026-11-13 with Arcforge native code.'
+            echo '- Built Arcforge native code against the Horizon source revision pinned in horizon-mixin.toml.'
+            echo '- Staged the client against the current published Nightly and pinned Minecraft 26.3 resources.'
             echo '- Uploaded an importable Linux x86_64 client bundle with the matching `.hmod` and `.hnmod`.'
             echo '- Pull requests package sources only; native code is built on pushes and manual dispatches.'
           } >> "$GITHUB_STEP_SUMMARY"

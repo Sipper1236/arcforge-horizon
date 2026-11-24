@@ -1,11 +1,11 @@
-# Build and compile policy (updated 2026-11-16)
-All Arcforge builds and compile verification run through GitHub Actions. Do not invoke the hybrid remote build script or compile on rx580/local. Previous hybrid results below are historical records only.
+# Build and compile policy (updated 2026-11-23)
+All Arcforge builds and compile verification run through GitHub Actions. Do not invoke the hybrid remote build script or compile locally. Previous hybrid results below are historical records only.
 
 ## Current build policy
 
-Latest successful full build: commit af81fc5, run [43783919669](https://github.com/Sipper1236/arcforge-horizon/actions/runs/43783919669). The client ZIP SHA-256 is c7cf787f5e92fefd1a3f0fdd06b279e2b30d728d3e0913a1d424edb1c57e3a64.
+Latest complete playable client before the current attempt: commit `230b789`, run [44217016120](https://github.com/Sipper1236/arcforge-horizon/actions/runs/44217016120); both package and Linux client jobs passed. Run [45295887536](https://github.com/Sipper1236/arcforge-horizon/actions/runs/45295887536) passed packaging on remote `main` at `b14d9c9`, then failed before client compilation because `nightly-2026-11-13-9f42064` is no longer published.
 
-Current instruction: build only with GitHub Actions. Do not run the hybrid compile workflow. Push a source change to trigger the workflow; it checks Rust and content, packages the mod, and builds the pinned Linux client.
+Current instruction: build only with GitHub Actions. Do not run the hybrid compile workflow or local builds. GitHub runners use their default CPU parallelism; the half-thread limit applies only to local builds. The workflow checks Rust and content, packages the mod, then builds the pinned Linux client on pushes and manual dispatches.
 ## Historical hybrid remote build (inactive)
 `tools/build_hybrid_client.sh` builds the Rust crate, checks the `.hmod`, packages the `.hnmod`, prepares the pinned Horizon Nightly, and creates an importable Linux client ZIP. Run it from the project root through the hybrid runner:
 
@@ -20,16 +20,16 @@ It uses the remote Horizon checkout at `/mnt/hdd2tb/horizon-reference`, download
 
 # GitHub Actions build
 
-`.github/workflows/build.yml` builds and checks the Rust mod, builds and checks the Horizon `.hmod`, packages the native `.hnmod`, and uploads a combined mod bundle. On pushes to `main` and manual dispatches, it also builds a Linux x86_64 Horizon client containing the Arcforge native code.
+`.github/workflows/build.yml` builds and checks the Rust mod, builds and checks the Horizon `.hmod`, packages the native `.hnmod`, and uploads a combined mod bundle. On pushes that match the workflow path filters and on manual dispatches, it also builds a Linux x86_64 Horizon client containing the Arcforge native code.
 
-The client job reads Horizon's pinned Minecraft hashes from its checked-out `research-lock.json`, then downloads the matching version JSON, client jar, and Linux library artifacts directly from Mojang. `tools/fetch_mojang_inputs.py` verifies each artifact's SHA-1 and listed size. These files stay on the ephemeral runner; they are not published or packaged in the artifact. Horizon can prepare the client without downloading the optional sound asset store. No Actions secrets or Microsoft account token are required. Horizon's offline launch option removes the account requirement at play time; it does not remove the need for pinned game files during preparation.
+The client job keeps the Horizon source checkout pinned at `9f42064c11efe7ef3e5ed2baad7ddc2a3b36eea0` and resolves an available published Nightly as its Minecraft 26.3 resource base. It reads the pinned Minecraft hashes from `research-lock.json`, then downloads the matching version JSON, client jar, and Linux library artifacts directly from Mojang. `tools/fetch_mojang_inputs.py` verifies each artifact's SHA-1 and listed size. These files stay on the ephemeral runner; they are not published or packaged in the artifact. Horizon can prepare the client without downloading the optional sound asset store. No Actions secrets or Microsoft account token are required. Horizon's offline launch option removes the account requirement at play time; it does not remove the need for pinned game files during preparation.
 
 ## Artifacts
 
 - `arcforge-<commit>`: `.hmod`, `.hnmod`, checksums, and a combined install ZIP.
 - `arcforge-playable-linux-x86_64-<commit>`: Horizon client executable, the native build's required `native-mods.json`, matching mod files, checksums, and installation instructions.
 
-The client artifact is for the Horizon Nightly commit pinned in the workflow. Import it into that Horizon version and copy the included `native-mods.json` beside `horizon-client` in the imported version folder. Horizon uses that file to activate the compiled native registrations; importing only the executable starts vanilla registries. Then enable `arcforge.hmod` in the target instance for recipes, loot, tags, and other data. The `.hnmod` is the matching native source bundle.
+The native mod is compiled against the Horizon source revision pinned in `horizon-mixin.toml`; the workflow uses an available Nightly as its Minecraft 26.3 resource base. Import the client artifact into an installed Horizon version for Minecraft 26.3 and copy the included `native-mods.json` beside `horizon-client` in the imported version folder. Horizon uses that file to activate the compiled native registrations; importing only the executable starts vanilla registries. Then enable `arcforge.hmod` in the target instance for recipes, loot, tags, and other data. The `.hnmod` is the matching native source bundle.
 
 ## Re-run the build
 
